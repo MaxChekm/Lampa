@@ -1,0 +1,1496 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Генератор Ламп для 3D Печати</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/inter@5/400.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/inter@5/600.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/inter@5/700.min.css">
+    <style>
+        * { font-family: 'Inter', sans-serif; }
+        body { background: #0f0f13; color: #e0e0e0; }
+        .slider-thumb::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: #6366f1;
+            cursor: pointer;
+            border: 2px solid #818cf8;
+        }
+        .slider-thumb::-moz-range-thumb {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: #6366f1;
+            cursor: pointer;
+            border: 2px solid #818cf8;
+        }
+        .slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            height: 4px;
+            border-radius: 2px;
+            background: #334155;
+            outline: none;
+        }
+        .glass-panel {
+            background: rgba(20, 20, 28, 0.85);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(99, 102, 241, 0.15);
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+            transition: all 0.3s ease;
+        }
+        .btn-primary:hover {
+            background: linear-gradient(135deg, #818cf8, #a78bfa);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 20px rgba(99, 102, 241, 0.4);
+        }
+        .shape-btn {
+            transition: all 0.2s ease;
+            border: 1px solid rgba(99, 102, 241, 0.2);
+        }
+        .shape-btn:hover {
+            border-color: #6366f1;
+            background: rgba(99, 102, 241, 0.1);
+        }
+        .shape-btn.active {
+            border-color: #6366f1;
+            background: rgba(99, 102, 241, 0.2);
+            box-shadow: 0 0 10px rgba(99, 102, 241, 0.3);
+        }
+        #canvas-container {
+            background: radial-gradient(ellipse at center, #1a1a2e 0%, #0f0f13 70%);
+        }
+        .glow-text {
+            text-shadow: 0 0 20px rgba(99, 102, 241, 0.5);
+        }
+        .tab-btn {
+            transition: all 0.2s;
+        }
+        .tab-btn.active {
+            background: rgba(99, 102, 241, 0.15);
+            border-bottom: 2px solid #6366f1;
+            color: #818cf8;
+        }
+        input[type="color"] {
+            -webkit-appearance: none;
+            border: none;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            cursor: pointer;
+        }
+        input[type="color"]::-webkit-color-swatch-wrapper { padding: 0; }
+        input[type="color"]::-webkit-color-swatch { border: 2px solid rgba(99,102,241,0.4); border-radius: 50%; }
+        .loading-spinner {
+            border: 3px solid rgba(99,102,241,0.2);
+            border-top-color: #6366f1;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            animation: spin 0.8s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .fade-in { animation: fadeIn 0.4s ease-out; }
+        .toast {
+            animation: slideIn 0.3s ease-out, fadeOut 0.3s ease-in 2.7s;
+        }
+        @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+        @keyframes fadeOut { from { opacity: 1; } to { opacity: 0; } }
+    </style>
+</head>
+<body class="h-screen overflow-hidden">
+    <div class="flex h-screen">
+        <!-- Left Panel - Controls -->
+        <div class="w-[380px] flex-shrink-0 glass-panel overflow-y-auto z-10 border-r border-indigo-500/10">
+            <!-- Header -->
+            <div class="p-5 border-b border-indigo-500/10">
+                <h1 class="text-xl font-bold glow-text text-indigo-400 flex items-center gap-2">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>
+                    </svg>
+                    3D Лампа Генератор
+                </h1>
+                <p class="text-xs text-gray-500 mt-1">Создайте уникальную лампу для 3D печати</p>
+            </div>
+
+            <!-- Tabs -->
+            <div class="flex border-b border-indigo-500/10">
+                <button class="tab-btn active flex-1 py-3 text-xs font-semibold text-center" onclick="switchTab('base')">
+                    🔲 Основание
+                </button>
+                <button class="tab-btn flex-1 py-3 text-xs font-semibold text-center" onclick="switchTab('stem')">
+                     Ножка
+                </button>
+                <button class="tab-btn flex-1 py-3 text-xs font-semibold text-center" onclick="switchTab('shade')">
+                    💡 Абажур
+                </button>
+            </div>
+
+            <!-- Tab Content -->
+            <div class="p-5 space-y-5" id="controls-container">
+                <!-- Base Controls -->
+                <div id="tab-base" class="tab-content space-y-5 fade-in">
+                    <div>
+                        <label class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Форма основания</label>
+                        <div class="grid grid-cols-4 gap-2 mt-2">
+                            <button class="shape-btn active p-2 rounded-lg flex flex-col items-center gap-1" onclick="setBaseShape('cylinder', this)">
+                                <div class="w-8 h-8 rounded-full border-2 border-indigo-400/50"></div>
+                                <span class="text-[10px] text-gray-400">Круг</span>
+                            </button>
+                            <button class="shape-btn p-2 rounded-lg flex flex-col items-center gap-1" onclick="setBaseShape('hexagon', this)">
+                                <div class="w-8 h-8 flex items-center justify-center"><div class="w-5 h-5 rotate-45 bg-transparent border-2 border-indigo-400/50" style="clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)"></div></div>
+                                <span class="text-[10px] text-gray-400">6-уг</span>
+                            </button>
+                            <button class="shape-btn p-2 rounded-lg flex flex-col items-center gap-1" onclick="setBaseShape('star', this)">
+                                <div class="w-8 h-8 flex items-center justify-center"><div class="w-5 h-5 text-indigo-400/50" style="clip-path: polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%); background: rgba(99,102,241,0.3); border-radius: 1px;"></div></div>
+                                <span class="text-[10px] text-gray-400">Звезда</span>
+                            </button>
+                            <button class="shape-btn p-2 rounded-lg flex flex-col items-center gap-1" onclick="setBaseShape('triangle', this)">
+                                <div class="w-8 h-8 flex items-center justify-center"><div class="w-0 h-0 border-l-[10px] border-l-transparent border-r-[10px] border-r-transparent border-b-[18px] border-b-indigo-400/30"></div></div>
+                                <span class="text-[10px] text-gray-400">Треуг</span>
+                            </button>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Высота основания</label>
+                        <input type="range" id="baseHeight" min="5" max="30" value="12" step="1" class="slider-thumb w-full mt-2" oninput="updateLamp()">
+                        <div class="flex justify-between text-[10px] text-gray-600"><span>5mm</span><span id="baseHeightVal">12mm</span><span>30mm</span></div>
+                    </div>
+                    <div>
+                        <label class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Радиус основания</label>
+                        <input type="range" id="baseRadius" min="15" max="60" value="30" step="1" class="slider-thumb w-full mt-2" oninput="updateLamp()">
+                        <div class="flex justify-between text-[10px] text-gray-600"><span>15mm</span><span id="baseRadiusVal">30mm</span><span>60mm</span></div>
+                    </div>
+                    <div>
+                        <label class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Скругление краёв</label>
+                        <input type="range" id="baseBevel" min="0" max="5" value="1" step="0.5" class="slider-thumb w-full mt-2" oninput="updateLamp()">
+                        <div class="flex justify-between text-[10px] text-gray-600"><span>0</span><span id="baseBevelVal">1mm</span><span>5mm</span></div>
+                    </div>
+                    <div>
+                        <label class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Полый внутри (экономия)</label>
+                        <div class="flex items-center gap-3 mt-2">
+                            <label class="flex items-center gap-2 cursor-pointer">
+                                <input type="checkbox" id="baseHollow" class="accent-indigo-500" onchange="updateLamp()">
+                                <span class="text-xs text-gray-400">Полый</span>
+                            </label>
+                            <label class="flex items-center gap-2 cursor-pointer">
+                                <input type="checkbox" id="baseWall" checked class="accent-indigo-500" onchange="updateLamp()">
+                                <span class="text-xs text-gray-400">Стенки 2mm</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Stem Controls -->
+                <div id="tab-stem" class="tab-content space-y-5 hidden fade-in">
+                    <div>
+                        <label class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Высота ножки</label>
+                        <input type="range" id="stemHeight" min="30" max="150" value="80" step="1" class="slider-thumb w-full mt-2" oninput="updateLamp()">
+                        <div class="flex justify-between text-[10px] text-gray-600"><span>30mm</span><span id="stemHeightVal">80mm</span><span>150mm</span></div>
+                    </div>
+                    <div>
+                        <label class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Толщина ножки</label>
+                        <input type="range" id="stemRadius" min="3" max="15" value="6" step="0.5" class="slider-thumb w-full mt-2" oninput="updateLamp()">
+                        <div class="flex justify-between text-[10px] text-gray-600"><span>3mm</span><span id="stemRadiusVal">6mm</span><span>15mm</span></div>
+                    </div>
+                    <div>
+                        <label class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Форма сечения</label>
+                        <div class="grid grid-cols-3 gap-2 mt-2">
+                            <button class="shape-btn active p-2 rounded-lg flex flex-col items-center gap-1" onclick="setStemShape('circle', this)">
+                                <div class="w-6 h-6 rounded-full border-2 border-indigo-400/50"></div>
+                                <span class="text-[10px] text-gray-400">Круг</span>
+                            </button>
+                            <button class="shape-btn p-2 rounded-lg flex flex-col items-center gap-1" onclick="setStemShape('square', this)">
+                                <div class="w-6 h-6 border-2 border-indigo-400/50 rounded-sm"></div>
+                                <span class="text-[10px] text-gray-400">Квадрат</span>
+                            </button>
+                            <button class="shape-btn p-2 rounded-lg flex flex-col items-center gap-1" onclick="setStemShape('hexagon', this)">
+                                <div class="w-6 h-6 bg-transparent border-2 border-indigo-400/50 rounded-sm" style="clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)"></div>
+                                <span class="text-[10px] text-gray-400">6-уг</span>
+                            </button>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Искривление ножки</label>
+                        <input type="range" id="stemCurve" min="0" max="20" value="0" step="0.5" class="slider-thumb w-full mt-2" oninput="updateLamp()">
+                        <div class="flex justify-between text-[10px] text-gray-600"><span>Прямая</span><span id="stemCurveVal">0mm</span><span>20mm</span></div>
+                    </div>
+                    <div>
+                        <label class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Сегменты (сглаживание)</label>
+                        <input type="range" id="stemSegments" min="8" max="32" value="16" step="1" class="slider-thumb w-full mt-2" oninput="updateLamp()">
+                        <div class="flex justify-between text-[10px] text-gray-600"><span>8</span><span id="stemSegmentsVal">16</span><span>32</span></div>
+                    </div>
+                </div>
+
+                <!-- Shade Controls -->
+                <div id="tab-shade" class="tab-content space-y-5 hidden fade-in">
+                    <div>
+                        <label class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Форма абажура</label>
+                        <div class="grid grid-cols-4 gap-2 mt-2">
+                            <button class="shape-btn active p-2 rounded-lg flex flex-col items-center gap-1" onclick="setShadeShape('cone', this)">
+                                <div class="w-0 h-0 border-l-[10px] border-l-transparent border-r-[10px] border-r-transparent border-b-[18px] border-b-indigo-400/30"></div>
+                                <span class="text-[10px] text-gray-400">Конус</span>
+                            </button>
+                            <button class="shape-btn p-2 rounded-lg flex flex-col items-center gap-1" onclick="setShadeShape('cylinder', this)">
+                                <div class="w-6 h-6 border-2 border-indigo-400/50 rounded-sm"></div>
+                                <span class="text-[10px] text-gray-400">Цилиндр</span>
+                            </button>
+                            <button class="shape-btn p-2 rounded-lg flex flex-col items-center gap-1" onclick="setShadeShape('sphere', this)">
+                                <div class="w-6 h-6 rounded-full border-2 border-indigo-400/50"></div>
+                                <span class="text-[10px] text-gray-400">Сфера</span>
+                            </button>
+                            <button class="shape-btn p-2 rounded-lg flex flex-col items-center gap-1" onclick="setShadeShape('geodesic', this)">
+                                <div class="w-6 h-6 bg-transparent border border-indigo-400/50" style="clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)"></div>
+                                <span class="text-[10px] text-gray-400">Гео</span>
+                            </button>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Высота абажура</label>
+                        <input type="range" id="shadeHeight" min="20" max="80" value="45" step="1" class="slider-thumb w-full mt-2" oninput="updateLamp()">
+                        <div class="flex justify-between text-[10px] text-gray-600"><span>20mm</span><span id="shadeHeightVal">45mm</span><span>80mm</span></div>
+                    </div>
+                    <div>
+                        <label class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Радиус абажура</label>
+                        <input type="range" id="shadeRadius" min="15" max="60" value="35" step="1" class="slider-thumb w-full mt-2" oninput="updateLamp()">
+                        <div class="flex justify-between text-[10px] text-gray-600"><span>15mm</span><span id="shadeRadiusVal">35mm</span><span>60mm</span></div>
+                    </div>
+                    <div>
+                        <label class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Отверстие вверху</label>
+                        <input type="range" id="shadeTopHole" min="0" max="20" value="5" step="0.5" class="slider-thumb w-full mt-2" oninput="updateLamp()">
+                        <div class="flex justify-between text-[10px] text-gray-600"><span>0mm</span><span id="shadeTopHoleVal">5mm</span><span>20mm</span></div>
+                    </div>
+                    <div>
+                        <label class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Количество сегментов</label>
+                        <input type="range" id="shadeSegments" min="6" max="24" value="12" step="1" class="slider-thumb w-full mt-2" oninput="updateLamp()">
+                        <div class="flex justify-between text-[10px] text-gray-600"><span>6</span><span id="shadeSegmentsVal">12</span><span>24</span></div>
+                    </div>
+                    <div>
+                        <label class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Стиль абажура</label>
+                        <div class="grid grid-cols-3 gap-2 mt-2">
+                            <button class="shape-btn active p-2 rounded-lg text-[10px] text-gray-400" onclick="setShadeStyle('solid', this)">Сплошной</button>
+                            <button class="shape-btn p-2 rounded-lg text-[10px] text-gray-400" onclick="setShadeStyle('ribs', this)">Рёбра</button>
+                            <button class="shape-btn p-2 rounded-lg text-[10px] text-gray-400" onclick="setShadeStyle('lattice', this)">Решётка</button>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Толщина стенок абажура</label>
+                        <input type="range" id="shadeThickness" min="1" max="5" value="2" step="0.5" class="slider-thumb w-full mt-2" oninput="updateLamp()">
+                        <div class="flex justify-between text-[10px] text-gray-600"><span>1mm</span><span id="shadeThicknessVal">2mm</span><span>5mm</span></div>
+                    </div>
+                </div>
+
+                <!-- Common Controls -->
+                <div class="pt-4 border-t border-indigo-500/10 space-y-4">
+                    <div>
+                        <label class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Цвет материала</label>
+                        <div class="flex items-center gap-3 mt-2">
+                            <input type="color" id="lampColor" value="#ffffff" onchange="updateLamp()">
+                            <span class="text-xs text-gray-400" id="colorLabel">#FFFFFF</span>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Масштаб (мм → ед.)</label>
+                        <input type="range" id="scaleFactor" min="0.5" max="3" value="1" step="0.1" class="slider-thumb w-full mt-2" oninput="updateLamp()">
+                        <div class="flex justify-between text-[10px] text-gray-600"><span>0.5x</span><span id="scaleVal">1.0x</span><span>3.0x</span></div>
+                    </div>
+                    <div>
+                        <label class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Детализация сетки</label>
+                        <input type="range" id="meshDetail" min="1" max="3" value="2" step="1" class="slider-thumb w-full mt-2" oninput="updateLamp()">
+                        <div class="flex justify-between text-[10px] text-gray-600"><span>Низкая</span><span>Средняя</span><span>Высокая</span></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Export Section -->
+            <div class="p-5 border-t border-indigo-500/10 space-y-3">
+                <div class="bg-indigo-500/5 rounded-lg p-3 border border-indigo-500/10">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs text-gray-400">Всего треугольников:</span>
+                        <span class="text-xs font-mono text-indigo-400" id="triCount">0</span>
+                    </div>
+                    <div class="flex items-center justify-between mt-1">
+                        <span class="text-xs text-gray-400">Примерный размер:</span>
+                        <span class="text-xs font-mono text-indigo-400" id="fileSize">0 KB</span>
+                    </div>
+                </div>
+                <button onclick="exportSTL()" class="btn-primary w-full py-3 rounded-lg font-semibold text-sm text-white flex items-center justify-center gap-2">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                    </svg>
+                    Скачать STL файл
+                </button>
+                <button onclick="exportOBJ()" class="w-full py-2.5 rounded-lg font-semibold text-sm text-gray-400 border border-indigo-500/20 hover:border-indigo-500/40 hover:text-indigo-300 transition-all flex items-center justify-center gap-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                    </svg>
+                    Скачать OBJ файл
+                </button>
+                <button onclick="resetAll()" class="w-full py-2 rounded-lg text-xs text-gray-500 hover:text-gray-300 transition-all">
+                    ↺ Сбросить настройки
+                </button>
+            </div>
+        </div>
+
+        <!-- Right - 3D Viewport -->
+        <div class="flex-1 relative" id="canvas-container">
+            <div id="three-canvas" class="w-full h-full"></div>
+
+            <!-- Viewport Controls -->
+            <div class="absolute top-4 right-4 flex gap-2">
+                <button onclick="toggleWireframe()" class="glass-panel px-3 py-2 rounded-lg text-xs text-gray-400 hover:text-white transition-all" id="wireframeBtn">
+                    🔲 Каркас
+                </button>
+                <button onclick="toggleGrid()" class="glass-panel px-3 py-2 rounded-lg text-xs text-gray-400 hover:text-white transition-all" id="gridBtn">
+                     Сетка
+                </button>
+                <button onclick="resetCamera()" class="glass-panel px-3 py-2 rounded-lg text-xs text-gray-400 hover:text-white transition-all">
+                     Сброс
+                </button>
+            </div>
+
+            <!-- Info Overlay -->
+            <div class="absolute bottom-4 left-4 glass-panel px-4 py-2 rounded-lg">
+                <div class="flex items-center gap-3 text-[11px] text-gray-500">
+                    <span>🖱 ЛКМ — вращение</span>
+                    <span>🖱 ПКМ — перемещение</span>
+                    <span>🖱 Колёсико — масштаб</span>
+                </div>
+            </div>
+
+            <!-- Loading -->
+            <div id="loading" class="hidden absolute inset-0 flex items-center justify-center bg-black/50">
+                <div class="loading-spinner"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Container -->
+    <div id="toast-container" class="fixed top-4 right-4 z-50"></div>
+
+    <script>
+    // Three.js Setup
+    let scene, camera, renderer, controls;
+    let lampGroup, wireframeGroup;
+    let gridHelper;
+    let isWireframe = false;
+    let currentTab = 'base';
+
+    // Lamp parameters
+    const params = {
+        baseShape: 'cylinder',
+        baseHeight: 12,
+        baseRadius: 30,
+        baseBevel: 1,
+        baseHollow: false,
+        baseWall: true,
+        stemShape: 'circle',
+        stemHeight: 80,
+        stemRadius: 6,
+        stemCurve: 0,
+        stemSegments: 16,
+        shadeShape: 'cone',
+        shadeHeight: 45,
+        shadeRadius: 35,
+        shadeTopHole: 5,
+        shadeSegments: 12,
+        shadeStyle: 'solid',
+        shadeThickness: 2,
+        color: '#ffffff',
+        scale: 1,
+        detail: 2
+    };
+
+    // Initialize
+    function init() {
+        const container = document.getElementById('three-canvas');
+        const width = container.clientWidth;
+        const height = container.clientHeight;
+
+        scene = new THREE.Scene();
+        scene.fog = new THREE.FogExp2(0x0f0f13, 0.008);
+
+        camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 1000);
+        camera.position.set(60, 80, 100);
+        camera.lookAt(0, 40, 0);
+
+        renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+        renderer.setSize(width, height);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        renderer.shadowMap.enabled = true;
+        renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+        renderer.toneMapping = THREE.ACESFilmicToneMapping;
+        renderer.toneMappingExposure = 1.2;
+        container.appendChild(renderer.domElement);
+
+        // Lights
+        const ambientLight = new THREE.AmbientLight(0x404060, 0.6);
+        scene.add(ambientLight);
+
+        const mainLight = new THREE.DirectionalLight(0xffffff, 1.0);
+        mainLight.position.set(50, 80, 50);
+        mainLight.castShadow = true;
+        mainLight.shadow.mapSize.width = 2048;
+        mainLight.shadow.mapSize.height = 2048;
+        scene.add(mainLight);
+
+        const fillLight = new THREE.DirectionalLight(0x6366f1, 0.3);
+        fillLight.position.set(-30, 40, -30);
+        scene.add(fillLight);
+
+        const rimLight = new THREE.DirectionalLight(0x8b5cf6, 0.2);
+        rimLight.position.set(0, 20, -50);
+        scene.add(rimLight);
+
+        // Grid
+        gridHelper = new THREE.GridHelper(200, 20, 0x1a1a3e, 0x0f0f1a);
+        scene.add(gridHelper);
+
+        // Lamp group
+        lampGroup = new THREE.Group();
+        scene.add(lampGroup);
+
+        wireframeGroup = new THREE.Group();
+        scene.add(wireframeGroup);
+
+        // Simple orbit controls implementation
+        setupOrbitControls(container);
+
+        // Initial lamp
+        updateLamp();
+
+        // Animation loop
+        animate();
+
+        // Resize handler
+        window.addEventListener('resize', onResize);
+    }
+
+    function setupOrbitControls(container) {
+        let isDragging = false;
+        let previousMousePosition = { x: 0, y: 0 };
+        let spherical = { theta: Math.PI / 4, phi: Math.PI / 3, radius: 120 };
+        let target = new THREE.Vector3(0, 40, 0);
+        let isRightDrag = false;
+
+        function updateCamera() {
+            camera.position.x = target.x + spherical.radius * Math.sin(spherical.phi) * Math.sin(spherical.theta);
+            camera.position.y = target.y + spherical.radius * Math.cos(spherical.phi);
+            camera.position.z = target.z + spherical.radius * Math.sin(spherical.phi) * Math.cos(spherical.theta);
+            camera.lookAt(target);
+        }
+
+        updateCamera();
+
+        renderer.domElement.addEventListener('mousedown', (e) => {
+            if (e.button === 0) isDragging = true;
+            if (e.button === 2) { isRightDrag = true; isDragging = true; }
+            previousMousePosition = { x: e.clientX, y: e.clientY };
+        });
+
+        renderer.domElement.addEventListener('mousemove', (e) => {
+            if (!isDragging) return;
+            const deltaMove = {
+                x: e.clientX - previousMousePosition.x,
+                y: e.clientY - previousMousePosition.y
+            };
+
+            if (isRightDrag) {
+                const right = new THREE.Vector3();
+                const up = new THREE.Vector3();
+                camera.getWorldDirection(new THREE.Vector3());
+                right.crossVectors(camera.up, new THREE.Vector3().subVectors(camera.position, target).normalize()).normalize();
+                up.copy(camera.up);
+                const panSpeed = 0.15;
+                target.add(right.multiplyScalar(-deltaMove.x * panSpeed));
+                target.add(up.multiplyScalar(deltaMove.y * panSpeed));
+            } else {
+                spherical.theta -= deltaMove.x * 0.005;
+                spherical.phi = Math.max(0.1, Math.min(Math.PI - 0.1, spherical.phi - deltaMove.y * 0.005));
+            }
+
+            previousMousePosition = { x: e.clientX, y: e.clientY };
+            updateCamera();
+        });
+
+        renderer.domElement.addEventListener('mouseup', () => {
+            isDragging = false;
+            isRightDrag = false;
+        });
+
+        renderer.domElement.addEventListener('wheel', (e) => {
+            e.preventDefault();
+            spherical.radius = Math.max(30, Math.min(300, spherical.radius + e.deltaY * 0.15));
+            updateCamera();
+        }, { passive: false });
+
+        renderer.domElement.addEventListener('contextmenu', (e) => e.preventDefault());
+
+        // Touch support
+        let touchStartDist = 0;
+        renderer.domElement.addEventListener('touchstart', (e) => {
+            if (e.touches.length === 1) {
+                isDragging = true;
+                previousMousePosition = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+            }
+            if (e.touches.length === 2) {
+                touchStartDist = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
+            }
+        });
+
+        renderer.domElement.addEventListener('touchmove', (e) => {
+            e.preventDefault();
+            if (e.touches.length === 1 && isDragging) {
+                const deltaMove = {
+                    x: e.touches[0].clientX - previousMousePosition.x,
+                    y: e.touches[0].clientY - previousMousePosition.y
+                };
+                spherical.theta -= deltaMove.x * 0.005;
+                spherical.phi = Math.max(0.1, Math.min(Math.PI - 0.1, spherical.phi - deltaMove.y * 0.005));
+                previousMousePosition = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+                updateCamera();
+            }
+            if (e.touches.length === 2) {
+                const dist = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
+                spherical.radius = Math.max(30, Math.min(300, spherical.radius - (dist - touchStartDist) * 0.3));
+                touchStartDist = dist;
+                updateCamera();
+            }
+        }, { passive: false });
+
+        renderer.domElement.addEventListener('touchend', () => { isDragging = false; });
+
+        window._orbitState = { spherical, target, updateCamera };
+    }
+
+    function onResize() {
+        const container = document.getElementById('three-canvas');
+        const width = container.clientWidth;
+        const height = container.clientHeight;
+        camera.aspect = width / height;
+        camera.updateProjectionMatrix();
+        renderer.setSize(width, height);
+    }
+
+    function animate() {
+        requestAnimationFrame(animate);
+        renderer.render(scene, camera);
+    }
+
+    // Read parameters from UI
+    function readParams() {
+        params.baseShape = document.querySelector('#tab-base .shape-btn.active')?.getAttribute('onclick')?.match(/'([^']+)'/)?.[1] || 'cylinder';
+        params.baseHeight = parseFloat(document.getElementById('baseHeight').value);
+        params.baseRadius = parseFloat(document.getElementById('baseRadius').value);
+        params.baseBevel = parseFloat(document.getElementById('baseBevel').value);
+        params.baseHollow = document.getElementById('baseHollow').checked;
+        params.baseWall = document.getElementById('baseWall').checked;
+        params.stemShape = document.querySelector('#tab-stem .shape-btn.active')?.getAttribute('onclick')?.match(/'([^']+)'/)?.[1] || 'circle';
+        params.stemHeight = parseFloat(document.getElementById('stemHeight').value);
+        params.stemRadius = parseFloat(document.getElementById('stemRadius').value);
+        params.stemCurve = parseFloat(document.getElementById('stemCurve').value);
+        params.stemSegments = parseInt(document.getElementById('stemSegments').value);
+        params.shadeShape = document.querySelector('#tab-shade .shape-btn.active')?.getAttribute('onclick')?.match(/'([^']+)'/)?.[1] || 'cone';
+        params.shadeHeight = parseFloat(document.getElementById('shadeHeight').value);
+        params.shadeRadius = parseFloat(document.getElementById('shadeRadius').value);
+        params.shadeTopHole = parseFloat(document.getElementById('shadeTopHole').value);
+        params.shadeSegments = parseInt(document.getElementById('shadeSegments').value);
+        params.shadeStyle = document.querySelector('#tab-shade .shape-btn:nth-child(4)')?.classList.contains('active') ? 'solid' :
+                           document.querySelector('#tab-shade .shape-btn:nth-child(5)')?.classList.contains('active') ? 'ribs' : 'lattice';
+        params.shadeThickness = parseFloat(document.getElementById('shadeThickness').value);
+        params.color = document.getElementById('lampColor').value;
+        params.scale = parseFloat(document.getElementById('scaleFactor').value);
+        params.detail = parseInt(document.getElementById('meshDetail').value);
+
+        // Update display values
+        document.getElementById('baseHeightVal').textContent = params.baseHeight + 'mm';
+        document.getElementById('baseRadiusVal').textContent = params.baseRadius + 'mm';
+        document.getElementById('baseBevelVal').textContent = params.baseBevel + 'mm';
+        document.getElementById('stemHeightVal').textContent = params.stemHeight + 'mm';
+        document.getElementById('stemRadiusVal').textContent = params.stemRadius + 'mm';
+        document.getElementById('stemCurveVal').textContent = params.stemCurve + 'mm';
+        document.getElementById('stemSegmentsVal').textContent = params.stemSegments;
+        document.getElementById('shadeHeightVal').textContent = params.shadeHeight + 'mm';
+        document.getElementById('shadeRadiusVal').textContent = params.shadeRadius + 'mm';
+        document.getElementById('shadeTopHoleVal').textContent = params.shadeTopHole + 'mm';
+        document.getElementById('shadeSegmentsVal').textContent = params.shadeSegments;
+        document.getElementById('shadeThicknessVal').textContent = params.shadeThickness + 'mm';
+        document.getElementById('scaleVal').textContent = params.scale.toFixed(1) + 'x';
+        document.getElementById('colorLabel').textContent = params.color.toUpperCase();
+    }
+
+    // Build lamp geometry
+    function buildLamp() {
+        readParams();
+
+        // Clear existing
+        while (lampGroup.children.length) {
+            const child = lampGroup.children[0];
+            child.geometry?.dispose();
+            if (child.material) {
+                if (Array.isArray(child.material)) child.material.forEach(m => m.dispose());
+                else child.material.dispose();
+            }
+            lampGroup.remove(child);
+        }
+
+        const s = params.scale;
+        const material = new THREE.MeshStandardMaterial({
+            color: new THREE.Color(params.color),
+            metalness: 0.1,
+            roughness: 0.7,
+            flatShading: params.detail === 1
+        });
+
+        let totalTriangles = 0;
+
+        // Build Base
+        const baseGeo = createBaseGeometry(s);
+        const baseMesh = new THREE.Mesh(baseGeo, material.clone());
+        baseMesh.position.y = 0;
+        baseMesh.castShadow = true;
+        baseMesh.receiveShadow = true;
+        lampGroup.add(baseMesh);
+        totalTriangles += baseGeo.index ? baseGeo.index.count / 3 : baseGeo.attributes.position.count / 3;
+
+        // Build Stem
+        const stemGeo = createStemGeometry(s);
+        const stemMesh = new THREE.Mesh(stemGeo, material.clone());
+        stemMesh.position.y = params.baseHeight * s;
+        stemMesh.castShadow = true;
+        stemMesh.receiveShadow = true;
+        lampGroup.add(stemMesh);
+        totalTriangles += stemGeo.index ? stemGeo.index.count / 3 : stemGeo.attributes.position.count / 3;
+
+        // Build Shade
+        const shadeGeo = createShadeGeometry(s);
+        const shadeMesh = new THREE.Mesh(shadeGeo, material.clone());
+        shadeMesh.position.y = (params.baseHeight + params.stemHeight) * s;
+        shadeMesh.castShadow = true;
+        shadeMesh.receiveShadow = true;
+        lampGroup.add(shadeMesh);
+        totalTriangles += shadeGeo.index ? shadeGeo.index.count / 3 : shadeGeo.attributes.position.count / 3;
+
+        // Update wireframe
+        buildWireframe();
+
+        // Update stats
+        document.getElementById('triCount').textContent = Math.round(totalTriangles).toLocaleString();
+        document.getElementById('fileSize').textContent = Math.round(totalTriangles * 50 / 1024) + ' KB';
+
+        // Center the lamp vertically
+        const box = new THREE.Box3().setFromObject(lampGroup);
+        const center = box.getCenter(new THREE.Vector3());
+        lampGroup.position.y = -center.y + params.baseHeight * s / 2;
+    }
+
+    function createBaseGeometry(s) {
+        const h = params.baseHeight * s;
+        const r = params.baseRadius * s;
+        const bevel = params.baseBevel * s;
+        const segments = params.detail === 1 ? 8 : params.detail === 2 ? 16 : 32;
+
+        let shape;
+        switch (params.baseShape) {
+            case 'hexagon':
+                shape = createPolygonShape(r, 6, bevel);
+                break;
+            case 'star':
+                shape = createStarShape(r, bevel);
+                break;
+            case 'triangle':
+                shape = createPolygonShape(r, 3, bevel);
+                break;
+            default:
+                shape = createCircleShape(r, bevel, segments);
+        }
+
+        const extrudeSettings = {
+            steps: 1,
+            depth: h,
+            bevelEnabled: bevel > 0,
+            bevelThickness: bevel * 0.5,
+            bevelSize: bevel * 0.5,
+            bevelOffset: 0,
+            bevelSegments: params.detail === 1 ? 1 : params.detail === 2 ? 2 : 4
+        };
+
+        return new THREE.ExtrudeGeometry(shape, extrudeSettings);
+    }
+
+    function createCircleShape(radius, bevel, segments) {
+        const shape = new THREE.Shape();
+        shape.absarc(0, 0, radius, 0, Math.PI * 2, false);
+
+        if (params.baseHollow && params.baseWall) {
+            const holeRadius = radius - 2 * s;
+            const holePath = new THREE.Path();
+            holePath.absarc(0, 0, holeRadius, 0, Math.PI * 2, true);
+            shape.holes.push(holePath);
+        }
+
+        return shape;
+    }
+
+    function createPolygonShape(radius, sides, bevel) {
+        const shape = new THREE.Shape();
+        const angleStep = (Math.PI * 2) / sides;
+
+        for (let i = 0; i < sides; i++) {
+            const angle = i * angleStep - Math.PI / 2;
+            const x = radius * Math.cos(angle);
+            const y = radius * Math.sin(angle);
+            if (i === 0) shape.moveTo(x, y);
+            else shape.lineTo(x, y);
+        }
+        shape.closePath();
+
+        if (params.baseHollow && params.baseWall) {
+            const innerR = radius - 2 * s;
+            const holePath = new THREE.Path();
+            for (let i = 0; i < sides; i++) {
+                const angle = i * angleStep - Math.PI / 2;
+                const x = innerR * Math.cos(angle);
+                const y = innerR * Math.sin(angle);
+                if (i === 0) holePath.moveTo(x, y);
+                else holePath.lineTo(x, y);
+            }
+            holePath.closePath();
+            shape.holes.push(holePath);
+        }
+
+        return shape;
+    }
+
+    function createStarShape(radius, bevel) {
+        const shape = new THREE.Shape();
+        const points = 5;
+        const innerR = radius * 0.5;
+
+        for (let i = 0; i < points * 2; i++) {
+            const angle = (i * Math.PI) / points - Math.PI / 2;
+            const r = i % 2 === 0 ? radius : innerR;
+            const x = r * Math.cos(angle);
+            const y = r * Math.sin(angle);
+            if (i === 0) shape.moveTo(x, y);
+            else shape.lineTo(x, y);
+        }
+        shape.closePath();
+
+        if (params.baseHollow && params.baseWall) {
+            const holePath = new THREE.Path();
+            for (let i = 0; i < points * 2; i++) {
+                const angle = (i * Math.PI) / points - Math.PI / 2;
+                const r = i % 2 === 0 ? radius - 2*s : innerR - 1*s;
+                const x = r * Math.cos(angle);
+                const y = r * Math.sin(angle);
+                if (i === 0) holePath.moveTo(x, y);
+                else holePath.lineTo(x, y);
+            }
+            holePath.closePath();
+            shape.holes.push(holePath);
+        }
+
+        return shape;
+    }
+
+    function createStemGeometry(s) {
+        const h = params.stemHeight * s;
+        const r = params.stemRadius * s;
+        const segments = params.stemSegments;
+        const curve = params.stemCurve * s;
+        const radialSegments = params.detail === 1 ? 6 : params.detail === 2 ? 12 : 24;
+
+        if (curve > 0) {
+            // Curved stem using TubeGeometry
+            const points = [];
+            const steps = 20;
+            for (let i = 0; i <= steps; i++) {
+                const t = i / steps;
+                const x = curve * Math.sin(t * Math.PI);
+                const y = t * h;
+                const z = 0;
+                points.push(new THREE.Vector3(x, y, z));
+            }
+            const path = new THREE.CatmullRomCurve3(points);
+
+            let stemShape;
+            if (params.stemShape === 'circle') {
+                stemShape = new THREE.Shape();
+                stemShape.absarc(0, 0, r, 0, Math.PI * 2, false);
+            } else if (params.stemShape === 'square') {
+                stemShape = new THREE.Shape();
+                stemShape.moveTo(-r, -r);
+                stemShape.lineTo(r, -r);
+                stemShape.lineTo(r, r);
+                stemShape.lineTo(-r, r);
+                stemShape.closePath();
+            } else {
+                stemShape = new THREE.Shape();
+                const hexR = r;
+                for (let i = 0; i < 6; i++) {
+                    const angle = (i * Math.PI) / 3;
+                    const x = hexR * Math.cos(angle);
+                    const y = hexR * Math.sin(angle);
+                    if (i === 0) stemShape.moveTo(x, y);
+                    else stemShape.lineTo(x, y);
+                }
+                stemShape.closePath();
+            }
+
+            return new THREE.ExtrudeGeometry(stemShape, {
+                steps: steps,
+                extrudePath: path,
+                bevelEnabled: false
+            });
+        } else {
+            // Straight stem
+            if (params.stemShape === 'circle') {
+                return new THREE.CylinderGeometry(r, r, h, radialSegments, 1, false);
+            } else if (params.stemShape === 'square') {
+                return new THREE.BoxGeometry(r * 2, h, r * 2, 1, 1, 1);
+            } else {
+                // Hexagonal
+                return new THREE.CylinderGeometry(r, r, h, 6, 1, false);
+            }
+        }
+    }
+
+    function createShadeGeometry(s) {
+        const h = params.shadeHeight * s;
+        const r = params.shadeRadius * s;
+        const topHole = params.shadeTopHole * s;
+        const segCount = params.shadeSegments;
+        const radialSegments = params.detail === 1 ? 8 : params.detail === 2 ? 16 : 32;
+        const thickness = params.shadeThickness * s;
+
+        switch (params.shadeShape) {
+            case 'cone':
+                return createConeShade(r, topHole, h, segCount, thickness, radialSegments);
+            case 'cylinder':
+                return createCylinderShade(r, h, segCount, thickness, radialSegments);
+            case 'sphere':
+                return createSphereShade(r, h, segCount, thickness, radialSegments);
+            case 'geodesic':
+                return createGeodesicShade(r, h, segCount, thickness);
+            default:
+                return createConeShade(r, topHole, h, segCount, thickness, radialSegments);
+        }
+    }
+
+    function createConeShade(bottomR, topR, height, segments, thickness, radialSegs) {
+        // Create a truncated cone (frustum) shade
+        if (params.shadeStyle === 'solid') {
+            const geo = new THREE.LatheGeometry(createShadeProfile(bottomR, topR, height, thickness), radialSegs);
+            return geo;
+        } else if (params.shadeStyle === 'ribs') {
+            return createRibbedCone(bottomR, topR, height, segments, thickness);
+        } else {
+            return createLatticeCone(bottomR, topR, height, segments, thickness);
+        }
+    }
+
+    function createShadeProfile(bottomR, topR, height, thickness) {
+        const points = [];
+        // Outer profile
+        points.push(new THREE.Vector2(bottomR, 0));
+        points.push(new THREE.Vector2(topR, height));
+        // Top edge
+        if (topR > 0.1) {
+            points.push(new THREE.Vector2(topR - thickness, height));
+        }
+        // Inner profile (going down)
+        points.push(new THREE.Vector2(Math.max(bottomR - thickness, topR - thickness + (bottomR - topR) * (height / height)), 0));
+        return points;
+    }
+
+    function createRibbedCone(bottomR, topR, height, segments, thickness) {
+        const group = new THREE.BufferGeometry();
+        const positions = [];
+        const normals = [];
+        const indices = [];
+        let idx = 0;
+
+        const ribCount = segments;
+        const horizontalRings = 4;
+
+        for (let ring = 0; ring <= horizontalRings; ring++) {
+            const t = ring / horizontalRings;
+            const y = t * height;
+            const currentR = bottomR + (topR - bottomR) * t;
+            const currentRInner = currentR - thickness;
+
+            for (let i = 0; i < ribCount; i++) {
+                const angle = (i / ribCount) * Math.PI * 2;
+
+                if (i === 0) {
+                    // Outer point
+                    positions.push(currentR * Math.cos(angle), y, currentR * Math.sin(angle));
+                    normals.push(Math.cos(angle), 0, Math.sin(angle));
+                    idx++;
+
+                    // Inner point
+                    positions.push(currentRInner * Math.cos(angle), y, currentRInner * Math.sin(angle));
+                    normals.push(-Math.cos(angle), 0, -Math.sin(angle));
+                    idx++;
+                } else {
+                    const prevAngle = ((i - 1) / ribCount) * Math.PI * 2;
+                    const midAngle = ((i - 0.5) / ribCount) * Math.PI * 2;
+
+                    // Outer point
+                    positions.push(currentR * Math.cos(angle), y, currentR * Math.sin(angle));
+                    normals.push(Math.cos(angle), 0, Math.sin(angle));
+                    idx++;
+
+                    // Inner point
+                    positions.push(currentRInner * Math.cos(angle), y, currentRInner * Math.sin(angle));
+                    normals.push(-Math.cos(angle), 0, -Math.sin(angle));
+                    idx++;
+
+                    // Bottom face triangles
+                    if (ring === 0) {
+                        const prevIdx = idx - 4;
+                        indices.push(prevIdx, prevIdx + 1, idx - 1);
+                        indices.push(prevIdx, idx - 1, idx - 2);
+                    }
+
+                    // Vertical faces
+                    if (ring > 0) {
+                        const a = idx - 4;
+                        const b = idx - 3;
+                        const c = idx - 2;
+                        const d = idx - 1;
+                        indices.push(a, b, c);
+                        indices.push(b, c, d);
+                    }
+                }
+            }
+        }
+
+        const geo = new THREE.BufferGeometry();
+        geo.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+        geo.setAttribute('normal', new THREE.Float32BufferAttribute(normals, 3));
+        geo.setIndex(indices);
+        return geo;
+    }
+
+    function createLatticeCone(bottomR, topR, height, segments, thickness) {
+        const group = new THREE.BufferGeometry();
+        const positions = [];
+        const normals = [];
+        const indices = [];
+        let idx = 0;
+
+        const verticalRibs = segments;
+        const horizontalRings = 5;
+        const ribWidth = thickness;
+
+        // Create horizontal rings as thin cylinders
+        for (let ring = 0; ring <= horizontalRings; ring++) {
+            const t = ring / horizontalRings;
+            const y = t * height;
+            const currentR = bottomR + (topR - bottomR) * t;
+            const ringSegs = 24;
+
+            for (let i = 0; i < ringSegs; i++) {
+                const angle = (i / ringSegs) * Math.PI * 2;
+                const nextAngle = ((i + 1) / ringSegs) * Math.PI * 2;
+
+                const ox1 = currentR * Math.cos(angle);
+                const oz1 = currentR * Math.sin(angle);
+                const ox2 = currentR * Math.cos(nextAngle);
+                const oz2 = currentR * Math.sin(nextAngle);
+
+                const ix1 = (currentR - ribWidth) * Math.cos(angle);
+                const iz1 = (currentR - ribWidth) * Math.sin(angle);
+                const ix2 = (currentR - ribWidth) * Math.cos(nextAngle);
+                const iz2 = (currentR - ribWidth) * Math.sin(nextAngle);
+
+                positions.push(ox1, y, oz1, ix1, y, iz1, ox2, y, oz2, ix2, y, iz2);
+                const n = ringSegs;
+                normals.push(Math.cos(angle), 0, Math.sin(angle), -Math.cos(angle), 0, -Math.sin(angle), Math.cos(angle), 0, Math.sin(angle), -Math.cos(angle), 0, -Math.sin(angle));
+
+                indices.push(idx, idx + 1, idx + 2, idx + 1, idx + 2, idx + 3);
+                idx += 4;
+            }
+        }
+
+        // Create vertical ribs
+        for (let v = 0; v < verticalRibs; v++) {
+            const angle = (v / verticalRibs) * Math.PI * 2;
+            const ribSegs = 8;
+
+            for (let seg = 0; seg < ribSegs; seg++) {
+                const t1 = seg / ribSegs;
+                const t2 = (seg + 1) / ribSegs;
+                const y1 = t1 * height;
+                const y2 = t2 * height;
+                const r1 = bottomR + (topR - bottomR) * t1;
+                const r2 = bottomR + (topR - bottomR) * t2;
+
+                const halfW = ribWidth / 2;
+
+                const perpAngle = angle + Math.PI / 2;
+                const px = Math.cos(perpAngle) * halfW;
+                const pz = Math.sin(perpAngle) * halfW;
+
+                const cosA = Math.cos(angle);
+                const sinA = Math.sin(angle);
+
+                const o1x = r1 * cosA + px;
+                const o1z = r1 * sinA + pz;
+                const i1x = (r1 - ribWidth) * cosA - px;
+                const i1z = (r1 - ribWidth) * sinA - pz;
+
+                const o2x = r2 * cosA + px;
+                const o2z = r2 * sinA + pz;
+                const i2x = (r2 - ribWidth) * cosA - px;
+                const i2z = (r2 - ribWidth) * sinA - pz;
+
+                positions.push(o1x, y1, o1z, i1x, y1, i1z, o2x, y2, o2z, i2x, y2, i2z);
+                normals.push(cosA, 0, sinA, -cosA, 0, -sinA, cosA, 0, sinA, -cosA, 0, -sinA);
+                indices.push(idx, idx + 1, idx + 2, idx + 1, idx + 2, idx + 3);
+                idx += 4;
+            }
+        }
+
+        const geo = new THREE.BufferGeometry();
+        geo.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+        geo.setAttribute('normal', new THREE.Float32BufferAttribute(normals, 3));
+        geo.setIndex(indices);
+        return geo;
+    }
+
+    function createCylinderShade(r, height, segments, thickness, radialSegs) {
+        const topR = r * 0.8;
+        return createConeShade(r, topR, height, segments, thickness, radialSegs);
+    }
+
+    function createSphereShade(r, height, segments, thickness, radialSegs) {
+        const geo = new THREE.SphereGeometry(r, radialSegs, Math.floor(radialSegs / 2), 0, Math.PI * 2, 0, Math.PI * 0.6);
+        return geo;
+    }
+
+    function createGeodesicShade(r, height, segments, thickness) {
+        const detail = params.detail;
+        const geo = new THREE.IcosahedronGeometry(r, detail === 1 ? 0 : detail === 2 ? 1 : 2);
+
+        // Flatten top and cut bottom
+        const pos = geo.attributes.position;
+        for (let i = 0; i < pos.count; i++) {
+            const y = pos.getY(i);
+            if (y > height * 0.4) {
+                pos.setY(i, height * 0.4);
+            }
+            if (y < 0) {
+                pos.setY(i, 0);
+            }
+        }
+        geo.computeVertexNormals();
+        return geo;
+    }
+
+    function buildWireframe() {
+        while (wireframeGroup.children.length) {
+            wireframeGroup.children[0].geometry?.dispose();
+            wireframeGroup.children[0].material?.dispose();
+            wireframeGroup.remove(wireframeGroup.children[0]);
+        }
+
+        if (!isWireframe) return;
+
+        lampGroup.children.forEach(child => {
+            const wireMat = new THREE.MeshBasicMaterial({
+                color: 0x6366f1,
+                wireframe: true,
+                transparent: true,
+                opacity: 0.3
+            });
+            const wireMesh = new THREE.Mesh(child.geometry.clone(), wireMat);
+            wireMesh.position.copy(child.position);
+            wireMesh.scale.copy(child.scale);
+            wireframeGroup.add(wireMesh);
+        });
+    }
+
+    function updateLamp() {
+        buildLamp();
+    }
+
+    // Tab switching
+    function switchTab(tab) {
+        currentTab = tab;
+        document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+        document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+        document.getElementById('tab-' + tab).classList.remove('hidden');
+        document.getElementById('tab-' + tab).classList.add('fade-in');
+        event.target.classList.add('active');
+    }
+
+    // Shape selection
+    function setBaseShape(shape, btn) {
+        params.baseShape = shape;
+        btn.closest('.grid').querySelectorAll('.shape-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        updateLamp();
+    }
+
+    function setStemShape(shape, btn) {
+        params.stemShape = shape;
+        btn.closest('.grid').querySelectorAll('.shape-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        updateLamp();
+    }
+
+    function setShadeShape(shape, btn) {
+        params.shadeShape = shape;
+        btn.closest('.grid').querySelectorAll('.shape-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        updateLamp();
+    }
+
+    function setShadeStyle(style, btn) {
+        params.shadeStyle = style;
+        btn.closest('.grid').querySelectorAll('.shape-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        updateLamp();
+    }
+
+    // Viewport controls
+    function toggleWireframe() {
+        isWireframe = !isWireframe;
+        document.getElementById('wireframeBtn').classList.toggle('text-indigo-400');
+        lampGroup.children.forEach(child => {
+            if (child.material) {
+                child.material.wireframe = isWireframe;
+                child.material.transparent = isWireframe;
+                child.material.opacity = isWireframe ? 0.7 : 1;
+            }
+        });
+        buildWireframe();
+    }
+
+    function toggleGrid() {
+        gridHelper.visible = !gridHelper.visible;
+        document.getElementById('gridBtn').classList.toggle('text-indigo-400');
+    }
+
+    function resetCamera() {
+        if (window._orbitState) {
+            window._orbitState.spherical = { theta: Math.PI / 4, phi: Math.PI / 3, radius: 120 };
+            window._orbitState.target.set(0, 40, 0);
+            window._orbitState.updateCamera();
+        }
+    }
+
+    // STL Export - Binary format
+    function exportSTL() {
+        const loading = document.getElementById('loading');
+        loading.classList.remove('hidden');
+
+        setTimeout(() => {
+            try {
+                const mergedGeometry = mergeLampGeometry();
+                const stlData = generateBinarySTL(mergedGeometry);
+                downloadBlob(stlData, 'lamp.stl', 'application/octet-stream');
+                showToast('✅ STL файл сохранён!');
+            } catch (err) {
+                showToast('❌ Ошибка: ' + err.message);
+                console.error(err);
+            }
+            loading.classList.add('hidden');
+        }, 100);
+    }
+
+    function exportOBJ() {
+        const loading = document.getElementById('loading');
+        loading.classList.remove('hidden');
+
+        setTimeout(() => {
+            try {
+                const mergedGeometry = mergeLampGeometry();
+                const objData = generateOBJ(mergedGeometry);
+                downloadBlob(new Blob([objData], { type: 'text/plain' }), 'lamp.obj', 'text/plain');
+                showToast('✅ OBJ файл сохранён!');
+            } catch (err) {
+                showToast('❌ Ошибка: ' + err.message);
+                console.error(err);
+            }
+            loading.classList.add('hidden');
+        }, 100);
+    }
+
+    function mergeLampGeometry() {
+        const geometries = [];
+        const transforms = [];
+
+        lampGroup.children.forEach(child => {
+            if (child.geometry) {
+                geometries.push(child.geometry);
+                transforms.push({
+                    position: child.position.clone(),
+                    rotation: child.rotation.clone(),
+                    scale: child.scale.clone()
+                });
+            }
+        });
+
+        if (geometries.length === 0) throw new Error('Нет геометрии');
+
+        // Merge all geometries
+        let totalVerts = 0;
+        let totalIndices = 0;
+        geometries.forEach(g => {
+            const idx = g.index ? g.index.count : g.attributes.position.count;
+            totalIndices += idx;
+            totalVerts += g.attributes.position.count;
+        });
+
+        const positions = new Float32Array(totalVerts * 3);
+        const normals = new Float32Array(totalVerts * 3);
+        const indices = new Uint32Array(totalIndices);
+
+        let vertOffset = 0;
+        let idxOffset = 0;
+
+        geometries.forEach((geo, gi) => {
+            const posAttr = geo.attributes.position;
+            const normAttr = geo.attributes.normal || null;
+            const transform = transforms[gi];
+            const matrix = new THREE.Matrix4();
+            matrix.compose(transform.position, new THREE.Quaternion().setFromEuler(transform.rotation), transform.scale);
+
+            const localPositions = posAttr.array;
+            const vertCount = posAttr.count;
+
+            for (let i = 0; i < vertCount; i++) {
+                const v = new THREE.Vector3(localPositions[i * 3], localPositions[i * 3 + 1], localPositions[i * 3 + 2]);
+                v.applyMatrix4(matrix);
+                positions[(vertOffset + i) * 3] = v.x;
+                positions[(vertOffset + i) * 3 + 1] = v.y;
+                positions[(vertOffset + i) * 3 + 2] = v.z;
+
+                if (normAttr) {
+                    const n = new THREE.Vector3(normAttr.array[i * 3], normAttr.array[i * 3 + 1], normAttr.array[i * 3 + 2]);
+                    n.transformDirection(matrix).normalize();
+                    normals[(vertOffset + i) * 3] = n.x;
+                    normals[(vertOffset + i) * 3 + 1] = n.y;
+                    normals[(vertOffset + i) * 3 + 2] = n.z;
+                }
+            }
+
+            if (geo.index) {
+                const localIdx = geo.index.array;
+                for (let i = 0; i < localIdx.length; i++) {
+                    indices[idxOffset + i] = localIdx[i] + vertOffset;
+                }
+            } else {
+                for (let i = 0; i < vertCount; i++) {
+                    indices[idxOffset + i] = vertOffset + i;
+                }
+            }
+
+            idxOffset += geo.index ? geo.index.count : vertCount;
+            vertOffset += vertCount;
+        });
+
+        const mergedGeo = new THREE.BufferGeometry();
+        mergedGeo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+        mergedGeo.setAttribute('normal', new THREE.BufferAttribute(normals, 3));
+        mergedGeo.setIndex(new THREE.BufferAttribute(indices, 1));
+        return mergedGeo;
+    }
+
+    function generateBinarySTL(geometry) {
+        const positions = geometry.attributes.position.array;
+        const normals = geometry.attributes.normal.array;
+        const indices = geometry.index ? geometry.index.array : null;
+        const faceCount = indices ? indices.length / 3 : positions.length / 9;
+
+        // Binary STL: 80 bytes header + 4 bytes triangle count + 50 bytes per triangle
+        const bufferSize = 80 + 4 + faceCount * 50;
+        const buffer = new ArrayBuffer(bufferSize);
+        const view = new DataView(buffer);
+
+        // Header (80 bytes) - can be anything
+        const header = 'Lamp Generator 3D Print STL';
+        for (let i = 0; i < 80; i++) {
+            view.setUint8(i, i < header.length ? header.charCodeAt(i) : 0);
+        }
+
+        // Number of triangles
+        view.setUint32(80, faceCount, true);
+
+        // Triangles
+        let offset = 84;
+        for (let i = 0; i < faceCount; i++) {
+            let i0, i1, i2;
+            if (indices) {
+                i0 = indices[i * 3];
+                i1 = indices[i * 3 + 1];
+                i2 = indices[i * 3 + 2];
+            } else {
+                i0 = i * 3;
+                i1 = i * 3 + 1;
+                i2 = i * 3 + 2;
+            }
+
+            // Normal
+            view.setFloat32(offset, normals[i0 * 3], true);
+            view.setFloat32(offset + 4, normals[i0 * 3 + 1], true);
+            view.setFloat32(offset + 8, normals[i0 * 3 + 2], true);
+            offset += 12;
+
+            // Vertex 1
+            view.setFloat32(offset, positions[i0 * 3], true);
+            view.setFloat32(offset + 4, positions[i0 * 3 + 1], true);
+            view.setFloat32(offset + 8, positions[i0 * 3 + 2], true);
+            offset += 12;
+
+            // Vertex 2
+            view.setFloat32(offset, positions[i1 * 3], true);
+            view.setFloat32(offset + 4, positions[i1 * 3 + 1], true);
+            view.setFloat32(offset + 8, positions[i1 * 3 + 2], true);
+            offset += 12;
+
+            // Vertex 3
+            view.setFloat32(offset, positions[i2 * 3], true);
+            view.setFloat32(offset + 4, positions[i2 * 3 + 1], true);
+            view.setFloat32(offset + 8, positions[i2 * 3 + 2], true);
+            offset += 12;
+
+            // Attribute byte count
+            view.setUint16(offset, 0, true);
+            offset += 2;
+        }
+
+        return new Blob([buffer], { type: 'application/octet-stream' });
+    }
+
+    function generateOBJ(geometry) {
+        const positions = geometry.attributes.position.array;
+        const normals = geometry.attributes.normal.array;
+        const indices = geometry.index ? geometry.index.array : null;
+        const faceCount = indices ? indices.length / 3 : positions.length / 9;
+
+        let obj = '# Lamp Generator 3D Print Model\n';
+        obj += '# Vertices: ' + (positions.length / 3) + '\n';
+        obj += '# Faces: ' + faceCount + '\n\n';
+
+        // Vertices
+        for (let i = 0; i < positions.length; i += 3) {
+            obj += `v ${positions[i].toFixed(6)} ${positions[i+1].toFixed(6)} ${positions[i+2].toFixed(6)}\n`;
+        }
+
+        // Normals
+        for (let i = 0; i < normals.length; i += 3) {
+            obj += `vn ${normals[i].toFixed(6)} ${normals[i+1].toFixed(6)} ${normals[i+2].toFixed(6)}\n`;
+        }
+
+        // Faces
+        obj += '\n';
+        for (let i = 0; i < faceCount; i++) {
+            let i0, i1, i2;
+            if (indices) {
+                i0 = indices[i * 3] + 1;
+                i1 = indices[i * 3 + 1] + 1;
+                i2 = indices[i * 3 + 2] + 1;
+            } else {
+                i0 = i * 3 + 1;
+                i1 = i * 3 + 2;
+                i2 = i * 3 + 3;
+            }
+            obj += `f ${i0}//${i0} ${i1}//${i1} ${i2}//${i2}\n`;
+        }
+
+        return obj;
+    }
+
+    function downloadBlob(blob, filename, mimeType) {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    }
+
+    function resetAll() {
+        document.getElementById('baseHeight').value = 12;
+        document.getElementById('baseRadius').value = 30;
+        document.getElementById('baseBevel').value = 1;
+        document.getElementById('baseHollow').checked = false;
+        document.getElementById('baseWall').checked = true;
+        document.getElementById('stemHeight').value = 80;
+        document.getElementById('stemRadius').value = 6;
+        document.getElementById('stemCurve').value = 0;
+        document.getElementById('stemSegments').value = 16;
+        document.getElementById('shadeHeight').value = 45;
+        document.getElementById('shadeRadius').value = 35;
+        document.getElementById('shadeTopHole').value = 5;
+        document.getElementById('shadeSegments').value = 12;
+        document.getElementById('shadeThickness').value = 2;
+        document.getElementById('lampColor').value = '#ffffff';
+        document.getElementById('scaleFactor').value = 1;
+        document.getElementById('meshDetail').value = 2;
+
+        // Reset active buttons
+        document.querySelectorAll('.grid').forEach(grid => {
+            const buttons = grid.querySelectorAll('.shape-btn');
+            buttons.forEach(b => b.classList.remove('active'));
+            if (buttons[0]) buttons[0].classList.add('active');
+        });
+
+        updateLamp();
+        showToast('🔄 Настройки сброшены');
+    }
+
+    function showToast(message) {
+        const container = document.getElementById('toast-container');
+        const toast = document.createElement('div');
+        toast.className = 'toast glass-panel px-4 py-3 rounded-lg text-sm text-white mb-2 border border-indigo-500/20';
+        toast.textContent = message;
+        container.appendChild(toast);
+        setTimeout(() => toast.remove(), 3000);
+    }
+
+    // Shade style buttons fix - need to select the correct buttons
+    function setShadeStyleFixed(style, btn) {
+        params.shadeStyle = style;
+        // Find the correct grid container
+        const shadeTab = document.getElementById('tab-shade');
+        const allShapeBtns = shadeTab.querySelectorAll('.shape-btn');
+        allShapeBtns.forEach(b => {
+            if (b.textContent.trim() === 'Сплошной' || b.textContent.trim() === 'Рёбра' || b.textContent.trim() === 'Решётка') {
+                b.classList.remove('active');
+            }
+        });
+        btn.classList.add('active');
+        updateLamp();
+    }
+
+    // Override the shade style function
+    window.setShadeStyle = setShadeStyleFixed;
+
+    // Fix shade style button selection
+    document.addEventListener('DOMContentLoaded', () => {
+        init();
+    });
+
+    // Start immediately
+    init();
+    </script>
+</body>
+</html>
+
