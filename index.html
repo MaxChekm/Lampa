@@ -3,1004 +3,845 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>🔧 Генератор Ламп для 3D Печати</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
+<title>🔧 Генератор Ламп 3D Pro</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
-* { margin: 0; padding: 0; box-sizing: border-box; }
-body { font-family: 'Inter', sans-serif; background: #0a0a0f; color: #e0e0e0; overflow-x: hidden; }
-#canvas-container { width: 100%; height: 100%; position: absolute; top: 0; left: 0; }
-.panel { backdrop-filter: blur(20px); background: rgba(15,15,25,0.85); border: 1px solid rgba(255,255,255,0.08); }
-.slider-group label { font-size: 0.75rem; color: #888; text-transform: uppercase; letter-spacing: 0.05em; }
-input[type="range"] { -webkit-appearance: none; width: 100%; height: 6px; border-radius: 3px; background: #1a1a2e; outline: none; }
-input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 18px; height: 18px; border-radius: 50%; background: #6c63ff; cursor: pointer; border: 2px solid #fff; }
-input[type="range"]::-moz-range-thumb { width: 18px; height: 18px; border-radius: 50%; background: #6c63ff; cursor: pointer; border: 2px solid #fff; }
-.btn-primary { background: linear-gradient(135deg, #6c63ff, #4834d4); transition: all 0.3s; }
-.btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(108,99,255,0.4); }
-.btn-secondary { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); transition: all 0.3s; }
-.btn-secondary:hover { background: rgba(255,255,255,0.1); }
-.preset-btn { transition: all 0.3s; cursor: pointer; }
-.preset-btn:hover, .preset-btn.active { background: rgba(108,99,255,0.2); border-color: #6c63ff; }
-.value-display { font-family: monospace; color: #6c63ff; font-weight: 600; }
-.tab-btn { transition: all 0.3s; }
-.tab-btn.active { background: #6c63ff; color: white; }
-.glow-text { text-shadow: 0 0 20px rgba(108,99,255,0.5); }
-::-webkit-scrollbar { width: 6px; }
-::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: #333; border-radius: 3px; }
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Inter',sans-serif;background:#08080f;color:#e0e0e0;overflow:hidden}
+#canvas3d{position:absolute;top:0;left:0;width:100%;height:100%}
+.panel{backdrop-filter:blur(24px);background:rgba(10,10,20,0.88);border:1px solid rgba(255,255,255,0.07)}
+.slider-group label{font-size:.7rem;color:#777;text-transform:uppercase;letter-spacing:.05em}
+input[type=range]{-webkit-appearance:none;width:100%;height:5px;border-radius:3px;background:#1a1a2e;outline:none}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:16px;border-radius:50%;background:#7c3aed;cursor:pointer;border:2px solid #fff}
+select{background:#111122;border:1px solid rgba(255,255,255,0.1);color:#fff;border-radius:6px;padding:6px 10px;font-size:12px;width:100%}
+.btn-gen{background:linear-gradient(135deg,#7c3aed,#5b21b6);transition:all .3s}
+.btn-gen:hover{transform:translateY(-2px);box-shadow:0 8px 30px rgba(124,58,237,.4)}
+.btn-dl{background:linear-gradient(135deg,#059669,#047857);transition:all .3s}
+.btn-dl:hover{transform:translateY(-2px);box-shadow:0 8px 30px rgba(5,150,105,.4)}
+.btn-sec{background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);transition:all .3s}
+.btn-sec:hover{background:rgba(255,255,255,0.1)}
+.preset-btn{transition:all .3s;cursor:pointer;font-size:11px}
+.preset-btn:hover,.preset-btn.active{background:rgba(124,58,237,0.2);border-color:#7c3aed;color:#c4b5fd}
+.tab-btn{transition:all .3s}
+.tab-btn.active{background:#7c3aed;color:#fff}
+.val{font-family:monospace;color:#a78bfa;font-weight:600;font-size:.75rem}
+.glow{text-shadow:0 0 20px rgba(124,58,237,.5)}
+::-webkit-scrollbar{width:5px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:#333;border-radius:3px}
+.color-dot{width:16px;height:16px;border-radius:50%;cursor:pointer;border:2px solid transparent}
+.color-dot.active{border-color:#fff}
 </style>
 </head>
 <body>
+<div style="height:100vh;position:relative">
+<div id="canvas3d"></div>
 
-<div class="relative" style="height: 100vh;">
-  <div id="canvas-container"></div>
-  
-  <!-- Header -->
-  <div class="absolute top-0 left-0 right-0 z-10 p-4">
-    <div class="flex items-center justify-between">
-      <h1 class="text-2xl font-bold glow-text">🔧 Lamp Generator 3D</h1>
-      <div class="flex gap-2">
-        <button onclick="randomize()" class="btn-secondary px-4 py-2 rounded-lg text-sm font-medium">🎲 Рандом</button>
-        <button onclick="resetParams()" class="btn-secondary px-4 py-2 rounded-lg text-sm font-medium">↺ Сброс</button>
-        <button onclick="exportSTL()" class="btn-primary px-6 py-2 rounded-lg text-sm font-bold text-white">⬇ STL</button>
-      </div>
-    </div>
-  </div>
+<!-- Header -->
+<div class="absolute top-0 left-0 right-0 z-10 p-3">
+<div class="flex items-center justify-between">
+<h1 class="text-xl font-bold glow">💡 Lamp Generator 3D Pro</h1>
+<div class="flex gap-2">
+<button onclick="randomizeAll()" class="btn-gen px-4 py-2 rounded-lg text-xs font-bold text-white">🎲 Рандом</button>
+<button onclick="exportSTL()" class="btn-dl px-5 py-2 rounded-lg text-xs font-bold text-white">⬇ Скачать STL</button>
+</div>
+</div>
+</div>
 
-  <!-- Left Panel - Presets -->
-  <div class="absolute top-20 left-4 z-10 panel rounded-xl p-4 w-56">
-    <h3 class="text-sm font-semibold mb-3 text-gray-400 uppercase tracking-wider">Пресеты</h3>
-    <div class="grid grid-cols-1 gap-2">
-      <button class="preset-btn active px-3 py-2 rounded-lg text-xs text-left border border-transparent" onclick="applyPreset('classic')">🏛 Классика</button>
-      <button class="preset-btn px-3 py-2 rounded-lg text-xs text-left border border-transparent" onclick="applyPreset('spiral')">🌀 Спираль</button>
-      <button class="preset-btn px-3 py-2 rounded-lg text-xs text-left border border-transparent" onclick="applyPreset('voronoi')">🧬 Воронный</button>
-      <button class="preset-btn px-3 py-2 rounded-lg text-xs text-left border border-transparent" onclick="applyPreset('geometric')">🔷 Геометрия</button>
-      <button class="preset-btn px-3 py-2 rounded-lg text-xs text-left border border-transparent" onclick="applyPreset('flower')">🌸 Цветок</button>
-      <button class="preset-btn px-3 py-2 rounded-lg text-xs text-left border border-transparent" onclick="applyPreset('modern')">⬜ Модерн</button>
-      <button class="preset-btn px-3 py-2 rounded-lg text-xs text-left border border-transparent" onclick="applyPreset('tube')">🔬 Тубус</button>
-      <button class="preset-btn px-3 py-2 rounded-lg text-xs text-left border border-transparent" onclick="applyPreset('lantern')">🏮 Фонарь</button>
-    </div>
-  </div>
+<!-- Left: Presets -->
+<div class="absolute top-14 left-3 z-10 panel rounded-xl p-3 w-48">
+<h3 class="text-xs font-semibold mb-2 text-gray-500 uppercase">Стили</h3>
+<div class="space-y-1.5">
+<button class="preset-btn active w-full px-2 py-1.5 rounded text-left border border-transparent" onclick="applyPreset('classic')">🏛 Классика</button>
+<button class="preset-btn w-full px-2 py-1.5 rounded text-left border border-transparent" onclick="applyPreset('modern')">⬜ Модерн</button>
+<button class="preset-btn w-full px-2 py-1.5 rounded text-left border border-transparent" onclick="applyPreset('artdeco')">✨ Арт-деко</button>
+<button class="preset-btn w-full px-2 py-1.5 rounded text-left border border-transparent" onclick="applyPreset('japanese')">🎋 Японский</button>
+<button class="preset-btn w-full px-2 py-1.5 rounded text-left border border-transparent" onclick="applyPreset('industrial')">🔩 Индастриал</button>
+<button class="preset-btn w-full px-2 py-1.5 rounded text-left border border-transparent" onclick="applyPreset('organic')">🌿 Органик</button>
+<button class="preset-btn w-full px-2 py-1.5 rounded text-left border border-transparent" onclick="applyPreset('futuristic')">🚀 Футуризм</button>
+<button class="preset-btn w-full px-2 py-1.5 rounded text-left border border-transparent" onclick="applyPreset('vintage')">🕰 Винтаж</button>
+<button class="preset-btn w-full px-2 py-1.5 rounded text-left border border-transparent" onclick="applyPreset('geometric')">🔷 Геометрия</button>
+<button class="preset-btn w-full px-2 py-1.5 rounded text-left border border-transparent" onclick="applyPreset('minimal')">⚪ Минимал</button>
+</div>
 
-  <!-- Right Panel - Controls -->
-  <div class="absolute top-20 right-4 z-10 panel rounded-xl p-5 w-72 max-h-[calc(100vh-6rem)] overflow-y-auto">
-    <!-- Tabs -->
-    <div class="flex gap-1 mb-4 bg-black/30 rounded-lg p-1">
-      <button class="tab-btn active flex-1 py-1.5 rounded-md text-xs font-medium" onclick="switchTab('shape', this)">Форма</button>
-      <button class="tab-btn flex-1 py-1.5 rounded-md text-xs font-medium" onclick="switchTab('pattern', this)">Узор</button>
-      <button class="tab-btn flex-1 py-1.5 rounded-md text-xs font-medium" onclick="switchTab('base', this)">База</button>
-    </div>
+<h3 class="text-xs font-semibold mb-2 mt-4 text-gray-500 uppercase">Цвет материала</h3>
+<div class="flex gap-2 flex-wrap" id="colorPicker">
+<div class="color-dot active" style="background:#e8e8f0" onclick="setColor('#e8e8f0',this)"></div>
+<div class="color-dot" style="background:#1a1a2e" onclick="setColor('#1a1a2e',this)"></div>
+<div class="color-dot" style="background:#d4a574" onclick="setColor('#d4a574',this)"></div>
+<div class="color-dot" style="background:#8b0000" onclick="setColor('#8b0000',this)"></div>
+<div class="color-dot" style="background:#2d5016" onclick="setColor('#2d5016',this)"></div>
+<div class="color-dot" style="background:#1e3a5f" onclick="setColor('#1e3a5f',this)"></div>
+<div class="color-dot" style="background:#f5f5dc" onclick="setColor('#f5f5dc',this)"></div>
+<div class="color-dot" style="background:#c0c0c0" onclick="setColor('#c0c0c0',this)"></div>
+</div>
+</div>
 
-    <!-- Shape Tab -->
-    <div id="tab-shape" class="tab-content space-y-4">
-      <div class="slider-group">
-        <div class="flex justify-between mb-1">
-          <label>Высота корпуса</label>
-          <span class="value-display" id="val-height">120</span>
-        </div>
-        <input type="range" min="40" max="250" value="120" id="lampHeight" oninput="updateParam('height', this.value)">
-      </div>
-      <div class="slider-group">
-        <div class="flex justify-between mb-1">
-          <label>Нижний радиус</label>
-          <span class="value-display" id="val-bottomR">45</span>
-        </div>
-        <input type="range" min="15" max="80" value="45" id="bottomRadius" oninput="updateParam('bottomR', this.value)">
-      </div>
-      <div class="slider-group">
-        <div class="flex justify-between mb-1">
-          <label>Верхний радиус</label>
-          <span class="value-display" id="val-topR">35</span>
-        </div>
-        <input type="range" min="10" max="80" value="35" id="topRadius" oninput="updateParam('topR', this.value)">
-      </div>
-      <div class="slider-group">
-        <div class="flex justify-between mb-1">
-          <label>Сторон</label>
-          <span class="value-display" id="val-sides">24</span>
-        </div>
-        <input type="range" min="3" max="48" value="24" id="sides" oninput="updateParam('sides', this.value)">
-      </div>
-      <div class="slider-group">
-        <div class="flex justify-between mb-1">
-          <label>Толщина стенки</label>
-          <span class="value-display" id="val-wall">1.5</span>
-        </div>
-        <input type="range" min="0.8" max="4" step="0.1" value="1.5" id="wallThickness" oninput="updateParam('wall', this.value)">
-      </div>
-      <div class="slider-group">
-        <div class="flex justify-between mb-1">
-          <label>Изгиб (curvature)</label>
-          <span class="value-display" id="val-curve">0</span>
-        </div>
-        <input type="range" min="-40" max="40" value="0" id="curvature" oninput="updateParam('curve', this.value)">
-      </div>
-    </div>
+<!-- Right: Controls -->
+<div class="absolute top-14 right-3 z-10 panel rounded-xl p-4 w-72 max-h-[calc(100vh-5rem)] overflow-y-auto">
+<div class="flex gap-1 mb-3 bg-black/30 rounded-lg p-1">
+<button class="tab-btn active flex-1 py-1.5 rounded-md text-xs font-medium" onclick="switchTab('shade',this)">Плафон</button>
+<button class="tab-btn flex-1 py-1.5 rounded-md text-xs font-medium" onclick="switchTab('neck',this)">Ножка</button>
+<button class="tab-btn flex-1 py-1.5 rounded-md text-xs font-medium" onclick="switchTab('socket',this)">Патрон</button>
+<button class="tab-btn flex-1 py-1.5 rounded-md text-xs font-medium" onclick="switchTab('pattern',this)">Узор</button>
+</div>
 
-    <!-- Pattern Tab -->
-    <div id="tab-pattern" class="tab-content space-y-4 hidden">
-      <div class="slider-group">
-        <div class="flex justify-between mb-1">
-          <label>Тип узора</label>
-        </div>
-        <select id="patternType" onchange="updateParam('patternType', this.value)" class="w-full bg-black/30 border border-white/10 rounded-lg px-3 py-2 text-sm text-white">
-          <option value="solid">Сплошной</option>
-          <option value="spiral">Спираль</option>
-          <option value="hex">Шестиугольники</option>
-          <option value="circles">Круги</option>
-          <option value="diamond">Ромбы</option>
-          <option value="waves">Волны</option>
-          <option value="stars">Звёзды</option>
-          <option value="voronoi">Вороной</option>
-        </select>
-      </div>
-      <div class="slider-group">
-        <div class="flex justify-between mb-1">
-          <label>Размер ячейки</label>
-          <span class="value-display" id="val-cell">8</span>
-        </div>
-        <input type="range" min="3" max="20" value="8" id="cellSize" oninput="updateParam('cellSize', this.value)">
-      </div>
-      <div class="slider-group">
-        <div class="flex justify-between mb-1">
-          <label>Глубина прорези</label>
-          <span class="value-display" id="val-cutDepth">0.8</span>
-        </div>
-        <input type="range" min="0.2" max="1.5" step="0.1" value="0.8" id="cutDepth" oninput="updateParam('cutDepth', this.value)">
-      </div>
-      <div class="slider-group">
-        <div class="flex justify-between mb-1">
-          <label>Спиральные витки</label>
-          <span class="value-display" id="val-spiral">5</span>
-        </div>
-        <input type="range" min="1" max="20" value="5" id="spiralTurns" oninput="updateParam('spiralTurns', this.value)">
-      </div>
-      <div class="slider-group">
-        <label class="flex items-center gap-2 cursor-pointer">
-          <input type="checkbox" id="innerPattern" onchange="updateParam('innerPattern', this.checked)" class="w-4 h-4 accent-[#6c63ff]">
-          <span class="text-xs text-gray-400">Внутренний рельеф</span>
-        </label>
-      </div>
-      <div class="slider-group">
-        <div class="flex justify-between mb-1">
-          <label>Рёбра жёсткости</label>
-          <span class="value-display" id="val-ribs">0</span>
-        </div>
-        <input type="range" min="0" max="12" value="0" id="ribs" oninput="updateParam('ribs', this.value)">
-      </div>
-    </div>
+<!-- Shade Tab -->
+<div id="tab-shade" class="tab-content space-y-3">
+<div class="slider-group">
+<label>Форма плафона</label>
+<select id="shadeShape" onchange="up('shadeShape',this.value)">
+<option value="cylinder">Цилиндр</option>
+<option value="sphere">Сфера</option>
+<option value="cone">Конус</option>
+<option value="dome">Купол</option>
+<option value="barrel">Бочка</option>
+<option value="hourglass">Песочные часы</option>
+<option value="bell">Колокол</option>
+<option value="inverted">Перевёрнутый</option>
+<option value="twisted">Скрученный</option>
+<option value="hexagonal">Шестиугольник</option>
+<option value="teardrop">Капля</option>
+<option value="diamond">Ромб</option>
+</select>
+</div>
+<div class="slider-group">
+<div class="flex justify-between mb-1"><label>Высота</label><span class="val" id="v-sh">100</span></div>
+<input type="range" min="30" max="220" value="100" id="shadeH" oninput="up('shadeH',+this.value)">
+</div>
+<div class="slider-group">
+<div class="flex justify-between mb-1"><label>Нижний Ø</label><span class="val" id="v-sb">50</span></div>
+<input type="range" min="15" max="90" value="50" id="shadeBotR" oninput="up('shadeBotR',+this.value)">
+</div>
+<div class="slider-group">
+<div class="flex justify-between mb-1"><label>Верхний Ø</label><span class="val" id="v-st">40</span></div>
+<input type="range" min="5" max="90" value="40" id="shadeTopR" oninput="up('shadeTopR',+this.value)">
+</div>
+<div class="slider-group">
+<div class="flex justify-between mb-1"><label>Толщина стенки</label><span class="val" id="v-sw">1.5</span></div>
+<input type="range" min="0.8" max="5" step="0.1" value="1.5" id="shadeWall" oninput="up('shadeWall',+this.value)">
+</div>
+<div class="slider-group">
+<div class="flex justify-between mb-1"><label>Сегменты</label><span class="val" id="v-ss">32</span></div>
+<input type="range" min="3" max="64" value="32" id="shadeSegs" oninput="up('shadeSegs',+this.value)">
+</div>
+<div class="slider-group">
+<div class="flex justify-between mb-1"><label>Отступ снизу</label><span class="val" id="v-so">5</span></div>
+<input type="range" min="0" max="30" value="5" id="shadeOffset" oninput="up('shadeOffset',+this.value)">
+</div>
+</div>
 
-    <!-- Base Tab -->
-    <div id="tab-base" class="tab-content space-y-4 hidden">
-      <div class="slider-group">
-        <div class="flex justify-between mb-1">
-          <label>Тип базы</label>
-        </div>
-        <select id="baseType" onchange="updateParam('baseType', this.value)" class="w-full bg-black/30 border border-white/10 rounded-lg px-3 py-2 text-sm text-white">
-          <option value="flat">Плоская</option>
-          <option value="rounded">Закруглённая</option>
-          <option value="flared">Расширенная</option>
-          <option value="ring">Кольцо</option>
-        </select>
-      </div>
-      <div class="slider-group">
-        <div class="flex justify-between mb-1">
-          <label>Радиус базы</label>
-          <span class="value-display" id="val-baseR">50</span>
-        </div>
-        <input type="range" min="20" max="90" value="50" id="baseRadius" oninput="updateParam('baseR', this.value)">
-      </div>
-      <div class="slider-group">
-        <div class="flex justify-between mb-1">
-          <label>Высота базы</label>
-          <span class="value-display" id="val-baseH">8</span>
-        </div>
-        <input type="range" min="3" max="20" value="8" id="baseHeight" oninput="updateParam('baseH', this.value)">
-      </div>
-      <div class="slider-group">
-        <div class="flex justify-between mb-1">
-          <label>Отверстие для LED</label>
-          <span class="value-display" id="val-ledHole">20</span>
-        </div>
-        <input type="range" min="0" max="40" value="20" id="ledHole" oninput="updateParam('ledHole', this.value)">
-      </div>
-      <div class="slider-group">
-        <div class="flex justify-between mb-1">
-          <label>Крышка сверху</label>
-          <span class="value-display" id="val-topCap">0</span>
-        </div>
-        <input type="range" min="0" max="1" step="1" value="0" id="topCap" oninput="updateParam('topCap', this.value)">
-      </div>
-      <div class="slider-group">
-        <div class="flex justify-between mb-1">
-          <label>Радиус крышки</label>
-          <span class="value-display" id="val-topCapR">30</span>
-        </div>
-        <input type="range" min="5" max="60" value="30" id="topCapRadius" oninput="updateParam('topCapR', this.value)">
-      </div>
-    </div>
+<!-- Neck Tab -->
+<div id="tab-neck" class="tab-content space-y-3 hidden">
+<div class="slider-group">
+<label>Форма ножки</label>
+<select id="neckShape" onchange="up('neckShape',this.value)">
+<option value="cylinder">Цилиндр</option>
+<option value="tapered">Конусная</option>
+<option value="turned">Точёная</option>
+<option value="spiral">Спиральная</option>
+<option value="crystal">Кристалл</option>
+<option value="branch">Ветвь</option>
+</select>
+</div>
+<div class="slider-group">
+<div class="flex justify-between mb-1"><label>Высота</label><span class="val" id="v-nh">30</span></div>
+<input type="range" min="0" max="120" value="30" id="neckH" oninput="up('neckH',+this.value)">
+</div>
+<div class="slider-group">
+<div class="flex justify-between mb-1"><label>Нижний Ø</label><span class="val" id="v-nb">40</span></div>
+<input type="range" min="10" max="80" value="40" id="neckBotR" oninput="up('neckBotR',+this.value)">
+</div>
+<div class="slider-group">
+<div class="flex justify-between mb-1"><label>Верхний Ø</label><span class="val" id="v-nt">25</span></div>
+<input type="range" min="5" max="60" value="25" id="neckTopR" oninput="up('neckTopR',+this.value)">
+</div>
+<div class="slider-group">
+<div class="flex justify-between mb-1"><label>Детали точения</label><span class="val" id="v-nd">0</span></div>
+<input type="range" min="0" max="8" value="0" id="neckDetails" oninput="up('neckDetails',+this.value)">
+</div>
+<div class="slider-group">
+<div class="flex justify-between mb-1"><label>Витки спирали</label><span class="val" id="v-ns">3</span></div>
+<input type="range" min="1" max="12" value="3" id="neckSpiral" oninput="up('neckSpiral',+this.value)">
+</div>
+</div>
 
-    <div class="mt-4 pt-4 border-t border-white/10">
-      <div class="text-xs text-gray-500 mb-2">Информация:</div>
-      <div class="text-xs text-gray-400" id="info-text">Граней: ~0 | Объём: ~0 см³</div>
-    </div>
-  </div>
+<!-- Socket Tab -->
+<div id="tab-socket" class="tab-content space-y-3 hidden">
+<div class="slider-group">
+<label>Тип патрона</label>
+<select id="socketType" onchange="up('socketType',this.value)">
+<option value="e27">E27 (стандарт)</option>
+<option value="e14">E14 (миньон)</option>
+<option value="gu10">GU10 (направл.)</option>
+<option value="e40">E40 (мощный)</option>
+<option value="none">Без патрона</option>
+</select>
+</div>
+<div class="slider-group">
+<div class="flex justify-between mb-1"><label>Выступающая часть</label><span class="val" id="v-sx">15</span></div>
+<input type="range" min="0" max="40" value="15" id="socketExt" oninput="up('socketExt',+this.value)">
+</div>
+<div class="slider-group">
+<div class="flex justify-between mb-1"><label>Диаметр</label><span class="val" id="v-sd">27</span></div>
+<input type="range" min="14" max="45" value="27" id="socketDia" oninput="up('socketDia',+this.value)">
+</div>
+<div class="slider-group">
+<div class="flex justify-between mb-1"><label>Глубина посадки</label><span class="val" id="v-sdp">25</span></div>
+<input type="range" min="10" max="50" value="25" id="socketDepth" oninput="up('socketDepth',+this.value)">
+</div>
+<div class="slider-group">
+<label class="flex items-center gap-2 cursor-pointer">
+<input type="checkbox" id="socketFlange" onchange="up('socketFlange',this.checked)" class="w-4 h-4 accent-[#7c3aed]">
+<span class="text-xs text-gray-400">Фланец крепления</span>
+</label>
+</div>
+</div>
 
-  <!-- Bottom info -->
-  <div class="absolute bottom-4 left-1/2 -translate-x-1/2 z-10 panel rounded-full px-6 py-2">
-    <span class="text-xs text-gray-400">🖱 Вращение • Колёсико масштаб • ПКМ перемещение</span>
-  </div>
+<!-- Pattern Tab -->
+<div id="tab-pattern" class="tab-content space-y-3 hidden">
+<div class="slider-group">
+<label>Тип узора</label>
+<select id="patternType" onchange="up('patternType',this.value)">
+<option value="solid">Сплошной</option>
+<option value="spiral">Спираль</option>
+<option value="hex">Шестиугольники</option>
+<option value="circles">Круги</option>
+<option value="diamond">Ромбы</option>
+<option value="waves">Волны</option>
+<option value="stars">Звёзды</option>
+<option value="voronoi">Вороной</option>
+<option value="random">🎲 Случайный</option>
+<option value="lines">Линии</option>
+<option value="cross">Крестики</option>
+<option value="lattice">Решётка</option>
+</select>
+</div>
+<div class="slider-group">
+<div class="flex justify-between mb-1"><label>Размер ячейки</label><span class="val" id="v-pc">8</span></div>
+<input type="range" min="3" max="25" value="8" id="patternCell" oninput="up('patternCell',+this.value)">
+</div>
+<div class="slider-group">
+<div class="flex justify-between mb-1"><label>Глубина прорези</label><span class="val" id="v-pd">0.8</span></div>
+<input type="range" min="0.1" max="2" step="0.1" value="0.8" id="patternDepth" oninput="up('patternDepth',+this.value)">
+</div>
+<div class="slider-group">
+<div class="flex justify-between mb-1"><label>Спиральные витки</label><span class="val" id="v-ps">5</span></div>
+<input type="range" min="1" max="20" value="5" id="patternSpiral" oninput="up('patternSpiral',+this.value)">
+</div>
+<div class="slider-group">
+<div class="flex justify-between mb-1"><label>Рёбра жёсткости</label><span class="val" id="v-pr">0</span></div>
+<input type="range" min="0" max="16" value="0" id="patternRibs" oninput="up('patternRibs',+this.value)">
+</div>
+<div class="slider-group">
+<label class="flex items-center gap-2 cursor-pointer">
+<input type="checkbox" id="patternInner" onchange="up('patternInner',this.checked)" class="w-4 h-4 accent-[#7c3aed]">
+<span class="text-xs text-gray-400">Внутренний рельеф</span>
+</label>
+</div>
+<div class="slider-group">
+<div class="flex justify-between mb-1"><label>Seed (для случайных)</label><span class="val" id="v-seed">42</span></div>
+<input type="range" min="1" max="999" value="42" id="patternSeed" oninput="up('patternSeed',+this.value)">
+</div>
+</div>
+
+<div class="mt-4 pt-3 border-t border-white/10">
+<div class="text-xs text-gray-500 mb-1">Информация:</div>
+<div class="text-xs text-gray-400" id="info-text">Загрузка...</div>
+</div>
+</div>
+
+<!-- Bottom hint -->
+<div class="absolute bottom-3 left-1/2 -translate-x-1/2 z-10 panel rounded-full px-5 py-1.5">
+<span class="text-[11px] text-gray-500">🖱 ЛКМ вращение • Колёсико масштаб • ПКМ перемещение</span>
+</div>
 </div>
 
 <script>
-// ==================== THREE.JS SETUP ====================
-const container = document.getElementById('canvas-container');
-const scene = new THREE.Scene();
-const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
-camera.position.set(100, 120, 150);
+// ==================== THREE.JS ====================
+const C=document.getElementById('canvas3d');
+const scene=new THREE.Scene();
+const camera=new THREE.PerspectiveCamera(45,innerWidth/innerHeight,0.1,2000);
+camera.position.set(120,140,160);
 
-const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-renderer.setSize(window.innerWidth, window.innerHeight);
-renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-renderer.shadowMap.enabled = true;
-renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-renderer.toneMapping = THREE.ACESFilmicToneMapping;
-renderer.toneMappingExposure = 1.2;
-container.appendChild(renderer.domElement);
+const renderer=new THREE.WebGLRenderer({antialias:true,alpha:true});
+renderer.setSize(innerWidth,innerHeight);
+renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+renderer.shadowMap.enabled=true;
+renderer.shadowMap.type=THREE.PCFSoftShadowMap;
+renderer.toneMapping=THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure=1.3;
+C.appendChild(renderer.domElement);
 
-// Lights
-const ambientLight = new THREE.AmbientLight(0x404060, 0.6);
-scene.add(ambientLight);
+scene.add(new THREE.AmbientLight(0x404060,0.5));
+const dl=new THREE.DirectionalLight(0xffffff,1.2);dl.position.set(80,200,80);dl.castShadow=true;dl.shadow.mapSize.set(2048,2048);scene.add(dl);
+const fl=new THREE.DirectionalLight(0x7c3aed,0.25);fl.position.set(-60,80,-40);scene.add(fl);
+const rl=new THREE.DirectionalLight(0xff6c6c,0.15);rl.position.set(0,50,-100);scene.add(rl);
+const glow=new THREE.PointLight(0xffaa44,0.6,250);glow.position.set(0,60,0);scene.add(glow);
 
-const mainLight = new THREE.DirectionalLight(0xffffff, 1.0);
-mainLight.position.set(80, 150, 80);
-mainLight.castShadow = true;
-mainLight.shadow.mapSize.set(2048, 2048);
-scene.add(mainLight);
+const gnd=new THREE.Mesh(new THREE.PlaneGeometry(600,600),new THREE.MeshStandardMaterial({color:0x0a0a15,roughness:0.95}));
+gnd.rotation.x=-Math.PI/2;gnd.receiveShadow=true;scene.add(gnd);
+scene.add(new THREE.GridHelper(300,30,0x1a1a33,0x111122));
 
-const fillLight = new THREE.DirectionalLight(0x6c63ff, 0.3);
-fillLight.position.set(-60, 80, -40);
-scene.add(fillLight);
+// Orbit controls
+let drag=false,pan=false,pm={x:0,y:0},oa={t:Math.PI/4,p:Math.PI/3},od=190,ot=new THREE.Vector3(0,55,0);
+renderer.domElement.addEventListener('mousedown',e=>{if(e.button===2)pan=true;else drag=true;pm={x:e.clientX,y:e.clientY};e.preventDefault()});
+renderer.domElement.addEventListener('mousemove',e=>{const dx=e.clientX-pm.x,dy=e.clientY-pm.y;if(drag){oa.t-=dx*.005;oa.p=Math.max(.1,Math.min(Math.PI-.1,oa.p-dy*.005))}if(pan){const r=new THREE.Vector3(),u=new THREE.Vector3();camera.getWorldDirection(new THREE.Vector3());r.crossVectors(camera.up,new THREE.Vector3().subVectors(camera.position,ot)).normalize();u.copy(camera.up);ot.add(r.multiplyScalar(-dx*.3));ot.add(u.multiplyScalar(dy*.3))}pm={x:e.clientX,y:e.clientY}});
+renderer.domElement.addEventListener('mouseup',()=>{drag=false;pan=false});
+renderer.domElement.addEventListener('wheel',e=>{od=Math.max(40,Math.min(500,od+e.deltaY*.25));e.preventDefault()},{passive:false});
+renderer.domElement.addEventListener('contextmenu',e=>e.preventDefault());
 
-const rimLight = new THREE.DirectionalLight(0xff6c6c, 0.2);
-rimLight.position.set(0, 50, -100);
-scene.add(rimLight);
+function updateCam(){camera.position.x=ot.x+od*Math.sin(oa.p)*Math.cos(oa.t);camera.position.y=ot.y+od*Math.cos(oa.p);camera.position.z=ot.z+od*Math.sin(oa.p)*Math.sin(oa.t);camera.lookAt(ot)}
 
-// Inner glow
-const innerGlow = new THREE.PointLight(0xffaa44, 0.8, 200);
-innerGlow.position.set(0, 60, 0);
-scene.add(innerGlow);
+// ==================== PARAMS ====================
+const P={shadeShape:'cylinder',shadeH:100,shadeBotR:50,shadeTopR:40,shadeWall:1.5,shadeSegs:32,shadeOffset:5,neckShape:'cylinder',neckH:30,neckBotR:40,neckTopR:25,neckDetails:0,neckSpiral:3,socketType:'e27',socketExt:15,socketDia:27,socketDepth:25,socketFlange:false,patternType:'solid',patternCell:8,patternDepth:.8,patternSpiral:5,patternRibs:0,patternInner:false,patternSeed:42};
+let lampMesh=null;
+const mat=new THREE.MeshStandardMaterial({color:0xe8e8f0,roughness:.3,metalness:.1,side:THREE.DoubleSide});
 
-// Ground
-const groundGeo = new THREE.PlaneGeometry(500, 500);
-const groundMat = new THREE.MeshStandardMaterial({ color: 0x111122, roughness: 0.9, metalness: 0.1 });
-const ground = new THREE.Mesh(groundGeo, groundMat);
-ground.rotation.x = -Math.PI / 2;
-ground.receiveShadow = true;
-scene.add(ground);
+// Seeded random
+function seededRandom(seed){let s=seed;return()=>{s=(s*16807)%2147483647;return(s-1)/2147483646}}
 
-// Grid
-const gridHelper = new THREE.GridHelper(200, 20, 0x222244, 0x111133);
-scene.add(gridHelper);
+// ==================== MESH GEN ====================
+function buildMesh(){
+  const V=[],N=[],Idx=[];
+  let vIdx=0;
 
-// ==================== ORBIT CONTROLS (manual) ====================
-let isDragging = false;
-let isPanning = false;
-let prevMouse = { x: 0, y: 0 };
-let orbitAngles = { theta: Math.PI / 4, phi: Math.PI / 3 };
-let orbitDist = 180;
-let orbitTarget = new THREE.Vector3(0, 50, 0);
-
-renderer.domElement.addEventListener('mousedown', (e) => {
-  if (e.button === 2) { isPanning = true; } else { isDragging = true; }
-  prevMouse = { x: e.clientX, y: e.clientY };
-  e.preventDefault();
-});
-
-renderer.domElement.addEventListener('mousemove', (e) => {
-  const dx = e.clientX - prevMouse.x;
-  const dy = e.clientY - prevMouse.y;
-  if (isDragging) {
-    orbitAngles.theta -= dx * 0.005;
-    orbitAngles.phi = Math.max(0.1, Math.min(Math.PI - 0.1, orbitAngles.phi - dy * 0.005));
-  }
-  if (isPanning) {
-    const right = new THREE.Vector3();
-    const up = new THREE.Vector3();
-    camera.getWorldDirection(new THREE.Vector3());
-    right.crossVectors(camera.up, new THREE.Vector3().subVectors(camera.position, orbitTarget)).normalize();
-    up.copy(camera.up);
-    orbitTarget.add(right.multiplyScalar(-dx * 0.3));
-    orbitTarget.add(up.multiplyScalar(dy * 0.3));
-  }
-  prevMouse = { x: e.clientX, y: e.clientY };
-});
-
-renderer.domElement.addEventListener('mouseup', () => { isDragging = false; isPanning = false; });
-renderer.domElement.addEventListener('wheel', (e) => {
-  orbitDist = Math.max(50, Math.min(400, orbitDist + e.deltaY * 0.3));
-  e.preventDefault();
-}, { passive: false });
-renderer.domElement.addEventListener('contextmenu', (e) => e.preventDefault());
-
-function updateCamera() {
-  camera.position.x = orbitTarget.x + orbitDist * Math.sin(orbitAngles.phi) * Math.cos(orbitAngles.theta);
-  camera.position.y = orbitTarget.y + orbitDist * Math.cos(orbitAngles.phi);
-  camera.position.z = orbitTarget.z + orbitDist * Math.sin(orbitAngles.phi) * Math.sin(orbitAngles.theta);
-  camera.lookAt(orbitTarget);
-}
-
-// ==================== LAMP PARAMETERS ====================
-const params = {
-  height: 120,
-  bottomR: 45,
-  topR: 35,
-  sides: 24,
-  wall: 1.5,
-  curve: 0,
-  patternType: 'solid',
-  cellSize: 8,
-  cutDepth: 0.8,
-  spiralTurns: 5,
-  innerPattern: false,
-  ribs: 0,
-  baseType: 'flat',
-  baseR: 50,
-  baseH: 8,
-  ledHole: 20,
-  topCap: 0,
-  topCapR: 30
-};
-
-let lampMesh = null;
-let lampMaterial = new THREE.MeshStandardMaterial({
-  color: 0xe8e8f0,
-  roughness: 0.3,
-  metalness: 0.1,
-  side: THREE.DoubleSide
-});
-
-// ==================== MESH GENERATION ====================
-function generateLampMesh() {
-  const geometry = new THREE.BufferGeometry();
-  const vertices = [];
-  const normals = [];
-  const indices = [];
-
-  function addTriangle(v1, v2, v3) {
-    vertices.push(...v1, ...v2, ...v3);
-    const ax = v2[0]-v1[0], ay = v2[1]-v1[1], az = v2[2]-v1[2];
-    const bx = v3[0]-v1[0], by = v3[1]-v1[1], bz = v3[2]-v1[2];
-    let nx = ay*bz - az*by, ny = az*bx - ax*bz, nz = ax*by - ay*bx;
-    const len = Math.sqrt(nx*nx + ny*ny + nz*nz) || 1;
-    nx /= len; ny /= len; nz /= len;
-    normals.push(nx,ny,nz, nx,ny,nz, nx,ny,nz);
-    const i = vertices.length / 3 - 3;
-    indices.push(i, i+1, i+2);
+  function tri(a,b,c){
+    V.push(...a,...b,...c);
+    const ax=b[0]-a[0],ay=b[1]-a[1],az=b[2]-a[2],bx=c[0]-a[0],by=c[1]-a[1],bz=c[2]-a[2];
+    let nx=ay*bz-az*by,ny=az*bx-ax*bz,nz=ax*by-ay*bx;
+    const l=Math.sqrt(nx*nx+ny*ny+nz*nz)||1;nx/=l;ny/=l;nz/=l;
+    N.push(nx,ny,nz,nx,ny,nz,nx,ny,nz);
+    Idx.push(vIdx,vIdx+1,vIdx+2);vIdx+=3;
   }
 
-  function getRadius(y) {
-    const t = y / params.height;
-    let r = params.bottomR + (params.topR - params.bottomR) * t;
-    // Apply curve (bulge)
-    const curve = params.curve / 1000;
-    r += Math.sin(t * Math.PI) * curve * params.height;
-    return r;
+  function shadeR(y){
+    const t=y/P.shadeH;const segs=P.shadeSegs;
+    let r;
+    switch(P.shadeShape){
+      case'cylinder':r=P.shadeBotR+(P.shadeTopR-P.shadeBotR)*t;break;
+      case'sphere':{const s=Math.sin(t*Math.PI);r=P.shadeBotR*s*1.2;break}
+      case'cone':r=P.shadeBotR*(1-t)+Math.max(P.shadeTopR,3)*t;break;
+      case'dome':r=P.shadeBotR*Math.sqrt(1-(1-t)*(1-t));break;
+      case'barrel':r=P.shadeBotR+Math.sin(t*Math.PI)*25;break;
+      case'hourglass':r=P.shadeBotR*(1-Math.sin(t*Math.PI)*.6);break;
+      case'bell':{const bt=t<.5?1-t*1.2:.3+(t-.5)*.4;r=P.shadeBotR*Math.max(.2,bt);break}
+      case'inverted':r=P.shadeTopR+(P.shadeBotR-P.shadeTopR)*(1-t);break;
+      case'twisted':{const base=P.shadeBotR+(P.shadeTopR-P.shadeBotR)*t;r=base+Math.sin(t*Math.PI*3+oa.t)*8;break}
+      case'hexagonal':{const base=P.shadeBotR+(P.shadeTopR-P.shadeBotR)*t;r=base;break}
+      case'teardrop':r=P.shadeBotR*Math.pow(Math.sin(t*Math.PI),.7);break;
+      case'diamond':r=P.shadeBotR*Math.sin(t*Math.PI)*1.5;break;
+      default:r=P.shadeBotR;
+    }
+    return Math.max(r,2);
   }
 
-  function getPatternOffset(y, angle) {
-    const t = y / params.height;
-    const cell = params.cellSize;
-    const pattern = params.patternType;
-    const depth = params.cutDepth;
-    
-    if (pattern === 'solid') return 0;
-    if (pattern === 'spiral') {
-      const spiralShift = (angle / (Math.PI*2) + t) * params.spiralTurns;
-      return Math.sin(spiralShift * Math.PI * 2) > 0 ? -depth : 0;
+  function patternOff(y,angle){
+    const t=y/P.shadeH;const c=P.patternCell;const d=P.patternDepth;
+    const rng=seededRandom(P.patternSeed+Math.floor(y*3.7+angle*5.1));
+    switch(P.patternType){
+      case'solid':return 0;
+      case'spiral':{const sv=(angle/(Math.PI*2)+t)*P.patternSpiral;return Math.sin(sv*Math.PI*2)>0?-d:0}
+      case'hex':{const ax=Math.round(angle/(Math.PI/3)),ay=Math.round(t*P.shadeH/(c*.866));return(ax+ay)%3===0?-d:0}
+      case'circles':{const cx=Math.round(angle*P.shadeBotR/c),cy=Math.round(t*P.shadeH/c);const lx=angle*P.shadeBotR-cx*c,ly=t*P.shadeH-cy*c;return lx*lx+ly*ly<c*c*.2?-d:0}
+      case'diamond':{const ax=Math.round(angle/(Math.PI/4)),ay=Math.round(t*P.shadeH/c);return(ax+ay)%2===0?-d:0}
+      case'waves':return Math.sin(angle*8+t*P.patternSpiral)>.3?-d:0;
+      case'stars':{const ax=Math.round(angle/(Math.PI/5)),ay=Math.round(t*P.shadeH/(c*1.2));return(ax+ay)%3===0?-d*1.5:0}
+      case'voronoi':{const s1=Math.sin(angle*3.7+t*7.1)*.5+.5,s2=Math.cos(angle*5.3+t*3.3)*.5+.5;return s1+s2>1.2?-d:0}
+      case'random':{const r=rng();return r>.55?-d*1.2:0}
+      case'lines':{return Math.sin(angle*12+t*P.patternSpiral*2)>.5?-d:0}
+      case'cross':{const ax=Math.round(angle*P.shadeBotR/c),ay=Math.round(t*P.shadeH/c);return((ax+ay)%4===0||ax%4===0)?-d:0}
+      case'lattice':{const ax=Math.round(angle/(Math.PI/6)),ay=Math.round(t*P.shadeH/c);return(ax%2===0&&ay%2===0)?-d:0}
+      default:return 0;
     }
-    if (pattern === 'hex') {
-      const ax = Math.round(angle / (Math.PI/3));
-      const ay = Math.round(t * params.height / (cell * 0.866));
-      return ((ax + ay) % 3 === 0) ? -depth : 0;
-    }
-    if (pattern === 'circles') {
-      const cx = Math.round(angle * params.bottomR / cell);
-      const cy = Math.round(t * params.height / cell);
-      const localX = angle * params.bottomR - cx * cell;
-      const localY = t * params.height - cy * cell;
-      return (localX*localX + localY*localY < cell*cell*0.25) ? -depth : 0;
-    }
-    if (pattern === 'diamond') {
-      const ax = Math.round(angle / (Math.PI/4));
-      const ay = Math.round(t * params.height / cell);
-      return ((ax + ay) % 2 === 0) ? -depth : 0;
-    }
-    if (pattern === 'waves') {
-      return Math.sin(angle * 8 + t * params.spiralTurns) > 0.3 ? -depth : 0;
-    }
-    if (pattern === 'stars') {
-      const ax = Math.round(angle / (Math.PI/5));
-      const ay = Math.round(t * params.height / (cell * 1.2));
-      return ((ax + ay) % 3 === 0) ? -depth * 1.5 : 0;
-    }
-    if (pattern === 'voronoi') {
-      const seed1 = Math.sin(angle * 3.7 + t * 7.1) * 0.5 + 0.5;
-      const seed2 = Math.cos(angle * 5.3 + t * 3.3) * 0.5 + 0.5;
-      return (seed1 + seed2 > 1.2) ? -depth : 0;
-    }
-    return 0;
   }
 
-  const layers = Math.ceil(params.height / params.cellSize) + 1;
-  const segs = params.sides;
+  const off=P.shadeOffset;
+  const layers=Math.max(4,Math.ceil(P.shadeH/P.patternCell))+1;
+  const segs=P.shadeSegs;
 
-  // Build main body
-  for (let layer = 0; layer < layers; layer++) {
-    const y0 = (layer / (layers-1)) * params.height;
-    const y1 = ((layer+1) / (layers-1)) * params.height;
-    const r0 = getRadius(y0);
-    const r1 = getRadius(y1);
-    const innerR0 = Math.max(r0 - params.wall, 1);
-    const innerR1 = Math.max(r1 - params.wall, 1);
-
-    for (let s = 0; s < segs; s++) {
-      const a0 = (s / segs) * Math.PI * 2;
-      const a1 = ((s+1) / segs) * Math.PI * 2;
-      
-      const po00 = getPatternOffset(y0, a0);
-      const po01 = getPatternOffset(y0, a1);
-      const po10 = getPatternOffset(y1, a0);
-      const po11 = getPatternOffset(y1, a1);
-
-      // Outer vertices
-      const ox00 = [Math.cos(a0)*(r0+po00), y0, Math.sin(a0)*(r0+po00)];
-      const ox01 = [Math.cos(a1)*(r0+po01), y0, Math.sin(a1)*(r0+po01)];
-      const ox10 = [Math.cos(a0)*(r1+po10), y1, Math.sin(a0)*(r1+po10)];
-      const ox11 = [Math.cos(a1)*(r1+po11), y1, Math.sin(a1)*(r1+po11)];
-
-      // Inner vertices
-      const ix00 = [Math.cos(a0)*innerR0, y0, Math.sin(a0)*innerR0];
-      const ix01 = [Math.cos(a1)*innerR0, y0, Math.sin(a1)*innerR0];
-      const ix10 = [Math.cos(a0)*innerR1, y1, Math.sin(a0)*innerR1];
-      const ix11 = [Math.cos(a1)*innerR1, y1, Math.sin(a1)*innerR1];
-
-      // Outer face
-      addTriangle(ox00, ox01, ox10);
-      addTriangle(ox01, ox11, ox10);
-
-      // Inner face (flipped normal)
-      addTriangle(ix10, ix01, ix00);
-      addTriangle(ix10, ix11, ix01);
-
-      // Top cap ring
-      addTriangle(ox10, ix10, ix11);
-      addTriangle(ox10, ix11, ox11);
-
-      // Bottom cap ring
-      addTriangle(ix00, ox00, ox01);
-      addTriangle(ix00, ox01, ix01);
-
-      // Side walls (connect inner to outer at each segment edge)
-      addTriangle(ox00, ix00, ix10);
-      addTriangle(ox00, ix10, ox10);
+  for(let ly=0;ly<layers;ly++){
+    const y0=off+(ly/(layers-1))*P.shadeH;
+    const y1=off+((ly+1)/(layers-1))*P.shadeH;
+    const r0=shadeR(y0-off),r1=shadeR(y1-off);
+    const ir0=Math.max(r0-P.shadeWall,1),ir1=Math.max(r1-P.shadeWall,1);
+    for(let s=0;s<segs;s++){
+      const a0=(s/segs)*Math.PI*2,a1=((s+1)/segs)*Math.PI*2;
+      const po00=patternOff(y0,a0),po01=patternOff(y0,a1),po10=patternOff(y1,a0),po11=patternOff(y1,a1);
+      const ox00=[Math.cos(a0)*(r0+po00),y0,Math.sin(a0)*(r0+po00)];
+      const ox01=[Math.cos(a1)*(r0+po01),y0,Math.sin(a1)*(r0+po01)];
+      const ox10=[Math.cos(a0)*(r1+po10),y1,Math.sin(a0)*(r1+po10)];
+      const ox11=[Math.cos(a1)*(r1+po11),y1,Math.sin(a1)*(r1+po11)];
+      const ix00=[Math.cos(a0)*ir0,y0,Math.sin(a0)*ir0];
+      const ix01=[Math.cos(a1)*ir0,y0,Math.sin(a1)*ir0];
+      const ix10=[Math.cos(a0)*ir1,y1,Math.sin(a0)*ir1];
+      const ix11=[Math.cos(a1)*ir1,y1,Math.sin(a1)*ir1];
+      tri(ox00,ox01,ox10);tri(ox01,ox11,ox10);
+      tri(ix10,ix01,ix00);tri(ix10,ix11,ix01);
+      tri(ox10,ix10,ix11);tri(ox10,ix11,ox11);
+      tri(ix00,ox00,ox01);tri(ix00,ox01,ix01);
+      tri(ox00,ix00,ix10);tri(ox00,ix10,ox10);
     }
   }
 
   // Ribs
-  if (params.ribs > 0) {
-    for (let r = 0; r < params.ribs; r++) {
-      const angle = (r / params.ribs) * Math.PI * 2;
-      const ribH = params.height * 0.9;
-      const ribW = 2;
-      for (let layer = 0; layer < layers - 1; layer++) {
-        const y0 = (layer / (layers-1)) * params.height;
-        const y1 = ((layer+1) / (layers-1)) * params.height;
-        const r0 = getRadius(y0);
-        const r1 = getRadius(y1);
-        if (y1 > ribH) continue;
-
-        const cosA = Math.cos(angle), sinA = Math.sin(angle);
-        const addTriangle = (v1,v2,v3) => {
-          vertices.push(...v1,...v2,...v3);
-          const ax=v2[0]-v1[0],ay=v2[1]-v1[1],az=v2[2]-v1[2];
-          const bx=v3[0]-v1[0],by=v3[1]-v1[1],bz=v3[2]-v1[2];
-          let nx=ay*bz-az*by,ny=az*bx-ax*bz,nz=ax*by-ay*bx;
-          const l=Math.sqrt(nx*nx+ny*ny+nz*nz)||1;
-          nx/=l;ny/=l;nz/=l;
-          normals.push(nx,ny,nz,nx,ny,nz,nx,ny,nz);
-          const i=vertices.length/3-3;
-          indices.push(i,i+1,i+2);
-        };
-
-        const o0 = [cosA*(r0+ribW), y0, sinA*(r0+ribW)];
-        const o1 = [cosA*(r1+ribW), y1, sinA*(r1+ribW)];
-        const i0 = [cosA*r0, y0, sinA*r0];
-        const i1 = [cosA*r1, y1, sinA*r1];
-
-        addTriangle(i0, o0, o1);
-        addTriangle(i0, o1, i1);
+  if(P.patternRibs>0){
+    for(let r=0;r<P.patternRibs;r++){
+      const angle=(r/P.patternRibs)*Math.PI*2;
+      for(let ly=0;ly<layers-1;ly++){
+        const y0=off+(ly/(layers-1))*P.shadeH,y1=off+((ly+1)/(layers-1))*P.shadeH;
+        const r0=shadeR(y0-off),r1=shadeR(y1-off);
+        const ri0=shadeR(y0-off)-P.shadeWall,ri1=shadeR(y1-off)-P.shadeWall;
+        const cosA=Math.cos(angle),sinA=Math.sin(angle);
+        const rw=1.5;
+        tri([cosA*r0,y0,sinA*r0],[cosA*(r0+rw),y0,sinA*(r0+rw)],[cosA*(r1+rw),y1,sinA*(r1+rw)]);
+        tri([cosA*r0,y0,sinA*r0],[cosA*(r1+rw),y1,sinA*(r1+rw)],[cosA*r1,y1,sinA*r1]);
+        tri([cosA*ri0,y0,sinA*ri0],[cosA*(ri0-rw*.5),y0,sinA*(ri0-rw*.5)],[cosA*(ri1-rw*.5),y1,sinA*(ri1-rw*.5)]);
+        tri([cosA*ri0,y0,sinA*ri0],[cosA*(ri1-rw*.5),y1,sinA*(ri1-rw*.5)],[cosA*ri1,y1,sinA*ri1]);
       }
     }
   }
 
-  // Base
-  const baseType = params.baseType;
-  const baseR = params.baseR;
-  const baseH = params.baseH;
-  const ledR = params.ledHole / 2;
+  // Neck
+  if(P.neckH>0){
+    const nSegs=segs;
+    const nLayers=12;
+    for(let ly=0;ly<nLayers;ly++){
+      const t0=ly/nLayers,t1=(ly+1)/nLayers;
+      const y0=-P.neckH*t0,y1=-P.neckH*t1;
+      let nr0,nr1;
 
-  if (baseType === 'flat') {
-    // Flat base cylinder
-    const baseSegs = segs;
-    for (let s = 0; s < baseSegs; s++) {
-      const a0 = (s / baseSegs) * Math.PI * 2;
-      const a1 = ((s+1) / baseSegs) * Math.PI * 2;
-      const addTriangle = (v1,v2,v3) => {
-        vertices.push(...v1,...v2,...v3);
-        const ax=v2[0]-v1[0],ay=v2[1]-v1[1],az=v2[2]-v1[2];
-        const bx=v3[0]-v1[0],by=v3[1]-v1[1],bz=v3[2]-v1[2];
-        let nx=ay*bz-az*by,ny=az*bx-ax*bz,nz=ax*by-ay*bx;
-        const l=Math.sqrt(nx*nx+ny*ny+nz*nz)||1;
-        nx/=l;ny/=l;nz/=l;
-        normals.push(nx,ny,nz,nx,ny,nz,nx,ny,nz);
-        const i=vertices.length/3-3;
-        indices.push(i,i+1,i+2);
-      };
-
-      // Top face
-      addTriangle([0,0,0],[Math.cos(a0)*baseR,0,Math.sin(a0)*baseR],[Math.cos(a1)*baseR,0,Math.sin(a1)*baseR]);
-      // Side
-      addTriangle([Math.cos(a0)*baseR,0,Math.sin(a0)*baseR],[Math.cos(a0)*baseR,-baseH,Math.sin(a0)*baseR],[Math.cos(a1)*baseR,-baseH,Math.sin(a1)*baseR]);
-      addTriangle([Math.cos(a0)*baseR,0,Math.sin(a0)*baseR],[Math.cos(a1)*baseR,-baseH,Math.sin(a1)*baseR],[Math.cos(a1)*baseR,0,Math.sin(a1)*baseR]);
-      // Bottom
-      addTriangle([0,-baseH,0],[Math.cos(a1)*baseR,-baseH,Math.sin(a1)*baseR],[Math.cos(a0)*baseR,-baseH,Math.sin(a0)*baseR]);
-    }
-  } else if (baseType === 'rounded') {
-    // Rounded base
-    const steps = 6;
-    for (let step = 0; step < steps; step++) {
-      const t0 = step / steps;
-      const t1 = (step+1) / steps;
-      const r0 = baseR * (1 - t0 * 0.3);
-      const r1 = baseR * (1 - t1 * 0.3);
-      const y0 = -baseH * t0;
-      const y1 = -baseH * t1;
-      
-      for (let s = 0; s < segs; s++) {
-        const a0 = (s / segs) * Math.PI * 2;
-        const a1 = ((s+1) / segs) * Math.PI * 2;
-        const addTriangle = (v1,v2,v3) => {
-          vertices.push(...v1,...v2,...v3);
-          const ax=v2[0]-v1[0],ay=v2[1]-v1[1],az=v2[2]-v1[2];
-          const bx=v3[0]-v1[0],by=v3[1]-v1[1],bz=v3[2]-v1[2];
-          let nx=ay*bz-az*by,ny=az*bx-ax*bz,nz=ax*by-ay*bx;
-          const l=Math.sqrt(nx*nx+ny*ny+nz*nz)||1;
-          nx/=l;ny/=l;nz/=l;
-          normals.push(nx,ny,nz,nx,ny,nz,nx,ny,nz);
-          const i=vertices.length/3-3;
-          indices.push(i,i+1,i+2);
-        };
-
-        addTriangle([Math.cos(a0)*r0,y0,Math.sin(a0)*r0],[Math.cos(a1)*r0,y0,Math.sin(a1)*r0],[Math.cos(a0)*r1,y1,Math.sin(a0)*r1]);
-        addTriangle([Math.cos(a1)*r0,y0,Math.sin(a1)*r0],[Math.cos(a1)*r1,y1,Math.sin(a1)*r1],[Math.cos(a0)*r1,y1,Math.sin(a0)*r1]);
+      switch(P.neckShape){
+        case'cylinder':nr0=P.neckBotR+(P.neckTopR-P.neckBotR)*t0;nr1=P.neckBotR+(P.neckTopR-P.neckBotR)*t1;break;
+        case'tapered':nr0=P.neckBotR*(1-t0)+P.neckTopR*t0;nr1=P.neckBotR*(1-t1)+P.neckTopR*t1;break;
+        case'turned':{const base=P.neckBotR+(P.neckTopR-P.neckBotR)*t0;const det=P.neckDetails;nr0=base+Math.sin(t0*Math.PI*(det+1))*5;nr1=base+Math.sin(t1*Math.PI*(det+1))*5;break}
+        case'spiral':{const base=P.neckBotR+(P.neckTopR-P.neckBotR)*t0;nr0=base;nr1=base;break}
+        case'crystal':{const base=P.neckBotR+(P.neckTopR-P.neckBotR)*t0;const fac=Math.abs(Math.sin(t0*Math.PI*4));nr0=base*(.7+fac*.3);const fac2=Math.abs(Math.sin(t1*Math.PI*4));nr1=base*(.7+fac2*.3);break}
+        case'branch':{const base=P.neckBotR+(P.neckTopR-P.neckBotR)*t0;const br=Math.sin(t0*Math.PI*3)*8;nr0=Math.max(base+br,5);const br2=Math.sin(t1*Math.PI*3)*8;nr1=Math.max(base+br2,5);break}
+        default:nr0=P.neckBotR;nr1=P.neckBotR;
       }
+
+      for(let s=0;s<nSegs;s++){
+        const a0=(s/nSegs)*Math.PI*2,a1=((s+1)/nSegs)*Math.PI*2;
+        let spiralOff0=0,spiralOff1=0;
+        if(P.neckShape==='spiral'){
+          spiralOff0=Math.sin(t0*Math.PI*2*P.neckSpiral+a0*P.neckSpiral)*2;
+          spiralOff1=Math.sin(t1*Math.PI*2*P.neckSpiral+a0*P.neckSpiral)*2;
+        }
+        const onr0=nr0+spiralOff0,onr1=nr1+spiralOff1;
+        tri([Math.cos(a0)*nr0,y0,Math.sin(a0)*nr0],[Math.cos(a0)*onr0,y0,Math.sin(a0)*onr0],[Math.cos(a1)*onr1,y1,Math.sin(a1)*onr1]);
+        tri([Math.cos(a0)*nr0,y0,Math.sin(a0)*nr0],[Math.cos(a1)*onr1,y1,Math.sin(a1)*onr1],[Math.cos(a1)*nr1,y1,Math.sin(a1)*nr1]);
+      }
+    }
+    // Neck bottom cap
+    const nbR=P.neckBotR;
+    for(let s=0;s<nSegs;s++){
+      const a0=(s/nSegs)*Math.PI*2,a1=((s+1)/nSegs)*Math.PI*2;
+      tri([0,-P.neckH,0],[Math.cos(a1)*nbR,-P.neckH,Math.sin(a1)*nbR],[Math.cos(a0)*nbR,-P.neckH,Math.sin(a0)*nbR]);
+    }
+  }
+
+  // Socket
+  if(P.socketType!=='none'){
+    let sDia=P.socketDia,sExt=P.socketExt,sDepth=P.socketDepth;
+    const sSegs=24;
+    const sTop=P.neckH>0?-P.neckH:0;
+
+    // External threads (simplified as ridges)
+    const threadLayers=Math.floor(sExt/2);
+    for(let tl=0;tl<threadLayers;tl++){
+      const y0=sTop-tl*2,y1=sTop-(tl+1)*2;
+      const tr=sDia/2,rid=tr+.8;
+      for(let s=0;s<sSegs;s++){
+        const a0=(s/sSegs)*Math.PI*2,a1=((s+1)/sSegs)*Math.PI*2;
+        tri([Math.cos(a0)*rid,y0,Math.sin(a0)*rid],[Math.cos(a1)*rid,y0,Math.sin(a1)*rid],[Math.cos(a0)*rid,y1,Math.sin(a0)*rid]);
+        tri([Math.cos(a1)*rid,y0,Math.sin(a1)*rid],[Math.cos(a1)*rid,y1,Math.sin(a1)*rid],[Math.cos(a0)*rid,y1,Math.sin(a0)*rid]);
+      }
+    }
+
+    // Socket body
+    const sBot=sTop-sExt;
+    for(let s=0;s<sSegs;s++){
+      const a0=(s/sSegs)*Math.PI*2,a1=((s+1)/sSegs)*Math.PI*2;
+      tri([Math.cos(a0)*sDia/2,sTop,Math.sin(a0)*sDia/2],[Math.cos(a1)*sDia/2,sTop,Math.sin(a1)*sDia/2],[Math.cos(a0)*sDia/2,sBot,Math.sin(a0)*sDia/2]);
+      tri([Math.cos(a1)*sDia/2,sTop,Math.sin(a1)*sDia/2],[Math.cos(a1)*sDia/2,sBot,Math.sin(a1)*sDia/2],[Math.cos(a0)*sDia/2,sBot,Math.sin(a0)*sDia/2]);
     }
     // Bottom cap
-    for (let s = 0; s < segs; s++) {
-      const a0 = (s / segs) * Math.PI * 2;
-      const a1 = ((s+1) / segs) * Math.PI * 2;
-      const addTriangle = (v1,v2,v3) => {
-        vertices.push(...v1,...v2,...v3);
-        normals.push(0,-1,0,0,-1,0,0,-1,0);
-        const i=vertices.length/3-3;
-        indices.push(i,i+1,i+2);
-      };
-      const r = baseR * 0.7;
-      addTriangle([0,-baseH,0],[Math.cos(a1)*r,-baseH,Math.sin(a1)*r],[Math.cos(a0)*r,-baseH,Math.sin(a0)*r]);
+    for(let s=0;s<sSegs;s++){
+      const a0=(s/sSegs)*Math.PI*2,a1=((s+1)/sSegs)*Math.PI*2;
+      tri([0,sBot,0],[Math.cos(a1)*sDia/2,sBot,Math.sin(a1)*sDia/2],[Math.cos(a0)*sDia/2,sBot,Math.sin(a0)*sDia/2]);
     }
-  } else if (baseType === 'flared') {
-    // Flared base - wider at bottom
-    const bottomR = baseR * 1.4;
-    for (let s = 0; s < segs; s++) {
-      const a0 = (s / segs) * Math.PI * 2;
-      const a1 = ((s+1) / segs) * Math.PI * 2;
-      const addTriangle = (v1,v2,v3) => {
-        vertices.push(...v1,...v2,...v3);
-        const ax=v2[0]-v1[0],ay=v2[1]-v1[1],az=v2[2]-v1[2];
-        const bx=v3[0]-v1[0],by=v3[1]-v1[1],bz=v3[2]-v1[2];
-        let nx=ay*bz-az*by,ny=az*bx-ax*bz,nz=ax*by-ay*bx;
-        const l=Math.sqrt(nx*nx+ny*ny+nz*nz)||1;
-        nx/=l;ny/=l;nz/=l;
-        normals.push(nx,ny,nz,nx,ny,nz,nx,ny,nz);
-        const i=vertices.length/3-3;
-        indices.push(i,i+1,i+2);
-      };
 
-      // Top
-      addTriangle([0,0,0],[Math.cos(a0)*baseR,0,Math.sin(a0)*baseR],[Math.cos(a1)*baseR,0,Math.sin(a1)*baseR]);
-      // Side
-      addTriangle([Math.cos(a0)*baseR,0,Math.sin(a0)*baseR],[Math.cos(a0)*bottomR,-baseH,Math.sin(a0)*bottomR],[Math.cos(a1)*bottomR,-baseH,Math.sin(a1)*bottomR]);
-      addTriangle([Math.cos(a0)*baseR,0,Math.sin(a0)*baseR],[Math.cos(a1)*bottomR,-baseH,Math.sin(a1)*bottomR],[Math.cos(a1)*baseR,0,Math.sin(a1)*baseR]);
-      // Bottom
-      addTriangle([0,-baseH,0],[Math.cos(a1)*bottomR,-baseH,Math.sin(a1)*bottomR],[Math.cos(a0)*bottomR,-baseH,Math.sin(a0)*bottomR]);
-    }
-  } else if (baseType === 'ring') {
-    // Ring base
-    const ringInner = baseR * 0.6;
-    for (let s = 0; s < segs; s++) {
-      const a0 = (s / segs) * Math.PI * 2;
-      const a1 = ((s+1) / segs) * Math.PI * 2;
-      const addTriangle = (v1,v2,v3) => {
-        vertices.push(...v1,...v2,...v3);
-        const ax=v2[0]-v1[0],ay=v2[1]-v1[1],az=v2[2]-v1[2];
-        const bx=v3[0]-v1[0],by=v3[1]-v1[1],bz=v3[2]-v1[2];
-        let nx=ay*bz-az*by,ny=az*bx-ax*bz,nz=ax*by-ay*bx;
-        const l=Math.sqrt(nx*nx+ny*ny+nz*nz)||1;
-        nx/=l;ny/=l;nz/=l;
-        normals.push(nx,ny,nz,nx,ny,nz,nx,ny,nz);
-        const i=vertices.length/3-3;
-        indices.push(i,i+1,i+2);
-      };
-
-      // Top ring
-      addTriangle([Math.cos(a0)*ringInner,0,Math.sin(a0)*ringInner],[Math.cos(a1)*ringInner,0,Math.sin(a1)*ringInner],[Math.cos(a0)*baseR,0,Math.sin(a0)*baseR]);
-      addTriangle([Math.cos(a1)*ringInner,0,Math.sin(a1)*ringInner],[Math.cos(a1)*baseR,0,Math.sin(a1)*baseR],[Math.cos(a0)*baseR,0,Math.sin(a0)*baseR]);
-      // Outer side
-      addTriangle([Math.cos(a0)*baseR,0,Math.sin(a0)*baseR],[Math.cos(a0)*baseR,-baseH,Math.sin(a0)*baseR],[Math.cos(a1)*baseR,-baseH,Math.sin(a1)*baseR]);
-      addTriangle([Math.cos(a0)*baseR,0,Math.sin(a0)*baseR],[Math.cos(a1)*baseR,-baseH,Math.sin(a1)*baseR],[Math.cos(a1)*baseR,0,Math.sin(a1)*baseR]);
-      // Inner side
-      addTriangle([Math.cos(a0)*ringInner,-baseH,Math.sin(a0)*ringInner],[Math.cos(a0)*ringInner,0,Math.sin(a0)*ringInner],[Math.cos(a1)*ringInner,0,Math.sin(a1)*ringInner]);
-      addTriangle([Math.cos(a0)*ringInner,-baseH,Math.sin(a0)*ringInner],[Math.cos(a1)*ringInner,0,Math.sin(a1)*ringInner],[Math.cos(a1)*ringInner,-baseH,Math.sin(a1)*ringInner]);
-      // Bottom ring
-      addTriangle([Math.cos(a0)*ringInner,-baseH,Math.sin(a0)*ringInner],[Math.cos(a1)*baseR,-baseH,Math.sin(a1)*baseR],[Math.cos(a0)*baseR,-baseH,Math.sin(a0)*baseR]);
-      addTriangle([Math.cos(a0)*ringInner,-baseH,Math.sin(a0)*ringInner],[Math.cos(a1)*ringInner,-baseH,Math.sin(a1)*ringInner],[Math.cos(a1)*baseR,-baseH,Math.sin(a1)*baseR]);
+    // Flange
+    if(P.socketFlange){
+      const fR=sDia/2+8,fH=3;
+      for(let s=0;s<sSegs;s++){
+        const a0=(s/sSegs)*Math.PI*2,a1=((s+1)/sSegs)*Math.PI*2;
+        tri([Math.cos(a0)*sDia/2,sTop,Math.sin(a0)*sDia/2],[Math.cos(a0)*fR,sTop,Math.sin(a0)*fR],[Math.cos(a1)*fR,sTop,Math.sin(a1)*fR]);
+        tri([Math.cos(a0)*sDia/2,sTop,Math.sin(a0)*sDia/2],[Math.cos(a1)*fR,sTop,Math.sin(a1)*fR],[Math.cos(a1)*sDia/2,sTop,Math.sin(a1)*sDia/2]);
+        tri([Math.cos(a0)*fR,sTop,Math.sin(a0)*fR],[Math.cos(a0)*fR,sTop-fH,Math.sin(a0)*fR],[Math.cos(a1)*fR,sTop-fH,Math.sin(a1)*fR]);
+        tri([Math.cos(a0)*fR,sTop,Math.sin(a0)*fR],[Math.cos(a1)*fR,sTop-fH,Math.sin(a1)*fR],[Math.cos(a1)*fR,sTop,Math.sin(a1)*fR]);
+      }
     }
   }
 
-  // LED hole
-  if (ledR > 0) {
-    const ledSegs = 12;
-    for (let s = 0; s < ledSegs; s++) {
-      const a0 = (s / ledSegs) * Math.PI * 2;
-      const a1 = ((s+1) / ledSegs) * Math.PI * 2;
-      const addTriangle = (v1,v2,v3) => {
-        vertices.push(...v1,...v2,...v3);
-        const ax=v2[0]-v1[0],ay=v2[1]-v1[1],az=v2[2]-v1[2];
-        const bx=v3[0]-v1[0],by=v3[1]-v1[1],bz=v3[2]-v1[2];
-        let nx=ay*bz-az*by,ny=az*bx-ax*bz,nz=ax*by-ay*bx;
-        const l=Math.sqrt(nx*nx+ny*ny+nz*nz)||1;
-        nx/=l;ny/=l;nz/=l;
-        normals.push(nx,ny,nz,nx,ny,nz,nx,ny,nz);
-        const i=vertices.length/3-3;
-        indices.push(i,i+1,i+2);
-      };
-      // Inner wall of LED hole
-      addTriangle([Math.cos(a0)*ledR,-0.1,Math.sin(a0)*ledR],[Math.cos(a0)*ledR,-baseH*0.8,Math.sin(a0)*ledR],[Math.cos(a1)*ledR,-baseH*0.8,Math.sin(a1)*ledR]);
-      addTriangle([Math.cos(a0)*ledR,-0.1,Math.sin(a0)*ledR],[Math.cos(a1)*ledR,-baseH*0.8,Math.sin(a1)*ledR],[Math.cos(a1)*ledR,-0.1,Math.sin(a1)*ledR]);
-    }
-  }
-
-  // Top cap
-  if (params.topCap === 1) {
-    const capR = params.topCapR;
-    const capH = 5;
-    for (let s = 0; s < segs; s++) {
-      const a0 = (s / segs) * Math.PI * 2;
-      const a1 = ((s+1) / segs) * Math.PI * 2;
-      const addTriangle = (v1,v2,v3) => {
-        vertices.push(...v1,...v2,...v3);
-        const ax=v2[0]-v1[0],ay=v2[1]-v1[1],az=v2[2]-v1[2];
-        const bx=v3[0]-v1[0],by=v3[1]-v1[1],bz=v3[2]-v1[2];
-        let nx=ay*bz-az*by,ny=az*bx-ax*bz,nz=ax*by-ay*bx;
-        const l=Math.sqrt(nx*nx+ny*ny+nz*nz)||1;
-        nx/=l;ny/=l;nz/=l;
-        normals.push(nx,ny,nz,nx,ny,nz,nx,ny,nz);
-        const i=vertices.length/3-3;
-        indices.push(i,i+1,i+2);
-      };
-      const tr = getRadius(params.height);
-      // Cap side
-      addTriangle([Math.cos(a0)*tr,params.height,Math.sin(a0)*tr],[Math.cos(a0)*capR,params.height+capH,Math.sin(a0)*capR],[Math.cos(a1)*capR,params.height+capH,Math.sin(a1)*capR]);
-      addTriangle([Math.cos(a0)*tr,params.height,Math.sin(a0)*tr],[Math.cos(a1)*capR,params.height+capH,Math.sin(a1)*capR],[Math.cos(a1)*tr,params.height,Math.sin(a1)*tr]);
-      // Cap top
-      addTriangle([0,params.height+capH,0],[Math.cos(a1)*capR,params.height+capH,Math.sin(a1)*capR],[Math.cos(a0)*capR,params.height+capH,Math.sin(a0)*capR]);
-    }
-  }
-
-  geometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
-  geometry.setAttribute('normal', new THREE.Float32BufferAttribute(normals, 3));
-  geometry.setIndex(indices);
-  geometry.computeBoundingSphere();
-
-  return geometry;
+  const geo=new THREE.BufferGeometry();
+  geo.setAttribute('position',new THREE.Float32BufferAttribute(V,3));
+  geo.setAttribute('normal',new THREE.Float32BufferAttribute(N,3));
+  geo.setIndex(Idx);
+  return geo;
 }
 
-// ==================== UPDATE LAMP ====================
-function updateLamp() {
-  if (lampMesh) {
-    scene.remove(lampMesh);
-    lampMesh.geometry.dispose();
+function updateLamp(){
+  if(lampMesh){scene.remove(lampMesh);lampMesh.geometry.dispose()}
+  const geo=buildMesh();
+  lampMesh=new THREE.Mesh(geo,mat);lampMesh.castShadow=true;lampMesh.receiveShadow=true;scene.add(lampMesh);
+  const triC=Idx?Idx.length/3:V.length/9;
+  const vol=(P.shadeBotR*P.shadeBotR*Math.PI*P.shadeH/1000).toFixed(1);
+  document.getElementById('info-text').textContent=`Граней: ~${Math.round(triC||0)} | Объём: ~${vol} см³`;
+  glow.position.y=P.shadeOffset+P.shadeH*.4;
+}
+
+let Idx=[];
+// Override tri to track indices
+const origTri=tri;
+function tri(a,b,c){
+  V.push(...a,...b,...c);
+  const ax=b[0]-a[0],ay=b[1]-a[1],az=b[2]-a[2],bx=c[0]-a[0],by=c[1]-a[1],bz=c[2]-a[2];
+  let nx=ay*bz-az*by,ny=az*bx-ax*bz,nz=ax*by-ay*bx;
+  const l=Math.sqrt(nx*nx+ny*ny+nz*nz)||1;nx/=l;ny/=l;nz/=l;
+  N.push(nx,ny,nz,nx,ny,nz,nx,ny,nz);
+  Idx.push(vIdx,vIdx+1,vIdx+2);vIdx+=3;
+}
+// We need to restructure - let's fix by redefining buildMesh properly
+
+// Actually let's just rewrite buildMesh properly inline
+function generateMesh(){
+  const V=[],N=[],Idx=[];
+  let vCount=0;
+  function addTri(a,b,c){
+    V.push(...a,...b,...c);
+    const ux=b[0]-a[0],uy=b[1]-a[1],uz=b[2]-a[2],vx=c[0]-a[0],vy=c[1]-a[1],vz=c[2]-a[2];
+    let nnx=uy*vz-uz*vy,nny=uz*vx-ux*vz,nnz=ux*vy-uy*vx;
+    const nl=Math.sqrt(nnx*nnx+nny*nny+nnz*nnz)||1;nnx/=nl;nny/=nl;nnz/=nl;
+    N.push(nnx,nny,nnz,nnx,nny,nnz,nnx,nny,nnz);
+    Idx.push(vCount,vCount+1,vCount+2);vCount+=3;
   }
 
-  const geo = generateLampMesh();
-  lampMesh = new THREE.Mesh(geo, lampMaterial);
-  lampMesh.castShadow = true;
-  lampMesh.receiveShadow = true;
-  scene.add(lampMesh);
-
-  // Update info
-  const triCount = geo.index ? geo.index.count / 3 : geo.attributes.position.count / 3;
-  const vol = (params.bottomR * params.bottomR * Math.PI * params.height / 1000).toFixed(1);
-  document.getElementById('info-text').textContent = `Граней: ~${Math.round(triCount)} | Объём: ~${vol} см³`;
-
-  // Update inner glow position
-  innerGlow.position.y = params.height * 0.4;
-  innerGlow.intensity = 0.5 + Math.sin(Date.now() * 0.002) * 0.2;
-}
-
-// ==================== PARAMETER UPDATES ====================
-function updateParam(name, value) {
-  value = parseFloat(value) || value;
-  params[name] = value;
-  
-  // Update displays
-  const displayMap = {
-    'height': 'val-height', 'bottomR': 'val-bottomR', 'topR': 'val-topR',
-    'sides': 'val-sides', 'wall': 'val-wall', 'curve': 'val-curve',
-    'cellSize': 'val-cell', 'cutDepth': 'val-cutDepth', 'spiralTurns': 'val-spiral',
-    'ribs': 'val-ribs', 'baseR': 'val-baseR', 'baseH': 'val-baseH',
-    'ledHole': 'val-ledHole', 'topCap': 'val-topCap', 'topCapR': 'val-topCapR'
-  };
-  if (displayMap[name]) {
-    document.getElementById(displayMap[name]).textContent = value;
+  function getShadeR(y){
+    const t=y/P.shadeH;
+    let r;
+    switch(P.shadeShape){
+      case'cylinder':r=P.shadeBotR+(P.shadeTopR-P.shadeBotR)*t;break;
+      case'sphere':r=P.shadeBotR*Math.sin(t*Math.PI)*1.2;break;
+      case'cone':r=P.shadeBotR*(1-t)+Math.max(P.shadeTopR,3)*t;break;
+      case'dome':r=P.shadeBotR*Math.sqrt(1-(1-t)*(1-t));break;
+      case'barrel':r=P.shadeBotR+Math.sin(t*Math.PI)*25;break;
+      case'hourglass':r=P.shadeBotR*(1-Math.sin(t*Math.PI)*.6);break;
+      case'bell':{const bt=t<.5?1-t*1.2:.3+(t-.5)*.4;r=P.shadeBotR*Math.max(.2,bt);break}
+      case'inverted':r=P.shadeTopR+(P.shadeBotR-P.shadeTopR)*(1-t);break;
+      case'twisted':{const base=P.shadeBotR+(P.shadeTopR-P.shadeBotR)*t;r=base+Math.sin(t*Math.PI*3)*8;break}
+      case'hexagonal':r=P.shadeBotR+(P.shadeTopR-P.shadeBotR)*t;break;
+      case'teardrop':r=P.shadeBotR*Math.pow(Math.sin(t*Math.PI),.7);break;
+      case'diamond':r=P.shadeBotR*Math.sin(t*Math.PI)*1.5;break;
+      default:r=P.shadeBotR;
+    }
+    return Math.max(r,2);
   }
 
-  updateLamp();
+  function getPatternOff(y,angle){
+    const t=y/P.shadeH;const c=P.patternCell;const d=P.patternDepth;
+    const rng=seededRandom(P.patternSeed+Math.floor(y*3.7+angle*5.1));
+    switch(P.patternType){
+      case'solid':return 0;
+      case'spiral':{const sv=(angle/(Math.PI*2)+t)*P.patternSpiral;return Math.sin(sv*Math.PI*2)>0?-d:0}
+      case'hex':{const ax=Math.round(angle/(Math.PI/3)),ay=Math.round(t*P.shadeH/(c*.866));return(ax+ay)%3===0?-d:0}
+      case'circles':{const cx=Math.round(angle*P.shadeBotR/c),cy=Math.round(t*P.shadeH/c);const lx=angle*P.shadeBotR-cx*c,ly=t*P.shadeH-cy*c;return lx*lx+ly*ly<c*c*.2?-d:0}
+      case'diamond':{const ax=Math.round(angle/(Math.PI/4)),ay=Math.round(t*P.shadeH/c);return(ax+ay)%2===0?-d:0}
+      case'waves':return Math.sin(angle*8+t*P.patternSpiral)>.3?-d:0;
+      case'stars':{const ax=Math.round(angle/(Math.PI/5)),ay=Math.round(t*P.shadeH/(c*1.2));return(ax+ay)%3===0?-d*1.5:0}
+      case'voronoi':{const s1=Math.sin(angle*3.7+t*7.1)*.5+.5,s2=Math.cos(angle*5.3+t*3.3)*.5+.5;return s1+s2>1.2?-d:0}
+      case'random':{const r=rng();return r>.55?-d*1.2:0}
+      case'lines':{return Math.sin(angle*12+t*P.patternSpiral*2)>.5?-d:0}
+      case'cross':{const ax=Math.round(angle*P.shadeBotR/c),ay=Math.round(t*P.shadeH/c);return((ax+ay)%4===0||ax%4===0)?-d:0}
+      case'lattice':{const ax=Math.round(angle/(Math.PI/6)),ay=Math.round(t*P.shadeH/c);return(ax%2===0&&ay%2===0)?-d:0}
+      default:return 0;
+    }
+  }
+
+  const off=P.shadeOffset;
+  const layers=Math.max(4,Math.ceil(P.shadeH/P.patternCell))+1;
+  const segs=P.shadeSegs;
+
+  // Shade body
+  for(let ly=0;ly<layers;ly++){
+    const y0=off+(ly/(layers-1))*P.shadeH,y1=off+((ly+1)/(layers-1))*P.shadeH;
+    const r0=getShadeR(y0-off),r1=getShadeR(y1-off);
+    const ir0=Math.max(r0-P.shadeWall,1),ir1=Math.max(r1-P.shadeWall,1);
+    for(let s=0;s<segs;s++){
+      const a0=(s/segs)*Math.PI*2,a1=((s+1)/segs)*Math.PI*2;
+      const p00=getPatternOff(y0,a0),p01=getPatternOff(y0,a1),p10=getPatternOff(y1,a0),p11=getPatternOff(y1,a1);
+      const ox00=[Math.cos(a0)*(r0+p00),y0,Math.sin(a0)*(r0+p00)];
+      const ox01=[Math.cos(a1)*(r0+p01),y0,Math.sin(a1)*(r0+p01)];
+      const ox10=[Math.cos(a0)*(r1+p10),y1,Math.sin(a0)*(r1+p10)];
+      const ox11=[Math.cos(a1)*(r1+p11),y1,Math.sin(a1)*(r1+p11)];
+      const ix00=[Math.cos(a0)*ir0,y0,Math.sin(a0)*ir0];
+      const ix01=[Math.cos(a1)*ir0,y0,Math.sin(a1)*ir0];
+      const ix10=[Math.cos(a0)*ir1,y1,Math.sin(a0)*ir1];
+      const ix11=[Math.cos(a1)*ir1,y1,Math.sin(a1)*ir1];
+      addTri(ox00,ox01,ox10);addTri(ox01,ox11,ox10);
+      addTri(ix10,ix01,ix00);addTri(ix10,ix11,ix01);
+      addTri(ox10,ix10,ix11);addTri(ox10,ix11,ox11);
+      addTri(ix00,ox00,ox01);addTri(ix00,ox01,ix01);
+      addTri(ox00,ix00,ix10);addTri(ox00,ix10,ox10);
+    }
+  }
+
+  // Ribs
+  if(P.patternRibs>0){
+    for(let rb=0;rb<P.patternRibs;rb++){
+      const ang=(rb/P.patternRibs)*Math.PI*2;
+      for(let ly=0;ly<layers-1;ly++){
+        const y0=off+(ly/(layers-1))*P.shadeH,y1=off+((ly+1)/(layers-1))*P.shadeH;
+        const sr0=getShadeR(y0-off),sr1=getShadeR(y1-off);
+        const sir0=sr0-P.shadeWall,sir1=sr1-P.shadeWall;
+        const cA=Math.cos(ang),sA=Math.sin(ang);
+        const rw=1.5;
+        addTri([cA*sr0,y0,sA*sr0],[cA*(sr0+rw),y0,sA*(sr0+rw)],[cA*(sr1+rw),y1,sA*(sr1+rw)]);
+        addTri([cA*sr0,y0,sA*sr0],[cA*(sr1+rw),y1,sA*(sr1+rw)],[cA*sr1,y1,sA*sr1]);
+        addTri([cA*sir0,y0,sA*sir0],[cA*(sir0-rw*.5),y0,sA*(sir0-rw*.5)],[cA*(sir1-rw*.5),y1,sA*(sir1-rw*.5)]);
+        addTri([cA*sir0,y0,sA*sir0],[cA*(sir1-rw*.5),y1,sA*(sir1-rw*.5)],[cA*sir1,y1,sA*sir1]);
+      }
+    }
+  }
+
+  // Neck
+  if(P.neckH>0){
+    const nL=12;
+    for(let ly=0;ly<nL;ly++){
+      const t0=ly/nL,t1=(ly+1)/nL;
+      const y0=-P.neckH*t0,y1=-P.neckH*t1;
+      let nr0,nr1;
+      switch(P.neckShape){
+        case'cylinder':nr0=P.neckBotR+(P.neckTopR-P.neckBotR)*t0;nr1=P.neckBotR+(P.neckTopR-P.neckBotR)*t1;break;
+        case'tapered':nr0=P.neckBotR*(1-t0)+P.neckTopR*t0;nr1=P.neckBotR*(1-t1)+P.neckTopR*t1;break;
+        case'turned':{const b0=P.neckBotR+(P.neckTopR-P.neckBotR)*t0;nr0=b0+Math.sin(t0*Math.PI*(P.neckDetails+1))*5;const b1=P.neckBotR+(P.neckTopR-P.neckBotR)*t1;nr1=b1+Math.sin(t1*Math.PI*(P.neckDetails+1))*5;break}
+        case'spiral':nr0=P.neckBotR+(P.neckTopR-P.neckBotR)*t0;nr1=P.neckBotR+(P.neckTopR-P.neckBotR)*t1;break;
+        case'crystal':{const b0=P.neckBotR+(P.neckTopR-P.neckBotR)*t0;const f0=Math.abs(Math.sin(t0*Math.PI*4));nr0=b0*(.7+f0*.3);const b1=P.neckBotR+(P.neckTopR-P.neckBotR)*t1;const f1=Math.abs(Math.sin(t1*Math.PI*4));nr1=b1*(.7+f1*.3);break}
+        case'branch':{const b0=P.neckBotR+(P.neckTopR-P.neckBotR)*t0;nr0=Math.max(b0+Math.sin(t0*Math.PI*3)*8,5);const b1=P.neckBotR+(P.neckTopR-P.neckBotR)*t1;nr1=Math.max(b1+Math.sin(t1*Math.PI*3)*8,5);break}
+        default:nr0=P.neckBotR;nr1=P.neckBotR;
+      }
+      for(let s=0;s<segs;s++){
+        const a0=(s/segs)*Math.PI*2,a1=((s+1)/segs)*Math.PI*2;
+        let sp0=0,sp1=0;
+        if(P.neckShape==='spiral'){sp0=Math.sin(t0*Math.PI*2*P.neckSpiral+a0*P.neckSpiral)*2;sp1=Math.sin(t1*Math.PI*2*P.neckSpiral+a0*P.neckSpiral)*2}
+        const onr0=nr0+sp0,onr1=nr1+sp1;
+        addTri([Math.cos(a0)*nr0,y0,Math.sin(a0)*nr0],[Math.cos(a0)*onr0,y0,Math.sin(a0)*onr0],[Math.cos(a1)*onr1,y1,Math.sin(a1)*onr1]);
+        addTri([Math.cos(a0)*nr0,y0,Math.sin(a0)*nr0],[Math.cos(a1)*onr1,y1,Math.sin(a1)*onr1],[Math.cos(a1)*nr1,y1,Math.sin(a1)*nr1]);
+      }
+    }
+    const nbR=P.neckBotR;
+    for(let s=0;s<segs;s++){const a0=(s/segs)*Math.PI*2,a1=((s+1)/segs)*Math.PI*2;addTri([0,-P.neckH,0],[Math.cos(a1)*nbR,-P.neckH,Math.sin(a1)*nbR],[Math.cos(a0)*nbR,-P.neckH,Math.sin(a0)*nbR])}
+  }
+
+  // Socket
+  if(P.socketType!=='none'){
+    const sDia=P.socketDia,sExt=P.socketExt;
+    const sSegs=24;
+    const sTop=P.neckH>0?-P.neckH:0;
+    const sBot=sTop-sExt;
+    const threadL=Math.floor(sExt/2);
+    for(let tl=0;tl<threadL;tl++){
+      const y0=sTop-tl*2,y1=sTop-(tl+1)*2;
+      const tr=sDia/2,rid=tr+.8;
+      for(let s=0;s<sSegs;s++){
+        const a0=(s/sSegs)*Math.PI*2,a1=((s+1)/sSegs)*Math.PI*2;
+        addTri([Math.cos(a0)*rid,y0,Math.sin(a0)*rid],[Math.cos(a1)*rid,y0,Math.sin(a1)*rid],[Math.cos(a0)*rid,y1,Math.sin(a0)*rid]);
+        addTri([Math.cos(a1)*rid,y0,Math.sin(a1)*rid],[Math.cos(a1)*rid,y1,Math.sin(a1)*rid],[Math.cos(a0)*rid,y1,Math.sin(a0)*rid]);
+      }
+    }
+    for(let s=0;s<sSegs;s++){
+      const a0=(s/sSegs)*Math.PI*2,a1=((s+1)/sSegs)*Math.PI*2;
+      addTri([Math.cos(a0)*sDia/2,sTop,Math.sin(a0)*sDia/2],[Math.cos(a1)*sDia/2,sTop,Math.sin(a1)*sDia/2],[Math.cos(a0)*sDia/2,sBot,Math.sin(a0)*sDia/2]);
+      addTri([Math.cos(a1)*sDia/2,sTop,Math.sin(a1)*sDia/2],[Math.cos(a1)*sDia/2,sBot,Math.sin(a1)*sDia/2],[Math.cos(a0)*sDia/2,sBot,Math.sin(a0)*sDia/2]);
+    }
+    for(let s=0;s<sSegs;s++){const a0=(s/sSegs)*Math.PI*2,a1=((s+1)/sSegs)*Math.PI*2;addTri([0,sBot,0],[Math.cos(a1)*sDia/2,sBot,Math.sin(a1)*sDia/2],[Math.cos(a0)*sDia/2,sBot,Math.sin(a0)*sDia/2])}
+    if(P.socketFlange){
+      const fR=sDia/2+8,fH=3;
+      for(let s=0;s<sSegs;s++){
+        const a0=(s/sSegs)*Math.PI*2,a1=((s+1)/sSegs)*Math.PI*2;
+        addTri([Math.cos(a0)*sDia/2,sTop,Math.sin(a0)*sDia/2],[Math.cos(a0)*fR,sTop,Math.sin(a0)*fR],[Math.cos(a1)*fR,sTop,Math.sin(a1)*fR]);
+        addTri([Math.cos(a0)*sDia/2,sTop,Math.sin(a0)*sDia/2],[Math.cos(a1)*fR,sTop,Math.sin(a1)*fR],[Math.cos(a1)*sDia/2,sTop,Math.sin(a1)*sDia/2]);
+        addTri([Math.cos(a0)*fR,sTop,Math.sin(a0)*fR],[Math.cos(a0)*fR,sTop-fH,Math.sin(a0)*fR],[Math.cos(a1)*fR,sTop-fH,Math.sin(a1)*fR]);
+        addTri([Math.cos(a0)*fR,sTop,Math.sin(a0)*fR],[Math.cos(a1)*fR,sTop-fH,Math.sin(a1)*fR],[Math.cos(a1)*fR,sTop,Math.sin(a1)*fR]);
+      }
+    }
+  }
+
+  const geo=new THREE.BufferGeometry();
+  geo.setAttribute('position',new THREE.Float32BufferAttribute(V,3));
+  geo.setAttribute('normal',new THREE.Float32BufferAttribute(N,3));
+  geo.setIndex(Idx);
+  geo.computeBoundingSphere();
+  return geo;
 }
 
-// ==================== TABS ====================
-function switchTab(tabName, btn) {
-  document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
-  document.getElementById('tab-' + tabName).classList.remove('hidden');
-  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-  btn.classList.add('active');
+function refreshLamp(){
+  if(lampMesh){scene.remove(lampMesh);lampMesh.geometry.dispose()}
+  const geo=generateMesh();
+  lampMesh=new THREE.Mesh(geo,mat);lampMesh.castShadow=true;lampMesh.receiveShadow=true;scene.add(lampMesh);
+  const triC=Idx.length/3;
+  const vol=(P.shadeBotR*P.shadeBotR*Math.PI*P.shadeH/1000).toFixed(1);
+  document.getElementById('info-text').textContent=`Граней: ~${Math.round(triC)} | Объём: ~${vol} см³`;
+  glow.position.y=P.shadeOffset+P.shadeH*.4;
 }
 
-// ==================== PRESETS ====================
-const presets = {
-  classic: { height: 120, bottomR: 45, topR: 35, sides: 24, wall: 1.5, curve: 15, patternType: 'solid', cellSize: 8, cutDepth: 0.8, spiralTurns: 5, innerPattern: false, ribs: 0, baseType: 'flat', baseR: 50, baseH: 8, ledHole: 20, topCap: 1, topCapR: 30 },
-  spiral: { height: 150, bottomR: 40, topR: 40, sides: 32, wall: 2, curve: 0, patternType: 'spiral', cellSize: 6, cutDepth: 1.0, spiralTurns: 8, innerPattern: false, ribs: 0, baseType: 'rounded', baseR: 55, baseH: 10, ledHole: 25, topCap: 0, topCapR: 30 },
-  voronoi: { height: 140, bottomR: 50, topR: 30, sides: 24, wall: 2, curve: 10, patternType: 'voronoi', cellSize: 12, cutDepth: 1.2, spiralTurns: 5, innerPattern: true, ribs: 0, baseType: 'flared', baseR: 60, baseH: 12, ledHole: 20, topCap: 1, topCapR: 25 },
-  geometric: { height: 100, bottomR: 45, topR: 45, sides: 6, wall: 1.5, curve: 0, patternType: 'hex', cellSize: 10, cutDepth: 0.8, spiralTurns: 5, innerPattern: false, ribs: 6, baseType: 'flat', baseR: 55, baseH: 6, ledHole: 20, topCap: 0, topCapR: 30 },
-  flower: { height: 130, bottomR: 35, topR: 55, sides: 32, wall: 1.2, curve: 30, patternType: 'waves', cellSize: 7, cutDepth: 0.6, spiralTurns: 3, innerPattern: true, ribs: 0, baseType: 'rounded', baseR: 45, baseH: 8, ledHole: 18, topCap: 0, topCapR: 30 },
-  modern: { height: 160, bottomR: 30, topR: 30, sides: 48, wall: 1.0, curve: 0, patternType: 'circles', cellSize: 8, cutDepth: 0.5, spiralTurns: 5, innerPattern: false, ribs: 0, baseType: 'ring', baseR: 40, baseH: 5, ledHole: 15, topCap: 1, topCapR: 25 },
-  tube: { height: 200, bottomR: 25, topR: 25, sides: 24, wall: 1.5, curve: 0, patternType: 'spiral', cellSize: 4, cutDepth: 0.4, spiralTurns: 15, innerPattern: false, ribs: 0, baseType: 'flat', baseR: 35, baseH: 6, ledHole: 20, topCap: 0, topCapR: 20 },
-  lantern: { height: 110, bottomR: 55, topR: 40, sides: 8, wall: 2, curve: 5, patternType: 'diamond', cellSize: 10, cutDepth: 1.0, spiralTurns: 5, innerPattern: false, ribs: 8, baseType: 'flared', baseR: 65, baseH: 12, ledHole: 22, topCap: 1, topCapR: 35 }
+// ==================== UI ====================
+function up(name,val){P[name]=val;const m={shadeH:'v-sh',shadeBotR:'v-sb',shadeTopR:'v-st',shadeWall:'v-sw',shadeSegs:'v-ss',shadeOffset:'v-so',neckH:'v-nh',neckBotR:'v-nb',neckTopR:'v-nt',neckDetails:'v-nd',neckSpiral:'v-ns',socketExt:'v-sx',socketDia:'v-sd',socketDepth:'v-sdp',patternCell:'v-pc',patternDepth:'v-pd',patternSpiral:'v-ps',patternRibs:'v-pr',patternSeed:'v-seed'};if(m[name])document.getElementById(m[name]).textContent=val;refreshLamp()}
+
+function switchTab(n,btn){document.querySelectorAll('.tab-content').forEach(e=>e.classList.add('hidden'));document.getElementById('tab-'+n).classList.remove('hidden');document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active')}
+
+function setColor(c,el){mat.color.set(c);document.querySelectorAll('.color-dot').forEach(d=>d.classList.remove('active'));el.classList.add('active')}
+
+const presets={
+  classic:{shadeShape:'bell',shadeH:100,shadeBotR:50,shadeTopR:20,shadeWall:1.5,shadeSegs:32,shadeOffset:5,neckShape:'turned',neckH:35,neckBotR:40,neckTopR:20,neckDetails:3,neckSpiral:3,socketType:'e27',socketExt:15,socketDia:27,socketDepth:25,socketFlange:true,patternType:'solid',patternCell:8,patternDepth:.8,patternSpiral:5,patternRibs:0,patternInner:false,patternSeed:42},
+  modern:{shadeShape:'cylinder',shadeH:150,shadeBotR:35,shadeTopR:35,shadeWall:1,shadeSegs:48,shadeOffset:5,neckShape:'cylinder',neckH:20,neckBotR:35,neckTopR:35,neckDetails:0,neckSpiral:3,socketType:'e27',socketExt:10,socketDia:27,socketDepth:20,socketFlange:false,patternType:'circles',patternCell:8,patternDepth:.4,patternSpiral:5,patternRibs:0,patternInner:false,patternSeed:42},
+  artdeco:{shadeShape:'dome',shadeH:90,shadeBotR:55,shadeTopR:15,shadeWall:2,shadeSegs:32,shadeOffset:5,neckShape:'crystal',neckH:45,neckBotR:35,neckTopR:15,neckDetails:4,neckSpiral:3,socketType:'e14',socketExt:12,socketDia:14,socketDepth:20,socketFlange:true,patternType:'diamond',patternCell:6,patternDepth:1,patternSpiral:5,patternRibs:8,patternInner:false,patternSeed:77},
+  japanese:{shadeShape:'cylinder',shadeH:120,shadeBotR:45,shadeTopR:45,shadeWall:1,shadeSegs:6,shadeOffset:5,neckShape:'cylinder',neckH:25,neckBotR:45,neckTopR:45,neckDetails:0,neckSpiral:3,socketType:'e27',socketExt:15,socketDia:27,socketDepth:25,socketFlange:false,patternType:'lattice',patternCell:12,patternDepth:.6,patternSpiral:5,patternRibs:0,patternInner:true,patternSeed:42},
+  industrial:{shadeShape:'inverted',shadeH:80,shadeBotR:60,shadeTopR:25,shadeWall:2.5,shadeSegs:32,shadeOffset:5,neckShape:'cylinder',neckH:15,neckBotR:25,neckTopR:25,neckDetails:0,neckSpiral:3,socketType:'e27',socketExt:15,socketDia:27,socketDepth:25,socketFlange:true,patternType:'lines',patternCell:5,patternDepth:.5,patternSpiral:8,patternRibs:0,patternInner:false,patternSeed:42},
+  organic:{shadeShape:'teardrop',shadeH:140,shadeBotR:30,shadeTopR:50,shadeWall:1.2,shadeSegs:32,shadeOffset:5,neckShape:'branch',neckH:50,neckBotR:30,neckTopR:25,neckDetails:2,neckSpiral:3,socketType:'e27',socketExt:15,socketDia:27,socketDepth:25,socketFlange:false,patternType:'voronoi',patternCell:14,patternDepth:1,patternSpiral:5,patternRibs:0,patternInner:true,patternSeed:123},
+  futuristic:{shadeShape:'twisted',shadeH:160,shadeBotR:35,shadeTopR:35,shadeWall:1,shadeSegs:32,shadeOffset:5,neckShape:'spiral',neckH:40,neckBotR:30,neckTopR:25,neckDetails:0,neckSpiral:6,socketType:'gu10',socketExt:10,socketDia:20,socketDepth:20,socketFlange:false,patternType:'spiral',patternCell:5,patternDepth:.8,patternSpiral:12,patternRibs:0,patternInner:false,patternSeed:42},
+  vintage:{shadeShape:'bell',shadeH:110,shadeBotR:55,shadeTopR:25,shadeWall:2,shadeSegs:32,shadeOffset:5,neckShape:'turned',neckH:40,neckBotR:45,neckTopR:25,neckDetails:5,neckSpiral:3,socketType:'e14',socketExt:15,socketDia:14,socketDepth:25,socketFlange:true,patternType:'stars',patternCell:8,patternDepth:.7,patternSpiral:5,patternRibs:4,patternInner:true,patternSeed:55},
+  geometric:{shadeShape:'hexagonal',shadeH:100,shadeBotR:45,shadeTopR:45,shadeWall:1.5,shadeSegs:6,shadeOffset:5,neckShape:'cylinder',neckH:20,neckBotR:45,neckTopR:45,neckDetails:0,neckSpiral:3,socketType:'e27',socketExt:15,socketDia:27,socketDepth:25,socketFlange:false,patternType:'hex',patternCell:10,patternDepth:.8,patternSpiral:5,patternRibs:6,patternInner:false,patternSeed:42},
+  minimal:{shadeShape:'dome',shadeH:80,shadeBotR:40,shadeTopR:40,shadeWall:.8,shadeSegs:48,shadeOffset:5,neckShape:'tapered',neckH:25,neckBotR:40,neckTopR:15,neckDetails:0,neckSpiral:3,socketType:'e27',socketExt:8,socketDia:27,socketDepth:18,socketFlange:false,patternType:'solid',patternCell:8,patternDepth:.8,patternSpiral:5,patternRibs:0,patternInner:false,patternSeed:42}
 };
 
-function applyPreset(name) {
-  const p = presets[name];
-  if (!p) return;
-  Object.assign(params, p);
-  
-  // Update all UI elements
-  document.getElementById('lampHeight').value = p.height;
-  document.getElementById('val-height').textContent = p.height;
-  document.getElementById('bottomRadius').value = p.bottomR;
-  document.getElementById('val-bottomR').textContent = p.bottomR;
-  document.getElementById('topRadius').value = p.topR;
-  document.getElementById('val-topR').textContent = p.topR;
-  document.getElementById('sides').value = p.sides;
-  document.getElementById('val-sides').textContent = p.sides;
-  document.getElementById('wallThickness').value = p.wall;
-  document.getElementById('val-wall').textContent = p.wall;
-  document.getElementById('curvature').value = p.curve;
-  document.getElementById('val-curve').textContent = p.curve;
-  document.getElementById('patternType').value = p.patternType;
-  document.getElementById('cellSize').value = p.cellSize;
-  document.getElementById('val-cell').textContent = p.cellSize;
-  document.getElementById('cutDepth').value = p.cutDepth;
-  document.getElementById('val-cutDepth').textContent = p.cutDepth;
-  document.getElementById('spiralTurns').value = p.spiralTurns;
-  document.getElementById('val-spiral').textContent = p.spiralTurns;
-  document.getElementById('ribs').value = p.ribs;
-  document.getElementById('val-ribs').textContent = p.ribs;
-  document.getElementById('baseType').value = p.baseType;
-  document.getElementById('baseRadius').value = p.baseR;
-  document.getElementById('val-baseR').textContent = p.baseR;
-  document.getElementById('baseHeight').value = p.baseH;
-  document.getElementById('val-baseH').textContent = p.baseH;
-  document.getElementById('ledHole').value = p.ledHole;
-  document.getElementById('val-ledHole').textContent = p.ledHole;
-  document.getElementById('topCap').value = p.topCap;
-  document.getElementById('val-topCap').textContent = p.topCap;
-  document.getElementById('topCapRadius').value = p.topCapR;
-  document.getElementById('val-topCapR').textContent = p.topCapR;
-
-  // Update active preset button
-  document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
+function applyPreset(name){
+  const p=presets[name];if(!p)return;
+  Object.assign(P,p);
+  // Update all UI
+  document.getElementById('shadeShape').value=p.shadeShape;
+  document.getElementById('shadeH').value=p.shadeH;document.getElementById('v-sh').textContent=p.shadeH;
+  document.getElementById('shadeBotR').value=p.shadeBotR;document.getElementById('v-sb').textContent=p.shadeBotR;
+  document.getElementById('shadeTopR').value=p.shadeTopR;document.getElementById('v-st').textContent=p.shadeTopR;
+  document.getElementById('shadeWall').value=p.shadeWall;document.getElementById('v-sw').textContent=p.shadeWall;
+  document.getElementById('shadeSegs').value=p.shadeSegs;document.getElementById('v-ss').textContent=p.shadeSegs;
+  document.getElementById('shadeOffset').value=p.shadeOffset;document.getElementById('v-so').textContent=p.shadeOffset;
+  document.getElementById('neckShape').value=p.neckShape;
+  document.getElementById('neckH').value=p.neckH;document.getElementById('v-nh').textContent=p.neckH;
+  document.getElementById('neckBotR').value=p.neckBotR;document.getElementById('v-nb').textContent=p.neckBotR;
+  document.getElementById('neckTopR').value=p.neckTopR;document.getElementById('v-nt').textContent=p.neckTopR;
+  document.getElementById('neckDetails').value=p.neckDetails;document.getElementById('v-nd').textContent=p.neckDetails;
+  document.getElementById('neckSpiral').value=p.neckSpiral;document.getElementById('v-ns').textContent=p.neckSpiral;
+  document.getElementById('socketType').value=p.socketType;
+  document.getElementById('socketExt').value=p.socketExt;document.getElementById('v-sx').textContent=p.socketExt;
+  document.getElementById('socketDia').value=p.socketDia;document.getElementById('v-sd').textContent=p.socketDia;
+  document.getElementById('socketDepth').value=p.socketDepth;document.getElementById('v-sdp').textContent=p.socketDepth;
+  document.getElementById('socketFlange').checked=p.socketFlange;
+  document.getElementById('patternType').value=p.patternType;
+  document.getElementById('patternCell').value=p.patternCell;document.getElementById('v-pc').textContent=p.patternCell;
+  document.getElementById('patternDepth').value=p.patternDepth;document.getElementById('v-pd').textContent=p.patternDepth;
+  document.getElementById('patternSpiral').value=p.patternSpiral;document.getElementById('v-ps').textContent=p.patternSpiral;
+  document.getElementById('patternRibs').value=p.patternRibs;document.getElementById('v-pr').textContent=p.patternRibs;
+  document.getElementById('patternSeed').value=p.patternSeed;document.getElementById('v-seed').textContent=p.patternSeed;
+  document.querySelectorAll('.preset-btn').forEach(b=>b.classList.remove('active'));
   event.target.classList.add('active');
-
-  updateLamp();
+  refreshLamp();
 }
 
-// ==================== RANDOMIZE ====================
-function randomize() {
-  const patternTypes = ['solid','spiral','hex','circles','diamond','waves','stars','voronoi'];
-  const baseTypes = ['flat','rounded','flared','ring'];
-  
-  params.height = 60 + Math.random() * 180;
-  params.bottomR = 20 + Math.random() * 50;
-  params.topR = 15 + Math.random() * 55;
-  params.sides = Math.floor(4 + Math.random() * 40);
-  params.wall = 0.8 + Math.random() * 3;
-  params.curve = -30 + Math.random() * 60;
-  params.patternType = patternTypes[Math.floor(Math.random() * patternTypes.length)];
-  params.cellSize = 3 + Math.random() * 15;
-  params.cutDepth = 0.3 + Math.random() * 1.2;
-  params.spiralTurns = 1 + Math.random() * 15;
-  params.ribs = Math.floor(Math.random() * 8);
-  params.baseType = baseTypes[Math.floor(Math.random() * baseTypes.length)];
-  params.baseR = 25 + Math.random() * 55;
-  params.baseH = 4 + Math.random() * 15;
-  params.ledHole = Math.random() > 0.3 ? 10 + Math.random() * 30 : 0;
-  params.topCap = Math.random() > 0.5 ? 1 : 0;
-  params.topCapR = 15 + Math.random() * 40;
+function randomizeAll(){
+  const shapes=['cylinder','sphere','cone','dome','barrel','hourglass','bell','inverted','twisted','hexagonal','teardrop','diamond'];
+  const nShapes=['cylinder','tapered','turned','spiral','crystal','branch'];
+  const pTypes=['solid','spiral','hex','circles','diamond','waves','stars','voronoi','random','lines','cross','lattice'];
+  const sTypes=['e27','e14','gu10','none'];
+
+  P.shadeShape=shapes[Math.floor(Math.random()*shapes.length)];
+  P.shadeH=50+Math.random()*150;
+  P.shadeBotR=20+Math.random()*60;
+  P.shadeTopR=10+Math.random()*60;
+  P.shadeWall=.8+Math.random()*3;
+  P.shadeSegs=Math.floor(4+Math.random()*50);
+  P.shadeOffset=Math.floor(Math.random()*20);
+  P.neckShape=nShapes[Math.floor(Math.random()*nShapes.length)];
+  P.neckH=Math.floor(Math.random()*100);
+  P.neckBotR=15+Math.random()*55;
+  P.neckTopR=8+Math.random()*40;
+  P.neckDetails=Math.floor(Math.random()*6);
+  P.neckSpiral=1+Math.floor(Math.random()*10);
+  P.socketType=sTypes[Math.floor(Math.random()*sTypes.length)];
+  P.socketExt=Math.floor(Math.random()*30);
+  P.socketDia=14+Math.floor(Math.random()*30);
+  P.socketDepth=10+Math.floor(Math.random()*35);
+  P.socketFlange=Math.random()>.5;
+  P.patternType=pTypes[Math.floor(Math.random()*pTypes.length)];
+  P.patternCell=3+Math.floor(Math.random()*20);
+  P.patternDepth=.2+Math.random()*1.5;
+  P.patternSpiral=1+Math.floor(Math.random()*15);
+  P.patternRibs=Math.floor(Math.random()*12);
+  P.patternInner=Math.random()>.6;
+  P.patternSeed=1+Math.floor(Math.random()*999);
 
   // Update UI
-  document.getElementById('lampHeight').value = params.height;
-  document.getElementById('val-height').textContent = Math.round(params.height);
-  document.getElementById('bottomRadius').value = params.bottomR;
-  document.getElementById('val-bottomR').textContent = Math.round(params.bottomR);
-  document.getElementById('topRadius').value = params.topR;
-  document.getElementById('val-topR').textContent = Math.round(params.topR);
-  document.getElementById('sides').value = params.sides;
-  document.getElementById('val-sides').textContent = params.sides;
-  document.getElementById('wallThickness').value = params.wall;
-  document.getElementById('val-wall').textContent = params.wall.toFixed(1);
-  document.getElementById('curvature').value = params.curve;
-  document.getElementById('val-curve').textContent = Math.round(params.curve);
-  document.getElementById('patternType').value = params.patternType;
-  document.getElementById('cellSize').value = params.cellSize;
-  document.getElementById('val-cell').textContent = Math.round(params.cellSize);
-  document.getElementById('cutDepth').value = params.cutDepth;
-  document.getElementById('val-cutDepth').textContent = params.cutDepth.toFixed(1);
-  document.getElementById('spiralTurns').value = params.spiralTurns;
-  document.getElementById('val-spiral').textContent = Math.round(params.spiralTurns);
-  document.getElementById('ribs').value = params.ribs;
-  document.getElementById('val-ribs').textContent = params.ribs;
-  document.getElementById('baseType').value = params.baseType;
-  document.getElementById('baseRadius').value = params.baseR;
-  document.getElementById('val-baseR').textContent = Math.round(params.baseR);
-  document.getElementById('baseHeight').value = params.baseH;
-  document.getElementById('val-baseH').textContent = Math.round(params.baseH);
-  document.getElementById('ledHole').value = params.ledHole;
-  document.getElementById('val-ledHole').textContent = Math.round(params.ledHole);
-  document.getElementById('topCap').value = params.topCap;
-  document.getElementById('val-topCap').textContent = params.topCap;
-  document.getElementById('topCapRadius').value = params.topCapR;
-  document.getElementById('val-topCapR').textContent = Math.round(params.topCapR);
+  document.getElementById('shadeShape').value=P.shadeShape;
+  document.getElementById('shadeH').value=P.shadeH;document.getElementById('v-sh').textContent=Math.round(P.shadeH);
+  document.getElementById('shadeBotR').value=P.shadeBotR;document.getElementById('v-sb').textContent=Math.round(P.shadeBotR);
+  document.getElementById('shadeTopR').value=P.shadeTopR;document.getElementById('v-st').textContent=Math.round(P.shadeTopR);
+  document.getElementById('shadeWall').value=P.shadeWall;document.getElementById('v-sw').textContent=P.shadeWall.toFixed(1);
+  document.getElementById('shadeSegs').value=P.shadeSegs;document.getElementById('v-ss').textContent=P.shadeSegs;
+  document.getElementById('shadeOffset').value=P.shadeOffset;document.getElementById('v-so').textContent=P.shadeOffset;
+  document.getElementById('neckShape').value=P.neckShape;
+  document.getElementById('neckH').value=P.neckH;document.getElementById('v-nh').textContent=P.neckH;
+  document.getElementById('neckBotR').value=P.neckBotR;document.getElementById('v-nb').textContent=Math.round(P.neckBotR);
+  document.getElementById('neckTopR').value=P.neckTopR;document.getElementById('v-nt').textContent=Math.round(P.neckTopR);
+  document.getElementById('neckDetails').value=P.neckDetails;document.getElementById('v-nd').textContent=P.neckDetails;
+  document.getElementById('neckSpiral').value=P.neckSpiral;document.getElementById('v-ns').textContent=P.neckSpiral;
+  document.getElementById('socketType').value=P.socketType;
+  document.getElementById('socketExt').value=P.socketExt;document.getElementById('v-sx').textContent=P.socketExt;
+  document.getElementById('socketDia').value=P.socketDia;document.getElementById('v-sd').textContent=Math.round(P.socketDia);
+  document.getElementById('socketDepth').value=P.socketDepth;document.getElementById('v-sdp').textContent=P.socketDepth;
+  document.getElementById('socketFlange').checked=P.socketFlange;
+  document.getElementById('patternType').value=P.patternType;
+  document.getElementById('patternCell').value=P.patternCell;document.getElementById('v-pc').textContent=Math.round(P.patternCell);
+  document.getElementById('patternDepth').value=P.patternDepth;document.getElementById('v-pd').textContent=P.patternDepth.toFixed(1);
+  document.getElementById('patternSpiral').value=P.patternSpiral;document.getElementById('v-ps').textContent=P.patternSpiral;
+  document.getElementById('patternRibs').value=P.patternRibs;document.getElementById('v-pr').textContent=P.patternRibs;
+  document.getElementById('patternSeed').value=P.patternSeed;document.getElementById('v-seed').textContent=P.patternSeed;
 
-  document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
-  updateLamp();
+  document.querySelectorAll('.preset-btn').forEach(b=>b.classList.remove('active'));
+  refreshLamp();
 }
 
-function resetParams() {
-  applyPreset('classic');
-  document.getElementById('lampHeight').value = 120;
-  document.getElementById('bottomRadius').value = 45;
-  document.getElementById('topRadius').value = 35;
-  document.getElementById('sides').value = 24;
-  document.getElementById('wallThickness').value = 1.5;
-  document.getElementById('curvature').value = 0;
-  document.getElementById('patternType').value = 'solid';
-  document.getElementById('cellSize').value = 8;
-  document.getElementById('cutDepth').value = 0.8;
-  document.getElementById('spiralTurns').value = 5;
-  document.getElementById('ribs').value = 0;
-  document.getElementById('baseType').value = 'flat';
-  document.getElementById('baseRadius').value = 50;
-  document.getElementById('baseHeight').value = 8;
-  document.getElementById('ledHole').value = 20;
-  document.getElementById('topCap').value = 0;
-  document.getElementById('topCapRadius').value = 30;
-  
-  params.height = 120; params.bottomR = 45; params.topR = 35; params.sides = 24;
-  params.wall = 1.5; params.curve = 0; params.patternType = 'solid'; params.cellSize = 8;
-  params.cutDepth = 0.8; params.spiralTurns = 5; params.ribs = 0;
-  params.baseType = 'flat'; params.baseR = 50; params.baseH = 8;
-  params.ledHole = 20; params.topCap = 0; params.topCapR = 30;
-  params.innerPattern = false;
-  
-  updateLamp();
-}
-
-// ==================== STL EXPORT ====================
-function exportSTL() {
-  const geo = generateLampMesh();
-  const positions = geo.attributes.position.array;
-  const normals = geo.attributes.normal.array;
-  const index = geo.index ? geo.index.array : null;
-  
-  let numTriangles = index ? index.length / 3 : positions.length / 9;
-  
-  // Binary STL
-  const buffer = new ArrayBuffer(84 + numTriangles * 50);
-  const view = new DataView(buffer);
-  
-  // Header (80 bytes)
-  const header = 'LampGenerator3D';
-  for (let i = 0; i < 80; i++) {
-    view.setUint8(i, i < header.length ? header.charCodeAt(i) : 0);
+function exportSTL(){
+  const geo=generateMesh();
+  const pos=geo.attributes.position.array;
+  const norm=geo.attributes.normal.array;
+  const idx=geo.index?geo.index.array:null;
+  const nTri=idx?idx.length/3:pos.length/9;
+  const buf=new ArrayBuffer(84+nTri*50);
+  const v=new DataView(buf);
+  const h='LampGenerator3DPro';
+  for(let i=0;i<80;i++)v.setUint8(i,i<h.length?h.charCodeAt(i):0);
+  v.setUint32(80,nTri,true);
+  let off=84;
+  for(let i=0;i<nTri;i++){
+    const i0=idx?idx[i*3]:i*3,i1=idx?idx[i*3+1]:i*3+1,i2=idx?idx[i*3+2]:i*3+2;
+    v.setFloat32(off,norm[i0*3],true);off+=4;v.setFloat32(off,norm[i0*3+1],true);off+=4;v.setFloat32(off,norm[i0*3+2],true);off+=4;
+    v.setFloat32(off,pos[i0*3],true);off+=4;v.setFloat32(off,pos[i0*3+1],true);off+=4;v.setFloat32(off,pos[i0*3+2],true);off+=4;
+    v.setFloat32(off,pos[i1*3],true);off+=4;v.setFloat32(off,pos[i1*3+1],true);off+=4;v.setFloat32(off,pos[i1*3+2],true);off+=4;
+    v.setFloat32(off,pos[i2*3],true);off+=4;v.setFloat32(off,pos[i2*3+1],true);off+=4;v.setFloat32(off,pos[i2*3+2],true);off+=4;
+    v.setUint16(off,0,true);off+=2;
   }
-  
-  // Number of triangles
-  view.setUint32(80, numTriangles, true);
-  
-  let offset = 84;
-  
-  for (let i = 0; i < numTriangles; i++) {
-    let i0, i1, i2;
-    if (index) {
-      i0 = index[i*3]; i1 = index[i*3+1]; i2 = index[i*3+2];
-    } else {
-      i0 = i*3; i1 = i*3+1; i2 = i*3+2;
-    }
-    
-    // Normal
-    view.setFloat32(offset, normals[i0*3], true); offset += 4;
-    view.setFloat32(offset, normals[i0*3+1], true); offset += 4;
-    view.setFloat32(offset, normals[i0*3+2], true); offset += 4;
-    
-    // Vertex 1
-    view.setFloat32(offset, positions[i0*3], true); offset += 4;
-    view.setFloat32(offset, positions[i0*3+1], true); offset += 4;
-    view.setFloat32(offset, positions[i0*3+2], true); offset += 4;
-    
-    // Vertex 2
-    view.setFloat32(offset, positions[i1*3], true); offset += 4;
-    view.setFloat32(offset, positions[i1*3+1], true); offset += 4;
-    view.setFloat32(offset, positions[i1*3+2], true); offset += 4;
-    
-    // Vertex 3
-    view.setFloat32(offset, positions[i2*3], true); offset += 4;
-    view.setFloat32(offset, positions[i2*3+1], true); offset += 4;
-    view.setFloat32(offset, positions[i2*3+2], true); offset += 4;
-    
-    // Attribute byte count
-    view.setUint16(offset, 0, true); offset += 2;
-  }
-  
-  // Download
-  const blob = new Blob([buffer], { type: 'application/octet-stream' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = 'lamp_3d_print.stl';
-  a.click();
-  URL.revokeObjectURL(url);
+  const blob=new Blob([buf],{type:'application/octet-stream'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');a.href=url;a.download='lamp_3d_print.stl';a.click();URL.revokeObjectURL(url);
 }
 
-// ==================== ANIMATION LOOP ====================
-function animate() {
-  requestAnimationFrame(animate);
-  updateCamera();
-  innerGlow.intensity = 0.5 + Math.sin(Date.now() * 0.003) * 0.3;
-  renderer.render(scene, camera);
-}
-
-// ==================== INIT ====================
-window.addEventListener('resize', () => {
-  camera.aspect = window.innerWidth / window.innerHeight;
-  camera.updateProjectionMatrix();
-  renderer.setSize(window.innerWidth, window.innerHeight);
-});
-
-updateLamp();
-animate();
+// Init
+window.addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight)});
+refreshLamp();
+(function anim(){requestAnimationFrame(anim);updateCam();glow.intensity=.5+Math.sin(Date.now()*.003)*.3;renderer.render(scene,camera)})();
 </script>
 </body>
 </html>
