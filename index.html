@@ -1,1496 +1,1007 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Генератор Ламп для 3D Печати</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/inter@5/400.min.css">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/inter@5/600.min.css">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/inter@5/700.min.css">
-    <style>
-        * { font-family: 'Inter', sans-serif; }
-        body { background: #0f0f13; color: #e0e0e0; }
-        .slider-thumb::-webkit-slider-thumb {
-            -webkit-appearance: none;
-            appearance: none;
-            width: 16px;
-            height: 16px;
-            border-radius: 50%;
-            background: #6366f1;
-            cursor: pointer;
-            border: 2px solid #818cf8;
-        }
-        .slider-thumb::-moz-range-thumb {
-            width: 16px;
-            height: 16px;
-            border-radius: 50%;
-            background: #6366f1;
-            cursor: pointer;
-            border: 2px solid #818cf8;
-        }
-        .slider-thumb {
-            -webkit-appearance: none;
-            appearance: none;
-            height: 4px;
-            border-radius: 2px;
-            background: #334155;
-            outline: none;
-        }
-        .glass-panel {
-            background: rgba(20, 20, 28, 0.85);
-            backdrop-filter: blur(12px);
-            border: 1px solid rgba(99, 102, 241, 0.15);
-        }
-        .btn-primary {
-            background: linear-gradient(135deg, #6366f1, #8b5cf6);
-            transition: all 0.3s ease;
-        }
-        .btn-primary:hover {
-            background: linear-gradient(135deg, #818cf8, #a78bfa);
-            transform: translateY(-1px);
-            box-shadow: 0 4px 20px rgba(99, 102, 241, 0.4);
-        }
-        .shape-btn {
-            transition: all 0.2s ease;
-            border: 1px solid rgba(99, 102, 241, 0.2);
-        }
-        .shape-btn:hover {
-            border-color: #6366f1;
-            background: rgba(99, 102, 241, 0.1);
-        }
-        .shape-btn.active {
-            border-color: #6366f1;
-            background: rgba(99, 102, 241, 0.2);
-            box-shadow: 0 0 10px rgba(99, 102, 241, 0.3);
-        }
-        #canvas-container {
-            background: radial-gradient(ellipse at center, #1a1a2e 0%, #0f0f13 70%);
-        }
-        .glow-text {
-            text-shadow: 0 0 20px rgba(99, 102, 241, 0.5);
-        }
-        .tab-btn {
-            transition: all 0.2s;
-        }
-        .tab-btn.active {
-            background: rgba(99, 102, 241, 0.15);
-            border-bottom: 2px solid #6366f1;
-            color: #818cf8;
-        }
-        input[type="color"] {
-            -webkit-appearance: none;
-            border: none;
-            width: 32px;
-            height: 32px;
-            border-radius: 50%;
-            cursor: pointer;
-        }
-        input[type="color"]::-webkit-color-swatch-wrapper { padding: 0; }
-        input[type="color"]::-webkit-color-swatch { border: 2px solid rgba(99,102,241,0.4); border-radius: 50%; }
-        .loading-spinner {
-            border: 3px solid rgba(99,102,241,0.2);
-            border-top-color: #6366f1;
-            border-radius: 50%;
-            width: 24px;
-            height: 24px;
-            animation: spin 0.8s linear infinite;
-        }
-        @keyframes spin { to { transform: rotate(360deg); } }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        .fade-in { animation: fadeIn 0.4s ease-out; }
-        .toast {
-            animation: slideIn 0.3s ease-out, fadeOut 0.3s ease-in 2.7s;
-        }
-        @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
-        @keyframes fadeOut { from { opacity: 1; } to { opacity: 0; } }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🔧 Генератор Ламп для 3D Печати</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: 'Inter', sans-serif; background: #0a0a0f; color: #e0e0e0; overflow-x: hidden; }
+#canvas-container { width: 100%; height: 100%; position: absolute; top: 0; left: 0; }
+.panel { backdrop-filter: blur(20px); background: rgba(15,15,25,0.85); border: 1px solid rgba(255,255,255,0.08); }
+.slider-group label { font-size: 0.75rem; color: #888; text-transform: uppercase; letter-spacing: 0.05em; }
+input[type="range"] { -webkit-appearance: none; width: 100%; height: 6px; border-radius: 3px; background: #1a1a2e; outline: none; }
+input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 18px; height: 18px; border-radius: 50%; background: #6c63ff; cursor: pointer; border: 2px solid #fff; }
+input[type="range"]::-moz-range-thumb { width: 18px; height: 18px; border-radius: 50%; background: #6c63ff; cursor: pointer; border: 2px solid #fff; }
+.btn-primary { background: linear-gradient(135deg, #6c63ff, #4834d4); transition: all 0.3s; }
+.btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(108,99,255,0.4); }
+.btn-secondary { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); transition: all 0.3s; }
+.btn-secondary:hover { background: rgba(255,255,255,0.1); }
+.preset-btn { transition: all 0.3s; cursor: pointer; }
+.preset-btn:hover, .preset-btn.active { background: rgba(108,99,255,0.2); border-color: #6c63ff; }
+.value-display { font-family: monospace; color: #6c63ff; font-weight: 600; }
+.tab-btn { transition: all 0.3s; }
+.tab-btn.active { background: #6c63ff; color: white; }
+.glow-text { text-shadow: 0 0 20px rgba(108,99,255,0.5); }
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #333; border-radius: 3px; }
+</style>
 </head>
-<body class="h-screen overflow-hidden">
-    <div class="flex h-screen">
-        <!-- Left Panel - Controls -->
-        <div class="w-[380px] flex-shrink-0 glass-panel overflow-y-auto z-10 border-r border-indigo-500/10">
-            <!-- Header -->
-            <div class="p-5 border-b border-indigo-500/10">
-                <h1 class="text-xl font-bold glow-text text-indigo-400 flex items-center gap-2">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>
-                    </svg>
-                    3D Лампа Генератор
-                </h1>
-                <p class="text-xs text-gray-500 mt-1">Создайте уникальную лампу для 3D печати</p>
-            </div>
+<body>
 
-            <!-- Tabs -->
-            <div class="flex border-b border-indigo-500/10">
-                <button class="tab-btn active flex-1 py-3 text-xs font-semibold text-center" onclick="switchTab('base')">
-                    🔲 Основание
-                </button>
-                <button class="tab-btn flex-1 py-3 text-xs font-semibold text-center" onclick="switchTab('stem')">
-                     Ножка
-                </button>
-                <button class="tab-btn flex-1 py-3 text-xs font-semibold text-center" onclick="switchTab('shade')">
-                    💡 Абажур
-                </button>
-            </div>
+<div class="relative" style="height: 100vh;">
+  <div id="canvas-container"></div>
+  
+  <!-- Header -->
+  <div class="absolute top-0 left-0 right-0 z-10 p-4">
+    <div class="flex items-center justify-between">
+      <h1 class="text-2xl font-bold glow-text">🔧 Lamp Generator 3D</h1>
+      <div class="flex gap-2">
+        <button onclick="randomize()" class="btn-secondary px-4 py-2 rounded-lg text-sm font-medium">🎲 Рандом</button>
+        <button onclick="resetParams()" class="btn-secondary px-4 py-2 rounded-lg text-sm font-medium">↺ Сброс</button>
+        <button onclick="exportSTL()" class="btn-primary px-6 py-2 rounded-lg text-sm font-bold text-white">⬇ STL</button>
+      </div>
+    </div>
+  </div>
 
-            <!-- Tab Content -->
-            <div class="p-5 space-y-5" id="controls-container">
-                <!-- Base Controls -->
-                <div id="tab-base" class="tab-content space-y-5 fade-in">
-                    <div>
-                        <label class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Форма основания</label>
-                        <div class="grid grid-cols-4 gap-2 mt-2">
-                            <button class="shape-btn active p-2 rounded-lg flex flex-col items-center gap-1" onclick="setBaseShape('cylinder', this)">
-                                <div class="w-8 h-8 rounded-full border-2 border-indigo-400/50"></div>
-                                <span class="text-[10px] text-gray-400">Круг</span>
-                            </button>
-                            <button class="shape-btn p-2 rounded-lg flex flex-col items-center gap-1" onclick="setBaseShape('hexagon', this)">
-                                <div class="w-8 h-8 flex items-center justify-center"><div class="w-5 h-5 rotate-45 bg-transparent border-2 border-indigo-400/50" style="clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)"></div></div>
-                                <span class="text-[10px] text-gray-400">6-уг</span>
-                            </button>
-                            <button class="shape-btn p-2 rounded-lg flex flex-col items-center gap-1" onclick="setBaseShape('star', this)">
-                                <div class="w-8 h-8 flex items-center justify-center"><div class="w-5 h-5 text-indigo-400/50" style="clip-path: polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%); background: rgba(99,102,241,0.3); border-radius: 1px;"></div></div>
-                                <span class="text-[10px] text-gray-400">Звезда</span>
-                            </button>
-                            <button class="shape-btn p-2 rounded-lg flex flex-col items-center gap-1" onclick="setBaseShape('triangle', this)">
-                                <div class="w-8 h-8 flex items-center justify-center"><div class="w-0 h-0 border-l-[10px] border-l-transparent border-r-[10px] border-r-transparent border-b-[18px] border-b-indigo-400/30"></div></div>
-                                <span class="text-[10px] text-gray-400">Треуг</span>
-                            </button>
-                        </div>
-                    </div>
-                    <div>
-                        <label class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Высота основания</label>
-                        <input type="range" id="baseHeight" min="5" max="30" value="12" step="1" class="slider-thumb w-full mt-2" oninput="updateLamp()">
-                        <div class="flex justify-between text-[10px] text-gray-600"><span>5mm</span><span id="baseHeightVal">12mm</span><span>30mm</span></div>
-                    </div>
-                    <div>
-                        <label class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Радиус основания</label>
-                        <input type="range" id="baseRadius" min="15" max="60" value="30" step="1" class="slider-thumb w-full mt-2" oninput="updateLamp()">
-                        <div class="flex justify-between text-[10px] text-gray-600"><span>15mm</span><span id="baseRadiusVal">30mm</span><span>60mm</span></div>
-                    </div>
-                    <div>
-                        <label class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Скругление краёв</label>
-                        <input type="range" id="baseBevel" min="0" max="5" value="1" step="0.5" class="slider-thumb w-full mt-2" oninput="updateLamp()">
-                        <div class="flex justify-between text-[10px] text-gray-600"><span>0</span><span id="baseBevelVal">1mm</span><span>5mm</span></div>
-                    </div>
-                    <div>
-                        <label class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Полый внутри (экономия)</label>
-                        <div class="flex items-center gap-3 mt-2">
-                            <label class="flex items-center gap-2 cursor-pointer">
-                                <input type="checkbox" id="baseHollow" class="accent-indigo-500" onchange="updateLamp()">
-                                <span class="text-xs text-gray-400">Полый</span>
-                            </label>
-                            <label class="flex items-center gap-2 cursor-pointer">
-                                <input type="checkbox" id="baseWall" checked class="accent-indigo-500" onchange="updateLamp()">
-                                <span class="text-xs text-gray-400">Стенки 2mm</span>
-                            </label>
-                        </div>
-                    </div>
-                </div>
+  <!-- Left Panel - Presets -->
+  <div class="absolute top-20 left-4 z-10 panel rounded-xl p-4 w-56">
+    <h3 class="text-sm font-semibold mb-3 text-gray-400 uppercase tracking-wider">Пресеты</h3>
+    <div class="grid grid-cols-1 gap-2">
+      <button class="preset-btn active px-3 py-2 rounded-lg text-xs text-left border border-transparent" onclick="applyPreset('classic')">🏛 Классика</button>
+      <button class="preset-btn px-3 py-2 rounded-lg text-xs text-left border border-transparent" onclick="applyPreset('spiral')">🌀 Спираль</button>
+      <button class="preset-btn px-3 py-2 rounded-lg text-xs text-left border border-transparent" onclick="applyPreset('voronoi')">🧬 Воронный</button>
+      <button class="preset-btn px-3 py-2 rounded-lg text-xs text-left border border-transparent" onclick="applyPreset('geometric')">🔷 Геометрия</button>
+      <button class="preset-btn px-3 py-2 rounded-lg text-xs text-left border border-transparent" onclick="applyPreset('flower')">🌸 Цветок</button>
+      <button class="preset-btn px-3 py-2 rounded-lg text-xs text-left border border-transparent" onclick="applyPreset('modern')">⬜ Модерн</button>
+      <button class="preset-btn px-3 py-2 rounded-lg text-xs text-left border border-transparent" onclick="applyPreset('tube')">🔬 Тубус</button>
+      <button class="preset-btn px-3 py-2 rounded-lg text-xs text-left border border-transparent" onclick="applyPreset('lantern')">🏮 Фонарь</button>
+    </div>
+  </div>
 
-                <!-- Stem Controls -->
-                <div id="tab-stem" class="tab-content space-y-5 hidden fade-in">
-                    <div>
-                        <label class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Высота ножки</label>
-                        <input type="range" id="stemHeight" min="30" max="150" value="80" step="1" class="slider-thumb w-full mt-2" oninput="updateLamp()">
-                        <div class="flex justify-between text-[10px] text-gray-600"><span>30mm</span><span id="stemHeightVal">80mm</span><span>150mm</span></div>
-                    </div>
-                    <div>
-                        <label class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Толщина ножки</label>
-                        <input type="range" id="stemRadius" min="3" max="15" value="6" step="0.5" class="slider-thumb w-full mt-2" oninput="updateLamp()">
-                        <div class="flex justify-between text-[10px] text-gray-600"><span>3mm</span><span id="stemRadiusVal">6mm</span><span>15mm</span></div>
-                    </div>
-                    <div>
-                        <label class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Форма сечения</label>
-                        <div class="grid grid-cols-3 gap-2 mt-2">
-                            <button class="shape-btn active p-2 rounded-lg flex flex-col items-center gap-1" onclick="setStemShape('circle', this)">
-                                <div class="w-6 h-6 rounded-full border-2 border-indigo-400/50"></div>
-                                <span class="text-[10px] text-gray-400">Круг</span>
-                            </button>
-                            <button class="shape-btn p-2 rounded-lg flex flex-col items-center gap-1" onclick="setStemShape('square', this)">
-                                <div class="w-6 h-6 border-2 border-indigo-400/50 rounded-sm"></div>
-                                <span class="text-[10px] text-gray-400">Квадрат</span>
-                            </button>
-                            <button class="shape-btn p-2 rounded-lg flex flex-col items-center gap-1" onclick="setStemShape('hexagon', this)">
-                                <div class="w-6 h-6 bg-transparent border-2 border-indigo-400/50 rounded-sm" style="clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)"></div>
-                                <span class="text-[10px] text-gray-400">6-уг</span>
-                            </button>
-                        </div>
-                    </div>
-                    <div>
-                        <label class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Искривление ножки</label>
-                        <input type="range" id="stemCurve" min="0" max="20" value="0" step="0.5" class="slider-thumb w-full mt-2" oninput="updateLamp()">
-                        <div class="flex justify-between text-[10px] text-gray-600"><span>Прямая</span><span id="stemCurveVal">0mm</span><span>20mm</span></div>
-                    </div>
-                    <div>
-                        <label class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Сегменты (сглаживание)</label>
-                        <input type="range" id="stemSegments" min="8" max="32" value="16" step="1" class="slider-thumb w-full mt-2" oninput="updateLamp()">
-                        <div class="flex justify-between text-[10px] text-gray-600"><span>8</span><span id="stemSegmentsVal">16</span><span>32</span></div>
-                    </div>
-                </div>
-
-                <!-- Shade Controls -->
-                <div id="tab-shade" class="tab-content space-y-5 hidden fade-in">
-                    <div>
-                        <label class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Форма абажура</label>
-                        <div class="grid grid-cols-4 gap-2 mt-2">
-                            <button class="shape-btn active p-2 rounded-lg flex flex-col items-center gap-1" onclick="setShadeShape('cone', this)">
-                                <div class="w-0 h-0 border-l-[10px] border-l-transparent border-r-[10px] border-r-transparent border-b-[18px] border-b-indigo-400/30"></div>
-                                <span class="text-[10px] text-gray-400">Конус</span>
-                            </button>
-                            <button class="shape-btn p-2 rounded-lg flex flex-col items-center gap-1" onclick="setShadeShape('cylinder', this)">
-                                <div class="w-6 h-6 border-2 border-indigo-400/50 rounded-sm"></div>
-                                <span class="text-[10px] text-gray-400">Цилиндр</span>
-                            </button>
-                            <button class="shape-btn p-2 rounded-lg flex flex-col items-center gap-1" onclick="setShadeShape('sphere', this)">
-                                <div class="w-6 h-6 rounded-full border-2 border-indigo-400/50"></div>
-                                <span class="text-[10px] text-gray-400">Сфера</span>
-                            </button>
-                            <button class="shape-btn p-2 rounded-lg flex flex-col items-center gap-1" onclick="setShadeShape('geodesic', this)">
-                                <div class="w-6 h-6 bg-transparent border border-indigo-400/50" style="clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)"></div>
-                                <span class="text-[10px] text-gray-400">Гео</span>
-                            </button>
-                        </div>
-                    </div>
-                    <div>
-                        <label class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Высота абажура</label>
-                        <input type="range" id="shadeHeight" min="20" max="80" value="45" step="1" class="slider-thumb w-full mt-2" oninput="updateLamp()">
-                        <div class="flex justify-between text-[10px] text-gray-600"><span>20mm</span><span id="shadeHeightVal">45mm</span><span>80mm</span></div>
-                    </div>
-                    <div>
-                        <label class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Радиус абажура</label>
-                        <input type="range" id="shadeRadius" min="15" max="60" value="35" step="1" class="slider-thumb w-full mt-2" oninput="updateLamp()">
-                        <div class="flex justify-between text-[10px] text-gray-600"><span>15mm</span><span id="shadeRadiusVal">35mm</span><span>60mm</span></div>
-                    </div>
-                    <div>
-                        <label class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Отверстие вверху</label>
-                        <input type="range" id="shadeTopHole" min="0" max="20" value="5" step="0.5" class="slider-thumb w-full mt-2" oninput="updateLamp()">
-                        <div class="flex justify-between text-[10px] text-gray-600"><span>0mm</span><span id="shadeTopHoleVal">5mm</span><span>20mm</span></div>
-                    </div>
-                    <div>
-                        <label class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Количество сегментов</label>
-                        <input type="range" id="shadeSegments" min="6" max="24" value="12" step="1" class="slider-thumb w-full mt-2" oninput="updateLamp()">
-                        <div class="flex justify-between text-[10px] text-gray-600"><span>6</span><span id="shadeSegmentsVal">12</span><span>24</span></div>
-                    </div>
-                    <div>
-                        <label class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Стиль абажура</label>
-                        <div class="grid grid-cols-3 gap-2 mt-2">
-                            <button class="shape-btn active p-2 rounded-lg text-[10px] text-gray-400" onclick="setShadeStyle('solid', this)">Сплошной</button>
-                            <button class="shape-btn p-2 rounded-lg text-[10px] text-gray-400" onclick="setShadeStyle('ribs', this)">Рёбра</button>
-                            <button class="shape-btn p-2 rounded-lg text-[10px] text-gray-400" onclick="setShadeStyle('lattice', this)">Решётка</button>
-                        </div>
-                    </div>
-                    <div>
-                        <label class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Толщина стенок абажура</label>
-                        <input type="range" id="shadeThickness" min="1" max="5" value="2" step="0.5" class="slider-thumb w-full mt-2" oninput="updateLamp()">
-                        <div class="flex justify-between text-[10px] text-gray-600"><span>1mm</span><span id="shadeThicknessVal">2mm</span><span>5mm</span></div>
-                    </div>
-                </div>
-
-                <!-- Common Controls -->
-                <div class="pt-4 border-t border-indigo-500/10 space-y-4">
-                    <div>
-                        <label class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Цвет материала</label>
-                        <div class="flex items-center gap-3 mt-2">
-                            <input type="color" id="lampColor" value="#ffffff" onchange="updateLamp()">
-                            <span class="text-xs text-gray-400" id="colorLabel">#FFFFFF</span>
-                        </div>
-                    </div>
-                    <div>
-                        <label class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Масштаб (мм → ед.)</label>
-                        <input type="range" id="scaleFactor" min="0.5" max="3" value="1" step="0.1" class="slider-thumb w-full mt-2" oninput="updateLamp()">
-                        <div class="flex justify-between text-[10px] text-gray-600"><span>0.5x</span><span id="scaleVal">1.0x</span><span>3.0x</span></div>
-                    </div>
-                    <div>
-                        <label class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Детализация сетки</label>
-                        <input type="range" id="meshDetail" min="1" max="3" value="2" step="1" class="slider-thumb w-full mt-2" oninput="updateLamp()">
-                        <div class="flex justify-between text-[10px] text-gray-600"><span>Низкая</span><span>Средняя</span><span>Высокая</span></div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Export Section -->
-            <div class="p-5 border-t border-indigo-500/10 space-y-3">
-                <div class="bg-indigo-500/5 rounded-lg p-3 border border-indigo-500/10">
-                    <div class="flex items-center justify-between">
-                        <span class="text-xs text-gray-400">Всего треугольников:</span>
-                        <span class="text-xs font-mono text-indigo-400" id="triCount">0</span>
-                    </div>
-                    <div class="flex items-center justify-between mt-1">
-                        <span class="text-xs text-gray-400">Примерный размер:</span>
-                        <span class="text-xs font-mono text-indigo-400" id="fileSize">0 KB</span>
-                    </div>
-                </div>
-                <button onclick="exportSTL()" class="btn-primary w-full py-3 rounded-lg font-semibold text-sm text-white flex items-center justify-center gap-2">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
-                    </svg>
-                    Скачать STL файл
-                </button>
-                <button onclick="exportOBJ()" class="w-full py-2.5 rounded-lg font-semibold text-sm text-gray-400 border border-indigo-500/20 hover:border-indigo-500/40 hover:text-indigo-300 transition-all flex items-center justify-center gap-2">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
-                    </svg>
-                    Скачать OBJ файл
-                </button>
-                <button onclick="resetAll()" class="w-full py-2 rounded-lg text-xs text-gray-500 hover:text-gray-300 transition-all">
-                    ↺ Сбросить настройки
-                </button>
-            </div>
-        </div>
-
-        <!-- Right - 3D Viewport -->
-        <div class="flex-1 relative" id="canvas-container">
-            <div id="three-canvas" class="w-full h-full"></div>
-
-            <!-- Viewport Controls -->
-            <div class="absolute top-4 right-4 flex gap-2">
-                <button onclick="toggleWireframe()" class="glass-panel px-3 py-2 rounded-lg text-xs text-gray-400 hover:text-white transition-all" id="wireframeBtn">
-                    🔲 Каркас
-                </button>
-                <button onclick="toggleGrid()" class="glass-panel px-3 py-2 rounded-lg text-xs text-gray-400 hover:text-white transition-all" id="gridBtn">
-                     Сетка
-                </button>
-                <button onclick="resetCamera()" class="glass-panel px-3 py-2 rounded-lg text-xs text-gray-400 hover:text-white transition-all">
-                     Сброс
-                </button>
-            </div>
-
-            <!-- Info Overlay -->
-            <div class="absolute bottom-4 left-4 glass-panel px-4 py-2 rounded-lg">
-                <div class="flex items-center gap-3 text-[11px] text-gray-500">
-                    <span>🖱 ЛКМ — вращение</span>
-                    <span>🖱 ПКМ — перемещение</span>
-                    <span>🖱 Колёсико — масштаб</span>
-                </div>
-            </div>
-
-            <!-- Loading -->
-            <div id="loading" class="hidden absolute inset-0 flex items-center justify-center bg-black/50">
-                <div class="loading-spinner"></div>
-            </div>
-        </div>
+  <!-- Right Panel - Controls -->
+  <div class="absolute top-20 right-4 z-10 panel rounded-xl p-5 w-72 max-h-[calc(100vh-6rem)] overflow-y-auto">
+    <!-- Tabs -->
+    <div class="flex gap-1 mb-4 bg-black/30 rounded-lg p-1">
+      <button class="tab-btn active flex-1 py-1.5 rounded-md text-xs font-medium" onclick="switchTab('shape', this)">Форма</button>
+      <button class="tab-btn flex-1 py-1.5 rounded-md text-xs font-medium" onclick="switchTab('pattern', this)">Узор</button>
+      <button class="tab-btn flex-1 py-1.5 rounded-md text-xs font-medium" onclick="switchTab('base', this)">База</button>
     </div>
 
-    <!-- Toast Container -->
-    <div id="toast-container" class="fixed top-4 right-4 z-50"></div>
+    <!-- Shape Tab -->
+    <div id="tab-shape" class="tab-content space-y-4">
+      <div class="slider-group">
+        <div class="flex justify-between mb-1">
+          <label>Высота корпуса</label>
+          <span class="value-display" id="val-height">120</span>
+        </div>
+        <input type="range" min="40" max="250" value="120" id="lampHeight" oninput="updateParam('height', this.value)">
+      </div>
+      <div class="slider-group">
+        <div class="flex justify-between mb-1">
+          <label>Нижний радиус</label>
+          <span class="value-display" id="val-bottomR">45</span>
+        </div>
+        <input type="range" min="15" max="80" value="45" id="bottomRadius" oninput="updateParam('bottomR', this.value)">
+      </div>
+      <div class="slider-group">
+        <div class="flex justify-between mb-1">
+          <label>Верхний радиус</label>
+          <span class="value-display" id="val-topR">35</span>
+        </div>
+        <input type="range" min="10" max="80" value="35" id="topRadius" oninput="updateParam('topR', this.value)">
+      </div>
+      <div class="slider-group">
+        <div class="flex justify-between mb-1">
+          <label>Сторон</label>
+          <span class="value-display" id="val-sides">24</span>
+        </div>
+        <input type="range" min="3" max="48" value="24" id="sides" oninput="updateParam('sides', this.value)">
+      </div>
+      <div class="slider-group">
+        <div class="flex justify-between mb-1">
+          <label>Толщина стенки</label>
+          <span class="value-display" id="val-wall">1.5</span>
+        </div>
+        <input type="range" min="0.8" max="4" step="0.1" value="1.5" id="wallThickness" oninput="updateParam('wall', this.value)">
+      </div>
+      <div class="slider-group">
+        <div class="flex justify-between mb-1">
+          <label>Изгиб (curvature)</label>
+          <span class="value-display" id="val-curve">0</span>
+        </div>
+        <input type="range" min="-40" max="40" value="0" id="curvature" oninput="updateParam('curve', this.value)">
+      </div>
+    </div>
 
-    <script>
-    // Three.js Setup
-    let scene, camera, renderer, controls;
-    let lampGroup, wireframeGroup;
-    let gridHelper;
-    let isWireframe = false;
-    let currentTab = 'base';
+    <!-- Pattern Tab -->
+    <div id="tab-pattern" class="tab-content space-y-4 hidden">
+      <div class="slider-group">
+        <div class="flex justify-between mb-1">
+          <label>Тип узора</label>
+        </div>
+        <select id="patternType" onchange="updateParam('patternType', this.value)" class="w-full bg-black/30 border border-white/10 rounded-lg px-3 py-2 text-sm text-white">
+          <option value="solid">Сплошной</option>
+          <option value="spiral">Спираль</option>
+          <option value="hex">Шестиугольники</option>
+          <option value="circles">Круги</option>
+          <option value="diamond">Ромбы</option>
+          <option value="waves">Волны</option>
+          <option value="stars">Звёзды</option>
+          <option value="voronoi">Вороной</option>
+        </select>
+      </div>
+      <div class="slider-group">
+        <div class="flex justify-between mb-1">
+          <label>Размер ячейки</label>
+          <span class="value-display" id="val-cell">8</span>
+        </div>
+        <input type="range" min="3" max="20" value="8" id="cellSize" oninput="updateParam('cellSize', this.value)">
+      </div>
+      <div class="slider-group">
+        <div class="flex justify-between mb-1">
+          <label>Глубина прорези</label>
+          <span class="value-display" id="val-cutDepth">0.8</span>
+        </div>
+        <input type="range" min="0.2" max="1.5" step="0.1" value="0.8" id="cutDepth" oninput="updateParam('cutDepth', this.value)">
+      </div>
+      <div class="slider-group">
+        <div class="flex justify-between mb-1">
+          <label>Спиральные витки</label>
+          <span class="value-display" id="val-spiral">5</span>
+        </div>
+        <input type="range" min="1" max="20" value="5" id="spiralTurns" oninput="updateParam('spiralTurns', this.value)">
+      </div>
+      <div class="slider-group">
+        <label class="flex items-center gap-2 cursor-pointer">
+          <input type="checkbox" id="innerPattern" onchange="updateParam('innerPattern', this.checked)" class="w-4 h-4 accent-[#6c63ff]">
+          <span class="text-xs text-gray-400">Внутренний рельеф</span>
+        </label>
+      </div>
+      <div class="slider-group">
+        <div class="flex justify-between mb-1">
+          <label>Рёбра жёсткости</label>
+          <span class="value-display" id="val-ribs">0</span>
+        </div>
+        <input type="range" min="0" max="12" value="0" id="ribs" oninput="updateParam('ribs', this.value)">
+      </div>
+    </div>
 
-    // Lamp parameters
-    const params = {
-        baseShape: 'cylinder',
-        baseHeight: 12,
-        baseRadius: 30,
-        baseBevel: 1,
-        baseHollow: false,
-        baseWall: true,
-        stemShape: 'circle',
-        stemHeight: 80,
-        stemRadius: 6,
-        stemCurve: 0,
-        stemSegments: 16,
-        shadeShape: 'cone',
-        shadeHeight: 45,
-        shadeRadius: 35,
-        shadeTopHole: 5,
-        shadeSegments: 12,
-        shadeStyle: 'solid',
-        shadeThickness: 2,
-        color: '#ffffff',
-        scale: 1,
-        detail: 2
-    };
+    <!-- Base Tab -->
+    <div id="tab-base" class="tab-content space-y-4 hidden">
+      <div class="slider-group">
+        <div class="flex justify-between mb-1">
+          <label>Тип базы</label>
+        </div>
+        <select id="baseType" onchange="updateParam('baseType', this.value)" class="w-full bg-black/30 border border-white/10 rounded-lg px-3 py-2 text-sm text-white">
+          <option value="flat">Плоская</option>
+          <option value="rounded">Закруглённая</option>
+          <option value="flared">Расширенная</option>
+          <option value="ring">Кольцо</option>
+        </select>
+      </div>
+      <div class="slider-group">
+        <div class="flex justify-between mb-1">
+          <label>Радиус базы</label>
+          <span class="value-display" id="val-baseR">50</span>
+        </div>
+        <input type="range" min="20" max="90" value="50" id="baseRadius" oninput="updateParam('baseR', this.value)">
+      </div>
+      <div class="slider-group">
+        <div class="flex justify-between mb-1">
+          <label>Высота базы</label>
+          <span class="value-display" id="val-baseH">8</span>
+        </div>
+        <input type="range" min="3" max="20" value="8" id="baseHeight" oninput="updateParam('baseH', this.value)">
+      </div>
+      <div class="slider-group">
+        <div class="flex justify-between mb-1">
+          <label>Отверстие для LED</label>
+          <span class="value-display" id="val-ledHole">20</span>
+        </div>
+        <input type="range" min="0" max="40" value="20" id="ledHole" oninput="updateParam('ledHole', this.value)">
+      </div>
+      <div class="slider-group">
+        <div class="flex justify-between mb-1">
+          <label>Крышка сверху</label>
+          <span class="value-display" id="val-topCap">0</span>
+        </div>
+        <input type="range" min="0" max="1" step="1" value="0" id="topCap" oninput="updateParam('topCap', this.value)">
+      </div>
+      <div class="slider-group">
+        <div class="flex justify-between mb-1">
+          <label>Радиус крышки</label>
+          <span class="value-display" id="val-topCapR">30</span>
+        </div>
+        <input type="range" min="5" max="60" value="30" id="topCapRadius" oninput="updateParam('topCapR', this.value)">
+      </div>
+    </div>
 
-    // Initialize
-    function init() {
-        const container = document.getElementById('three-canvas');
-        const width = container.clientWidth;
-        const height = container.clientHeight;
+    <div class="mt-4 pt-4 border-t border-white/10">
+      <div class="text-xs text-gray-500 mb-2">Информация:</div>
+      <div class="text-xs text-gray-400" id="info-text">Граней: ~0 | Объём: ~0 см³</div>
+    </div>
+  </div>
 
-        scene = new THREE.Scene();
-        scene.fog = new THREE.FogExp2(0x0f0f13, 0.008);
+  <!-- Bottom info -->
+  <div class="absolute bottom-4 left-1/2 -translate-x-1/2 z-10 panel rounded-full px-6 py-2">
+    <span class="text-xs text-gray-400">🖱 Вращение • Колёсико масштаб • ПКМ перемещение</span>
+  </div>
+</div>
 
-        camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 1000);
-        camera.position.set(60, 80, 100);
-        camera.lookAt(0, 40, 0);
+<script>
+// ==================== THREE.JS SETUP ====================
+const container = document.getElementById('canvas-container');
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+camera.position.set(100, 120, 150);
 
-        renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-        renderer.setSize(width, height);
-        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-        renderer.shadowMap.enabled = true;
-        renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-        renderer.toneMapping = THREE.ACESFilmicToneMapping;
-        renderer.toneMappingExposure = 1.2;
-        container.appendChild(renderer.domElement);
+const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.2;
+container.appendChild(renderer.domElement);
 
-        // Lights
-        const ambientLight = new THREE.AmbientLight(0x404060, 0.6);
-        scene.add(ambientLight);
+// Lights
+const ambientLight = new THREE.AmbientLight(0x404060, 0.6);
+scene.add(ambientLight);
 
-        const mainLight = new THREE.DirectionalLight(0xffffff, 1.0);
-        mainLight.position.set(50, 80, 50);
-        mainLight.castShadow = true;
-        mainLight.shadow.mapSize.width = 2048;
-        mainLight.shadow.mapSize.height = 2048;
-        scene.add(mainLight);
+const mainLight = new THREE.DirectionalLight(0xffffff, 1.0);
+mainLight.position.set(80, 150, 80);
+mainLight.castShadow = true;
+mainLight.shadow.mapSize.set(2048, 2048);
+scene.add(mainLight);
 
-        const fillLight = new THREE.DirectionalLight(0x6366f1, 0.3);
-        fillLight.position.set(-30, 40, -30);
-        scene.add(fillLight);
+const fillLight = new THREE.DirectionalLight(0x6c63ff, 0.3);
+fillLight.position.set(-60, 80, -40);
+scene.add(fillLight);
 
-        const rimLight = new THREE.DirectionalLight(0x8b5cf6, 0.2);
-        rimLight.position.set(0, 20, -50);
-        scene.add(rimLight);
+const rimLight = new THREE.DirectionalLight(0xff6c6c, 0.2);
+rimLight.position.set(0, 50, -100);
+scene.add(rimLight);
 
-        // Grid
-        gridHelper = new THREE.GridHelper(200, 20, 0x1a1a3e, 0x0f0f1a);
-        scene.add(gridHelper);
+// Inner glow
+const innerGlow = new THREE.PointLight(0xffaa44, 0.8, 200);
+innerGlow.position.set(0, 60, 0);
+scene.add(innerGlow);
 
-        // Lamp group
-        lampGroup = new THREE.Group();
-        scene.add(lampGroup);
+// Ground
+const groundGeo = new THREE.PlaneGeometry(500, 500);
+const groundMat = new THREE.MeshStandardMaterial({ color: 0x111122, roughness: 0.9, metalness: 0.1 });
+const ground = new THREE.Mesh(groundGeo, groundMat);
+ground.rotation.x = -Math.PI / 2;
+ground.receiveShadow = true;
+scene.add(ground);
 
-        wireframeGroup = new THREE.Group();
-        scene.add(wireframeGroup);
+// Grid
+const gridHelper = new THREE.GridHelper(200, 20, 0x222244, 0x111133);
+scene.add(gridHelper);
 
-        // Simple orbit controls implementation
-        setupOrbitControls(container);
+// ==================== ORBIT CONTROLS (manual) ====================
+let isDragging = false;
+let isPanning = false;
+let prevMouse = { x: 0, y: 0 };
+let orbitAngles = { theta: Math.PI / 4, phi: Math.PI / 3 };
+let orbitDist = 180;
+let orbitTarget = new THREE.Vector3(0, 50, 0);
 
-        // Initial lamp
-        updateLamp();
+renderer.domElement.addEventListener('mousedown', (e) => {
+  if (e.button === 2) { isPanning = true; } else { isDragging = true; }
+  prevMouse = { x: e.clientX, y: e.clientY };
+  e.preventDefault();
+});
 
-        // Animation loop
-        animate();
+renderer.domElement.addEventListener('mousemove', (e) => {
+  const dx = e.clientX - prevMouse.x;
+  const dy = e.clientY - prevMouse.y;
+  if (isDragging) {
+    orbitAngles.theta -= dx * 0.005;
+    orbitAngles.phi = Math.max(0.1, Math.min(Math.PI - 0.1, orbitAngles.phi - dy * 0.005));
+  }
+  if (isPanning) {
+    const right = new THREE.Vector3();
+    const up = new THREE.Vector3();
+    camera.getWorldDirection(new THREE.Vector3());
+    right.crossVectors(camera.up, new THREE.Vector3().subVectors(camera.position, orbitTarget)).normalize();
+    up.copy(camera.up);
+    orbitTarget.add(right.multiplyScalar(-dx * 0.3));
+    orbitTarget.add(up.multiplyScalar(dy * 0.3));
+  }
+  prevMouse = { x: e.clientX, y: e.clientY };
+});
 
-        // Resize handler
-        window.addEventListener('resize', onResize);
+renderer.domElement.addEventListener('mouseup', () => { isDragging = false; isPanning = false; });
+renderer.domElement.addEventListener('wheel', (e) => {
+  orbitDist = Math.max(50, Math.min(400, orbitDist + e.deltaY * 0.3));
+  e.preventDefault();
+}, { passive: false });
+renderer.domElement.addEventListener('contextmenu', (e) => e.preventDefault());
+
+function updateCamera() {
+  camera.position.x = orbitTarget.x + orbitDist * Math.sin(orbitAngles.phi) * Math.cos(orbitAngles.theta);
+  camera.position.y = orbitTarget.y + orbitDist * Math.cos(orbitAngles.phi);
+  camera.position.z = orbitTarget.z + orbitDist * Math.sin(orbitAngles.phi) * Math.sin(orbitAngles.theta);
+  camera.lookAt(orbitTarget);
+}
+
+// ==================== LAMP PARAMETERS ====================
+const params = {
+  height: 120,
+  bottomR: 45,
+  topR: 35,
+  sides: 24,
+  wall: 1.5,
+  curve: 0,
+  patternType: 'solid',
+  cellSize: 8,
+  cutDepth: 0.8,
+  spiralTurns: 5,
+  innerPattern: false,
+  ribs: 0,
+  baseType: 'flat',
+  baseR: 50,
+  baseH: 8,
+  ledHole: 20,
+  topCap: 0,
+  topCapR: 30
+};
+
+let lampMesh = null;
+let lampMaterial = new THREE.MeshStandardMaterial({
+  color: 0xe8e8f0,
+  roughness: 0.3,
+  metalness: 0.1,
+  side: THREE.DoubleSide
+});
+
+// ==================== MESH GENERATION ====================
+function generateLampMesh() {
+  const geometry = new THREE.BufferGeometry();
+  const vertices = [];
+  const normals = [];
+  const indices = [];
+
+  function addTriangle(v1, v2, v3) {
+    vertices.push(...v1, ...v2, ...v3);
+    const ax = v2[0]-v1[0], ay = v2[1]-v1[1], az = v2[2]-v1[2];
+    const bx = v3[0]-v1[0], by = v3[1]-v1[1], bz = v3[2]-v1[2];
+    let nx = ay*bz - az*by, ny = az*bx - ax*bz, nz = ax*by - ay*bx;
+    const len = Math.sqrt(nx*nx + ny*ny + nz*nz) || 1;
+    nx /= len; ny /= len; nz /= len;
+    normals.push(nx,ny,nz, nx,ny,nz, nx,ny,nz);
+    const i = vertices.length / 3 - 3;
+    indices.push(i, i+1, i+2);
+  }
+
+  function getRadius(y) {
+    const t = y / params.height;
+    let r = params.bottomR + (params.topR - params.bottomR) * t;
+    // Apply curve (bulge)
+    const curve = params.curve / 1000;
+    r += Math.sin(t * Math.PI) * curve * params.height;
+    return r;
+  }
+
+  function getPatternOffset(y, angle) {
+    const t = y / params.height;
+    const cell = params.cellSize;
+    const pattern = params.patternType;
+    const depth = params.cutDepth;
+    
+    if (pattern === 'solid') return 0;
+    if (pattern === 'spiral') {
+      const spiralShift = (angle / (Math.PI*2) + t) * params.spiralTurns;
+      return Math.sin(spiralShift * Math.PI * 2) > 0 ? -depth : 0;
     }
-
-    function setupOrbitControls(container) {
-        let isDragging = false;
-        let previousMousePosition = { x: 0, y: 0 };
-        let spherical = { theta: Math.PI / 4, phi: Math.PI / 3, radius: 120 };
-        let target = new THREE.Vector3(0, 40, 0);
-        let isRightDrag = false;
-
-        function updateCamera() {
-            camera.position.x = target.x + spherical.radius * Math.sin(spherical.phi) * Math.sin(spherical.theta);
-            camera.position.y = target.y + spherical.radius * Math.cos(spherical.phi);
-            camera.position.z = target.z + spherical.radius * Math.sin(spherical.phi) * Math.cos(spherical.theta);
-            camera.lookAt(target);
-        }
-
-        updateCamera();
-
-        renderer.domElement.addEventListener('mousedown', (e) => {
-            if (e.button === 0) isDragging = true;
-            if (e.button === 2) { isRightDrag = true; isDragging = true; }
-            previousMousePosition = { x: e.clientX, y: e.clientY };
-        });
-
-        renderer.domElement.addEventListener('mousemove', (e) => {
-            if (!isDragging) return;
-            const deltaMove = {
-                x: e.clientX - previousMousePosition.x,
-                y: e.clientY - previousMousePosition.y
-            };
-
-            if (isRightDrag) {
-                const right = new THREE.Vector3();
-                const up = new THREE.Vector3();
-                camera.getWorldDirection(new THREE.Vector3());
-                right.crossVectors(camera.up, new THREE.Vector3().subVectors(camera.position, target).normalize()).normalize();
-                up.copy(camera.up);
-                const panSpeed = 0.15;
-                target.add(right.multiplyScalar(-deltaMove.x * panSpeed));
-                target.add(up.multiplyScalar(deltaMove.y * panSpeed));
-            } else {
-                spherical.theta -= deltaMove.x * 0.005;
-                spherical.phi = Math.max(0.1, Math.min(Math.PI - 0.1, spherical.phi - deltaMove.y * 0.005));
-            }
-
-            previousMousePosition = { x: e.clientX, y: e.clientY };
-            updateCamera();
-        });
-
-        renderer.domElement.addEventListener('mouseup', () => {
-            isDragging = false;
-            isRightDrag = false;
-        });
-
-        renderer.domElement.addEventListener('wheel', (e) => {
-            e.preventDefault();
-            spherical.radius = Math.max(30, Math.min(300, spherical.radius + e.deltaY * 0.15));
-            updateCamera();
-        }, { passive: false });
-
-        renderer.domElement.addEventListener('contextmenu', (e) => e.preventDefault());
-
-        // Touch support
-        let touchStartDist = 0;
-        renderer.domElement.addEventListener('touchstart', (e) => {
-            if (e.touches.length === 1) {
-                isDragging = true;
-                previousMousePosition = { x: e.touches[0].clientX, y: e.touches[0].clientY };
-            }
-            if (e.touches.length === 2) {
-                touchStartDist = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
-            }
-        });
-
-        renderer.domElement.addEventListener('touchmove', (e) => {
-            e.preventDefault();
-            if (e.touches.length === 1 && isDragging) {
-                const deltaMove = {
-                    x: e.touches[0].clientX - previousMousePosition.x,
-                    y: e.touches[0].clientY - previousMousePosition.y
-                };
-                spherical.theta -= deltaMove.x * 0.005;
-                spherical.phi = Math.max(0.1, Math.min(Math.PI - 0.1, spherical.phi - deltaMove.y * 0.005));
-                previousMousePosition = { x: e.touches[0].clientX, y: e.touches[0].clientY };
-                updateCamera();
-            }
-            if (e.touches.length === 2) {
-                const dist = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
-                spherical.radius = Math.max(30, Math.min(300, spherical.radius - (dist - touchStartDist) * 0.3));
-                touchStartDist = dist;
-                updateCamera();
-            }
-        }, { passive: false });
-
-        renderer.domElement.addEventListener('touchend', () => { isDragging = false; });
-
-        window._orbitState = { spherical, target, updateCamera };
+    if (pattern === 'hex') {
+      const ax = Math.round(angle / (Math.PI/3));
+      const ay = Math.round(t * params.height / (cell * 0.866));
+      return ((ax + ay) % 3 === 0) ? -depth : 0;
     }
-
-    function onResize() {
-        const container = document.getElementById('three-canvas');
-        const width = container.clientWidth;
-        const height = container.clientHeight;
-        camera.aspect = width / height;
-        camera.updateProjectionMatrix();
-        renderer.setSize(width, height);
+    if (pattern === 'circles') {
+      const cx = Math.round(angle * params.bottomR / cell);
+      const cy = Math.round(t * params.height / cell);
+      const localX = angle * params.bottomR - cx * cell;
+      const localY = t * params.height - cy * cell;
+      return (localX*localX + localY*localY < cell*cell*0.25) ? -depth : 0;
     }
-
-    function animate() {
-        requestAnimationFrame(animate);
-        renderer.render(scene, camera);
+    if (pattern === 'diamond') {
+      const ax = Math.round(angle / (Math.PI/4));
+      const ay = Math.round(t * params.height / cell);
+      return ((ax + ay) % 2 === 0) ? -depth : 0;
     }
-
-    // Read parameters from UI
-    function readParams() {
-        params.baseShape = document.querySelector('#tab-base .shape-btn.active')?.getAttribute('onclick')?.match(/'([^']+)'/)?.[1] || 'cylinder';
-        params.baseHeight = parseFloat(document.getElementById('baseHeight').value);
-        params.baseRadius = parseFloat(document.getElementById('baseRadius').value);
-        params.baseBevel = parseFloat(document.getElementById('baseBevel').value);
-        params.baseHollow = document.getElementById('baseHollow').checked;
-        params.baseWall = document.getElementById('baseWall').checked;
-        params.stemShape = document.querySelector('#tab-stem .shape-btn.active')?.getAttribute('onclick')?.match(/'([^']+)'/)?.[1] || 'circle';
-        params.stemHeight = parseFloat(document.getElementById('stemHeight').value);
-        params.stemRadius = parseFloat(document.getElementById('stemRadius').value);
-        params.stemCurve = parseFloat(document.getElementById('stemCurve').value);
-        params.stemSegments = parseInt(document.getElementById('stemSegments').value);
-        params.shadeShape = document.querySelector('#tab-shade .shape-btn.active')?.getAttribute('onclick')?.match(/'([^']+)'/)?.[1] || 'cone';
-        params.shadeHeight = parseFloat(document.getElementById('shadeHeight').value);
-        params.shadeRadius = parseFloat(document.getElementById('shadeRadius').value);
-        params.shadeTopHole = parseFloat(document.getElementById('shadeTopHole').value);
-        params.shadeSegments = parseInt(document.getElementById('shadeSegments').value);
-        params.shadeStyle = document.querySelector('#tab-shade .shape-btn:nth-child(4)')?.classList.contains('active') ? 'solid' :
-                           document.querySelector('#tab-shade .shape-btn:nth-child(5)')?.classList.contains('active') ? 'ribs' : 'lattice';
-        params.shadeThickness = parseFloat(document.getElementById('shadeThickness').value);
-        params.color = document.getElementById('lampColor').value;
-        params.scale = parseFloat(document.getElementById('scaleFactor').value);
-        params.detail = parseInt(document.getElementById('meshDetail').value);
-
-        // Update display values
-        document.getElementById('baseHeightVal').textContent = params.baseHeight + 'mm';
-        document.getElementById('baseRadiusVal').textContent = params.baseRadius + 'mm';
-        document.getElementById('baseBevelVal').textContent = params.baseBevel + 'mm';
-        document.getElementById('stemHeightVal').textContent = params.stemHeight + 'mm';
-        document.getElementById('stemRadiusVal').textContent = params.stemRadius + 'mm';
-        document.getElementById('stemCurveVal').textContent = params.stemCurve + 'mm';
-        document.getElementById('stemSegmentsVal').textContent = params.stemSegments;
-        document.getElementById('shadeHeightVal').textContent = params.shadeHeight + 'mm';
-        document.getElementById('shadeRadiusVal').textContent = params.shadeRadius + 'mm';
-        document.getElementById('shadeTopHoleVal').textContent = params.shadeTopHole + 'mm';
-        document.getElementById('shadeSegmentsVal').textContent = params.shadeSegments;
-        document.getElementById('shadeThicknessVal').textContent = params.shadeThickness + 'mm';
-        document.getElementById('scaleVal').textContent = params.scale.toFixed(1) + 'x';
-        document.getElementById('colorLabel').textContent = params.color.toUpperCase();
+    if (pattern === 'waves') {
+      return Math.sin(angle * 8 + t * params.spiralTurns) > 0.3 ? -depth : 0;
     }
-
-    // Build lamp geometry
-    function buildLamp() {
-        readParams();
-
-        // Clear existing
-        while (lampGroup.children.length) {
-            const child = lampGroup.children[0];
-            child.geometry?.dispose();
-            if (child.material) {
-                if (Array.isArray(child.material)) child.material.forEach(m => m.dispose());
-                else child.material.dispose();
-            }
-            lampGroup.remove(child);
-        }
-
-        const s = params.scale;
-        const material = new THREE.MeshStandardMaterial({
-            color: new THREE.Color(params.color),
-            metalness: 0.1,
-            roughness: 0.7,
-            flatShading: params.detail === 1
-        });
-
-        let totalTriangles = 0;
-
-        // Build Base
-        const baseGeo = createBaseGeometry(s);
-        const baseMesh = new THREE.Mesh(baseGeo, material.clone());
-        baseMesh.position.y = 0;
-        baseMesh.castShadow = true;
-        baseMesh.receiveShadow = true;
-        lampGroup.add(baseMesh);
-        totalTriangles += baseGeo.index ? baseGeo.index.count / 3 : baseGeo.attributes.position.count / 3;
-
-        // Build Stem
-        const stemGeo = createStemGeometry(s);
-        const stemMesh = new THREE.Mesh(stemGeo, material.clone());
-        stemMesh.position.y = params.baseHeight * s;
-        stemMesh.castShadow = true;
-        stemMesh.receiveShadow = true;
-        lampGroup.add(stemMesh);
-        totalTriangles += stemGeo.index ? stemGeo.index.count / 3 : stemGeo.attributes.position.count / 3;
-
-        // Build Shade
-        const shadeGeo = createShadeGeometry(s);
-        const shadeMesh = new THREE.Mesh(shadeGeo, material.clone());
-        shadeMesh.position.y = (params.baseHeight + params.stemHeight) * s;
-        shadeMesh.castShadow = true;
-        shadeMesh.receiveShadow = true;
-        lampGroup.add(shadeMesh);
-        totalTriangles += shadeGeo.index ? shadeGeo.index.count / 3 : shadeGeo.attributes.position.count / 3;
-
-        // Update wireframe
-        buildWireframe();
-
-        // Update stats
-        document.getElementById('triCount').textContent = Math.round(totalTriangles).toLocaleString();
-        document.getElementById('fileSize').textContent = Math.round(totalTriangles * 50 / 1024) + ' KB';
-
-        // Center the lamp vertically
-        const box = new THREE.Box3().setFromObject(lampGroup);
-        const center = box.getCenter(new THREE.Vector3());
-        lampGroup.position.y = -center.y + params.baseHeight * s / 2;
+    if (pattern === 'stars') {
+      const ax = Math.round(angle / (Math.PI/5));
+      const ay = Math.round(t * params.height / (cell * 1.2));
+      return ((ax + ay) % 3 === 0) ? -depth * 1.5 : 0;
     }
+    if (pattern === 'voronoi') {
+      const seed1 = Math.sin(angle * 3.7 + t * 7.1) * 0.5 + 0.5;
+      const seed2 = Math.cos(angle * 5.3 + t * 3.3) * 0.5 + 0.5;
+      return (seed1 + seed2 > 1.2) ? -depth : 0;
+    }
+    return 0;
+  }
 
-    function createBaseGeometry(s) {
-        const h = params.baseHeight * s;
-        const r = params.baseRadius * s;
-        const bevel = params.baseBevel * s;
-        const segments = params.detail === 1 ? 8 : params.detail === 2 ? 16 : 32;
+  const layers = Math.ceil(params.height / params.cellSize) + 1;
+  const segs = params.sides;
 
-        let shape;
-        switch (params.baseShape) {
-            case 'hexagon':
-                shape = createPolygonShape(r, 6, bevel);
-                break;
-            case 'star':
-                shape = createStarShape(r, bevel);
-                break;
-            case 'triangle':
-                shape = createPolygonShape(r, 3, bevel);
-                break;
-            default:
-                shape = createCircleShape(r, bevel, segments);
-        }
+  // Build main body
+  for (let layer = 0; layer < layers; layer++) {
+    const y0 = (layer / (layers-1)) * params.height;
+    const y1 = ((layer+1) / (layers-1)) * params.height;
+    const r0 = getRadius(y0);
+    const r1 = getRadius(y1);
+    const innerR0 = Math.max(r0 - params.wall, 1);
+    const innerR1 = Math.max(r1 - params.wall, 1);
 
-        const extrudeSettings = {
-            steps: 1,
-            depth: h,
-            bevelEnabled: bevel > 0,
-            bevelThickness: bevel * 0.5,
-            bevelSize: bevel * 0.5,
-            bevelOffset: 0,
-            bevelSegments: params.detail === 1 ? 1 : params.detail === 2 ? 2 : 4
+    for (let s = 0; s < segs; s++) {
+      const a0 = (s / segs) * Math.PI * 2;
+      const a1 = ((s+1) / segs) * Math.PI * 2;
+      
+      const po00 = getPatternOffset(y0, a0);
+      const po01 = getPatternOffset(y0, a1);
+      const po10 = getPatternOffset(y1, a0);
+      const po11 = getPatternOffset(y1, a1);
+
+      // Outer vertices
+      const ox00 = [Math.cos(a0)*(r0+po00), y0, Math.sin(a0)*(r0+po00)];
+      const ox01 = [Math.cos(a1)*(r0+po01), y0, Math.sin(a1)*(r0+po01)];
+      const ox10 = [Math.cos(a0)*(r1+po10), y1, Math.sin(a0)*(r1+po10)];
+      const ox11 = [Math.cos(a1)*(r1+po11), y1, Math.sin(a1)*(r1+po11)];
+
+      // Inner vertices
+      const ix00 = [Math.cos(a0)*innerR0, y0, Math.sin(a0)*innerR0];
+      const ix01 = [Math.cos(a1)*innerR0, y0, Math.sin(a1)*innerR0];
+      const ix10 = [Math.cos(a0)*innerR1, y1, Math.sin(a0)*innerR1];
+      const ix11 = [Math.cos(a1)*innerR1, y1, Math.sin(a1)*innerR1];
+
+      // Outer face
+      addTriangle(ox00, ox01, ox10);
+      addTriangle(ox01, ox11, ox10);
+
+      // Inner face (flipped normal)
+      addTriangle(ix10, ix01, ix00);
+      addTriangle(ix10, ix11, ix01);
+
+      // Top cap ring
+      addTriangle(ox10, ix10, ix11);
+      addTriangle(ox10, ix11, ox11);
+
+      // Bottom cap ring
+      addTriangle(ix00, ox00, ox01);
+      addTriangle(ix00, ox01, ix01);
+
+      // Side walls (connect inner to outer at each segment edge)
+      addTriangle(ox00, ix00, ix10);
+      addTriangle(ox00, ix10, ox10);
+    }
+  }
+
+  // Ribs
+  if (params.ribs > 0) {
+    for (let r = 0; r < params.ribs; r++) {
+      const angle = (r / params.ribs) * Math.PI * 2;
+      const ribH = params.height * 0.9;
+      const ribW = 2;
+      for (let layer = 0; layer < layers - 1; layer++) {
+        const y0 = (layer / (layers-1)) * params.height;
+        const y1 = ((layer+1) / (layers-1)) * params.height;
+        const r0 = getRadius(y0);
+        const r1 = getRadius(y1);
+        if (y1 > ribH) continue;
+
+        const cosA = Math.cos(angle), sinA = Math.sin(angle);
+        const addTriangle = (v1,v2,v3) => {
+          vertices.push(...v1,...v2,...v3);
+          const ax=v2[0]-v1[0],ay=v2[1]-v1[1],az=v2[2]-v1[2];
+          const bx=v3[0]-v1[0],by=v3[1]-v1[1],bz=v3[2]-v1[2];
+          let nx=ay*bz-az*by,ny=az*bx-ax*bz,nz=ax*by-ay*bx;
+          const l=Math.sqrt(nx*nx+ny*ny+nz*nz)||1;
+          nx/=l;ny/=l;nz/=l;
+          normals.push(nx,ny,nz,nx,ny,nz,nx,ny,nz);
+          const i=vertices.length/3-3;
+          indices.push(i,i+1,i+2);
         };
 
-        return new THREE.ExtrudeGeometry(shape, extrudeSettings);
+        const o0 = [cosA*(r0+ribW), y0, sinA*(r0+ribW)];
+        const o1 = [cosA*(r1+ribW), y1, sinA*(r1+ribW)];
+        const i0 = [cosA*r0, y0, sinA*r0];
+        const i1 = [cosA*r1, y1, sinA*r1];
+
+        addTriangle(i0, o0, o1);
+        addTriangle(i0, o1, i1);
+      }
     }
+  }
 
-    function createCircleShape(radius, bevel, segments) {
-        const shape = new THREE.Shape();
-        shape.absarc(0, 0, radius, 0, Math.PI * 2, false);
+  // Base
+  const baseType = params.baseType;
+  const baseR = params.baseR;
+  const baseH = params.baseH;
+  const ledR = params.ledHole / 2;
 
-        if (params.baseHollow && params.baseWall) {
-            const holeRadius = radius - 2 * s;
-            const holePath = new THREE.Path();
-            holePath.absarc(0, 0, holeRadius, 0, Math.PI * 2, true);
-            shape.holes.push(holePath);
-        }
+  if (baseType === 'flat') {
+    // Flat base cylinder
+    const baseSegs = segs;
+    for (let s = 0; s < baseSegs; s++) {
+      const a0 = (s / baseSegs) * Math.PI * 2;
+      const a1 = ((s+1) / baseSegs) * Math.PI * 2;
+      const addTriangle = (v1,v2,v3) => {
+        vertices.push(...v1,...v2,...v3);
+        const ax=v2[0]-v1[0],ay=v2[1]-v1[1],az=v2[2]-v1[2];
+        const bx=v3[0]-v1[0],by=v3[1]-v1[1],bz=v3[2]-v1[2];
+        let nx=ay*bz-az*by,ny=az*bx-ax*bz,nz=ax*by-ay*bx;
+        const l=Math.sqrt(nx*nx+ny*ny+nz*nz)||1;
+        nx/=l;ny/=l;nz/=l;
+        normals.push(nx,ny,nz,nx,ny,nz,nx,ny,nz);
+        const i=vertices.length/3-3;
+        indices.push(i,i+1,i+2);
+      };
 
-        return shape;
+      // Top face
+      addTriangle([0,0,0],[Math.cos(a0)*baseR,0,Math.sin(a0)*baseR],[Math.cos(a1)*baseR,0,Math.sin(a1)*baseR]);
+      // Side
+      addTriangle([Math.cos(a0)*baseR,0,Math.sin(a0)*baseR],[Math.cos(a0)*baseR,-baseH,Math.sin(a0)*baseR],[Math.cos(a1)*baseR,-baseH,Math.sin(a1)*baseR]);
+      addTriangle([Math.cos(a0)*baseR,0,Math.sin(a0)*baseR],[Math.cos(a1)*baseR,-baseH,Math.sin(a1)*baseR],[Math.cos(a1)*baseR,0,Math.sin(a1)*baseR]);
+      // Bottom
+      addTriangle([0,-baseH,0],[Math.cos(a1)*baseR,-baseH,Math.sin(a1)*baseR],[Math.cos(a0)*baseR,-baseH,Math.sin(a0)*baseR]);
     }
+  } else if (baseType === 'rounded') {
+    // Rounded base
+    const steps = 6;
+    for (let step = 0; step < steps; step++) {
+      const t0 = step / steps;
+      const t1 = (step+1) / steps;
+      const r0 = baseR * (1 - t0 * 0.3);
+      const r1 = baseR * (1 - t1 * 0.3);
+      const y0 = -baseH * t0;
+      const y1 = -baseH * t1;
+      
+      for (let s = 0; s < segs; s++) {
+        const a0 = (s / segs) * Math.PI * 2;
+        const a1 = ((s+1) / segs) * Math.PI * 2;
+        const addTriangle = (v1,v2,v3) => {
+          vertices.push(...v1,...v2,...v3);
+          const ax=v2[0]-v1[0],ay=v2[1]-v1[1],az=v2[2]-v1[2];
+          const bx=v3[0]-v1[0],by=v3[1]-v1[1],bz=v3[2]-v1[2];
+          let nx=ay*bz-az*by,ny=az*bx-ax*bz,nz=ax*by-ay*bx;
+          const l=Math.sqrt(nx*nx+ny*ny+nz*nz)||1;
+          nx/=l;ny/=l;nz/=l;
+          normals.push(nx,ny,nz,nx,ny,nz,nx,ny,nz);
+          const i=vertices.length/3-3;
+          indices.push(i,i+1,i+2);
+        };
 
-    function createPolygonShape(radius, sides, bevel) {
-        const shape = new THREE.Shape();
-        const angleStep = (Math.PI * 2) / sides;
-
-        for (let i = 0; i < sides; i++) {
-            const angle = i * angleStep - Math.PI / 2;
-            const x = radius * Math.cos(angle);
-            const y = radius * Math.sin(angle);
-            if (i === 0) shape.moveTo(x, y);
-            else shape.lineTo(x, y);
-        }
-        shape.closePath();
-
-        if (params.baseHollow && params.baseWall) {
-            const innerR = radius - 2 * s;
-            const holePath = new THREE.Path();
-            for (let i = 0; i < sides; i++) {
-                const angle = i * angleStep - Math.PI / 2;
-                const x = innerR * Math.cos(angle);
-                const y = innerR * Math.sin(angle);
-                if (i === 0) holePath.moveTo(x, y);
-                else holePath.lineTo(x, y);
-            }
-            holePath.closePath();
-            shape.holes.push(holePath);
-        }
-
-        return shape;
+        addTriangle([Math.cos(a0)*r0,y0,Math.sin(a0)*r0],[Math.cos(a1)*r0,y0,Math.sin(a1)*r0],[Math.cos(a0)*r1,y1,Math.sin(a0)*r1]);
+        addTriangle([Math.cos(a1)*r0,y0,Math.sin(a1)*r0],[Math.cos(a1)*r1,y1,Math.sin(a1)*r1],[Math.cos(a0)*r1,y1,Math.sin(a0)*r1]);
+      }
     }
-
-    function createStarShape(radius, bevel) {
-        const shape = new THREE.Shape();
-        const points = 5;
-        const innerR = radius * 0.5;
-
-        for (let i = 0; i < points * 2; i++) {
-            const angle = (i * Math.PI) / points - Math.PI / 2;
-            const r = i % 2 === 0 ? radius : innerR;
-            const x = r * Math.cos(angle);
-            const y = r * Math.sin(angle);
-            if (i === 0) shape.moveTo(x, y);
-            else shape.lineTo(x, y);
-        }
-        shape.closePath();
-
-        if (params.baseHollow && params.baseWall) {
-            const holePath = new THREE.Path();
-            for (let i = 0; i < points * 2; i++) {
-                const angle = (i * Math.PI) / points - Math.PI / 2;
-                const r = i % 2 === 0 ? radius - 2*s : innerR - 1*s;
-                const x = r * Math.cos(angle);
-                const y = r * Math.sin(angle);
-                if (i === 0) holePath.moveTo(x, y);
-                else holePath.lineTo(x, y);
-            }
-            holePath.closePath();
-            shape.holes.push(holePath);
-        }
-
-        return shape;
+    // Bottom cap
+    for (let s = 0; s < segs; s++) {
+      const a0 = (s / segs) * Math.PI * 2;
+      const a1 = ((s+1) / segs) * Math.PI * 2;
+      const addTriangle = (v1,v2,v3) => {
+        vertices.push(...v1,...v2,...v3);
+        normals.push(0,-1,0,0,-1,0,0,-1,0);
+        const i=vertices.length/3-3;
+        indices.push(i,i+1,i+2);
+      };
+      const r = baseR * 0.7;
+      addTriangle([0,-baseH,0],[Math.cos(a1)*r,-baseH,Math.sin(a1)*r],[Math.cos(a0)*r,-baseH,Math.sin(a0)*r]);
     }
+  } else if (baseType === 'flared') {
+    // Flared base - wider at bottom
+    const bottomR = baseR * 1.4;
+    for (let s = 0; s < segs; s++) {
+      const a0 = (s / segs) * Math.PI * 2;
+      const a1 = ((s+1) / segs) * Math.PI * 2;
+      const addTriangle = (v1,v2,v3) => {
+        vertices.push(...v1,...v2,...v3);
+        const ax=v2[0]-v1[0],ay=v2[1]-v1[1],az=v2[2]-v1[2];
+        const bx=v3[0]-v1[0],by=v3[1]-v1[1],bz=v3[2]-v1[2];
+        let nx=ay*bz-az*by,ny=az*bx-ax*bz,nz=ax*by-ay*bx;
+        const l=Math.sqrt(nx*nx+ny*ny+nz*nz)||1;
+        nx/=l;ny/=l;nz/=l;
+        normals.push(nx,ny,nz,nx,ny,nz,nx,ny,nz);
+        const i=vertices.length/3-3;
+        indices.push(i,i+1,i+2);
+      };
 
-    function createStemGeometry(s) {
-        const h = params.stemHeight * s;
-        const r = params.stemRadius * s;
-        const segments = params.stemSegments;
-        const curve = params.stemCurve * s;
-        const radialSegments = params.detail === 1 ? 6 : params.detail === 2 ? 12 : 24;
-
-        if (curve > 0) {
-            // Curved stem using TubeGeometry
-            const points = [];
-            const steps = 20;
-            for (let i = 0; i <= steps; i++) {
-                const t = i / steps;
-                const x = curve * Math.sin(t * Math.PI);
-                const y = t * h;
-                const z = 0;
-                points.push(new THREE.Vector3(x, y, z));
-            }
-            const path = new THREE.CatmullRomCurve3(points);
-
-            let stemShape;
-            if (params.stemShape === 'circle') {
-                stemShape = new THREE.Shape();
-                stemShape.absarc(0, 0, r, 0, Math.PI * 2, false);
-            } else if (params.stemShape === 'square') {
-                stemShape = new THREE.Shape();
-                stemShape.moveTo(-r, -r);
-                stemShape.lineTo(r, -r);
-                stemShape.lineTo(r, r);
-                stemShape.lineTo(-r, r);
-                stemShape.closePath();
-            } else {
-                stemShape = new THREE.Shape();
-                const hexR = r;
-                for (let i = 0; i < 6; i++) {
-                    const angle = (i * Math.PI) / 3;
-                    const x = hexR * Math.cos(angle);
-                    const y = hexR * Math.sin(angle);
-                    if (i === 0) stemShape.moveTo(x, y);
-                    else stemShape.lineTo(x, y);
-                }
-                stemShape.closePath();
-            }
-
-            return new THREE.ExtrudeGeometry(stemShape, {
-                steps: steps,
-                extrudePath: path,
-                bevelEnabled: false
-            });
-        } else {
-            // Straight stem
-            if (params.stemShape === 'circle') {
-                return new THREE.CylinderGeometry(r, r, h, radialSegments, 1, false);
-            } else if (params.stemShape === 'square') {
-                return new THREE.BoxGeometry(r * 2, h, r * 2, 1, 1, 1);
-            } else {
-                // Hexagonal
-                return new THREE.CylinderGeometry(r, r, h, 6, 1, false);
-            }
-        }
+      // Top
+      addTriangle([0,0,0],[Math.cos(a0)*baseR,0,Math.sin(a0)*baseR],[Math.cos(a1)*baseR,0,Math.sin(a1)*baseR]);
+      // Side
+      addTriangle([Math.cos(a0)*baseR,0,Math.sin(a0)*baseR],[Math.cos(a0)*bottomR,-baseH,Math.sin(a0)*bottomR],[Math.cos(a1)*bottomR,-baseH,Math.sin(a1)*bottomR]);
+      addTriangle([Math.cos(a0)*baseR,0,Math.sin(a0)*baseR],[Math.cos(a1)*bottomR,-baseH,Math.sin(a1)*bottomR],[Math.cos(a1)*baseR,0,Math.sin(a1)*baseR]);
+      // Bottom
+      addTriangle([0,-baseH,0],[Math.cos(a1)*bottomR,-baseH,Math.sin(a1)*bottomR],[Math.cos(a0)*bottomR,-baseH,Math.sin(a0)*bottomR]);
     }
+  } else if (baseType === 'ring') {
+    // Ring base
+    const ringInner = baseR * 0.6;
+    for (let s = 0; s < segs; s++) {
+      const a0 = (s / segs) * Math.PI * 2;
+      const a1 = ((s+1) / segs) * Math.PI * 2;
+      const addTriangle = (v1,v2,v3) => {
+        vertices.push(...v1,...v2,...v3);
+        const ax=v2[0]-v1[0],ay=v2[1]-v1[1],az=v2[2]-v1[2];
+        const bx=v3[0]-v1[0],by=v3[1]-v1[1],bz=v3[2]-v1[2];
+        let nx=ay*bz-az*by,ny=az*bx-ax*bz,nz=ax*by-ay*bx;
+        const l=Math.sqrt(nx*nx+ny*ny+nz*nz)||1;
+        nx/=l;ny/=l;nz/=l;
+        normals.push(nx,ny,nz,nx,ny,nz,nx,ny,nz);
+        const i=vertices.length/3-3;
+        indices.push(i,i+1,i+2);
+      };
 
-    function createShadeGeometry(s) {
-        const h = params.shadeHeight * s;
-        const r = params.shadeRadius * s;
-        const topHole = params.shadeTopHole * s;
-        const segCount = params.shadeSegments;
-        const radialSegments = params.detail === 1 ? 8 : params.detail === 2 ? 16 : 32;
-        const thickness = params.shadeThickness * s;
-
-        switch (params.shadeShape) {
-            case 'cone':
-                return createConeShade(r, topHole, h, segCount, thickness, radialSegments);
-            case 'cylinder':
-                return createCylinderShade(r, h, segCount, thickness, radialSegments);
-            case 'sphere':
-                return createSphereShade(r, h, segCount, thickness, radialSegments);
-            case 'geodesic':
-                return createGeodesicShade(r, h, segCount, thickness);
-            default:
-                return createConeShade(r, topHole, h, segCount, thickness, radialSegments);
-        }
+      // Top ring
+      addTriangle([Math.cos(a0)*ringInner,0,Math.sin(a0)*ringInner],[Math.cos(a1)*ringInner,0,Math.sin(a1)*ringInner],[Math.cos(a0)*baseR,0,Math.sin(a0)*baseR]);
+      addTriangle([Math.cos(a1)*ringInner,0,Math.sin(a1)*ringInner],[Math.cos(a1)*baseR,0,Math.sin(a1)*baseR],[Math.cos(a0)*baseR,0,Math.sin(a0)*baseR]);
+      // Outer side
+      addTriangle([Math.cos(a0)*baseR,0,Math.sin(a0)*baseR],[Math.cos(a0)*baseR,-baseH,Math.sin(a0)*baseR],[Math.cos(a1)*baseR,-baseH,Math.sin(a1)*baseR]);
+      addTriangle([Math.cos(a0)*baseR,0,Math.sin(a0)*baseR],[Math.cos(a1)*baseR,-baseH,Math.sin(a1)*baseR],[Math.cos(a1)*baseR,0,Math.sin(a1)*baseR]);
+      // Inner side
+      addTriangle([Math.cos(a0)*ringInner,-baseH,Math.sin(a0)*ringInner],[Math.cos(a0)*ringInner,0,Math.sin(a0)*ringInner],[Math.cos(a1)*ringInner,0,Math.sin(a1)*ringInner]);
+      addTriangle([Math.cos(a0)*ringInner,-baseH,Math.sin(a0)*ringInner],[Math.cos(a1)*ringInner,0,Math.sin(a1)*ringInner],[Math.cos(a1)*ringInner,-baseH,Math.sin(a1)*ringInner]);
+      // Bottom ring
+      addTriangle([Math.cos(a0)*ringInner,-baseH,Math.sin(a0)*ringInner],[Math.cos(a1)*baseR,-baseH,Math.sin(a1)*baseR],[Math.cos(a0)*baseR,-baseH,Math.sin(a0)*baseR]);
+      addTriangle([Math.cos(a0)*ringInner,-baseH,Math.sin(a0)*ringInner],[Math.cos(a1)*ringInner,-baseH,Math.sin(a1)*ringInner],[Math.cos(a1)*baseR,-baseH,Math.sin(a1)*baseR]);
     }
+  }
 
-    function createConeShade(bottomR, topR, height, segments, thickness, radialSegs) {
-        // Create a truncated cone (frustum) shade
-        if (params.shadeStyle === 'solid') {
-            const geo = new THREE.LatheGeometry(createShadeProfile(bottomR, topR, height, thickness), radialSegs);
-            return geo;
-        } else if (params.shadeStyle === 'ribs') {
-            return createRibbedCone(bottomR, topR, height, segments, thickness);
-        } else {
-            return createLatticeCone(bottomR, topR, height, segments, thickness);
-        }
+  // LED hole
+  if (ledR > 0) {
+    const ledSegs = 12;
+    for (let s = 0; s < ledSegs; s++) {
+      const a0 = (s / ledSegs) * Math.PI * 2;
+      const a1 = ((s+1) / ledSegs) * Math.PI * 2;
+      const addTriangle = (v1,v2,v3) => {
+        vertices.push(...v1,...v2,...v3);
+        const ax=v2[0]-v1[0],ay=v2[1]-v1[1],az=v2[2]-v1[2];
+        const bx=v3[0]-v1[0],by=v3[1]-v1[1],bz=v3[2]-v1[2];
+        let nx=ay*bz-az*by,ny=az*bx-ax*bz,nz=ax*by-ay*bx;
+        const l=Math.sqrt(nx*nx+ny*ny+nz*nz)||1;
+        nx/=l;ny/=l;nz/=l;
+        normals.push(nx,ny,nz,nx,ny,nz,nx,ny,nz);
+        const i=vertices.length/3-3;
+        indices.push(i,i+1,i+2);
+      };
+      // Inner wall of LED hole
+      addTriangle([Math.cos(a0)*ledR,-0.1,Math.sin(a0)*ledR],[Math.cos(a0)*ledR,-baseH*0.8,Math.sin(a0)*ledR],[Math.cos(a1)*ledR,-baseH*0.8,Math.sin(a1)*ledR]);
+      addTriangle([Math.cos(a0)*ledR,-0.1,Math.sin(a0)*ledR],[Math.cos(a1)*ledR,-baseH*0.8,Math.sin(a1)*ledR],[Math.cos(a1)*ledR,-0.1,Math.sin(a1)*ledR]);
     }
+  }
 
-    function createShadeProfile(bottomR, topR, height, thickness) {
-        const points = [];
-        // Outer profile
-        points.push(new THREE.Vector2(bottomR, 0));
-        points.push(new THREE.Vector2(topR, height));
-        // Top edge
-        if (topR > 0.1) {
-            points.push(new THREE.Vector2(topR - thickness, height));
-        }
-        // Inner profile (going down)
-        points.push(new THREE.Vector2(Math.max(bottomR - thickness, topR - thickness + (bottomR - topR) * (height / height)), 0));
-        return points;
+  // Top cap
+  if (params.topCap === 1) {
+    const capR = params.topCapR;
+    const capH = 5;
+    for (let s = 0; s < segs; s++) {
+      const a0 = (s / segs) * Math.PI * 2;
+      const a1 = ((s+1) / segs) * Math.PI * 2;
+      const addTriangle = (v1,v2,v3) => {
+        vertices.push(...v1,...v2,...v3);
+        const ax=v2[0]-v1[0],ay=v2[1]-v1[1],az=v2[2]-v1[2];
+        const bx=v3[0]-v1[0],by=v3[1]-v1[1],bz=v3[2]-v1[2];
+        let nx=ay*bz-az*by,ny=az*bx-ax*bz,nz=ax*by-ay*bx;
+        const l=Math.sqrt(nx*nx+ny*ny+nz*nz)||1;
+        nx/=l;ny/=l;nz/=l;
+        normals.push(nx,ny,nz,nx,ny,nz,nx,ny,nz);
+        const i=vertices.length/3-3;
+        indices.push(i,i+1,i+2);
+      };
+      const tr = getRadius(params.height);
+      // Cap side
+      addTriangle([Math.cos(a0)*tr,params.height,Math.sin(a0)*tr],[Math.cos(a0)*capR,params.height+capH,Math.sin(a0)*capR],[Math.cos(a1)*capR,params.height+capH,Math.sin(a1)*capR]);
+      addTriangle([Math.cos(a0)*tr,params.height,Math.sin(a0)*tr],[Math.cos(a1)*capR,params.height+capH,Math.sin(a1)*capR],[Math.cos(a1)*tr,params.height,Math.sin(a1)*tr]);
+      // Cap top
+      addTriangle([0,params.height+capH,0],[Math.cos(a1)*capR,params.height+capH,Math.sin(a1)*capR],[Math.cos(a0)*capR,params.height+capH,Math.sin(a0)*capR]);
     }
+  }
 
-    function createRibbedCone(bottomR, topR, height, segments, thickness) {
-        const group = new THREE.BufferGeometry();
-        const positions = [];
-        const normals = [];
-        const indices = [];
-        let idx = 0;
+  geometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
+  geometry.setAttribute('normal', new THREE.Float32BufferAttribute(normals, 3));
+  geometry.setIndex(indices);
+  geometry.computeBoundingSphere();
 
-        const ribCount = segments;
-        const horizontalRings = 4;
+  return geometry;
+}
 
-        for (let ring = 0; ring <= horizontalRings; ring++) {
-            const t = ring / horizontalRings;
-            const y = t * height;
-            const currentR = bottomR + (topR - bottomR) * t;
-            const currentRInner = currentR - thickness;
+// ==================== UPDATE LAMP ====================
+function updateLamp() {
+  if (lampMesh) {
+    scene.remove(lampMesh);
+    lampMesh.geometry.dispose();
+  }
 
-            for (let i = 0; i < ribCount; i++) {
-                const angle = (i / ribCount) * Math.PI * 2;
+  const geo = generateLampMesh();
+  lampMesh = new THREE.Mesh(geo, lampMaterial);
+  lampMesh.castShadow = true;
+  lampMesh.receiveShadow = true;
+  scene.add(lampMesh);
 
-                if (i === 0) {
-                    // Outer point
-                    positions.push(currentR * Math.cos(angle), y, currentR * Math.sin(angle));
-                    normals.push(Math.cos(angle), 0, Math.sin(angle));
-                    idx++;
+  // Update info
+  const triCount = geo.index ? geo.index.count / 3 : geo.attributes.position.count / 3;
+  const vol = (params.bottomR * params.bottomR * Math.PI * params.height / 1000).toFixed(1);
+  document.getElementById('info-text').textContent = `Граней: ~${Math.round(triCount)} | Объём: ~${vol} см³`;
 
-                    // Inner point
-                    positions.push(currentRInner * Math.cos(angle), y, currentRInner * Math.sin(angle));
-                    normals.push(-Math.cos(angle), 0, -Math.sin(angle));
-                    idx++;
-                } else {
-                    const prevAngle = ((i - 1) / ribCount) * Math.PI * 2;
-                    const midAngle = ((i - 0.5) / ribCount) * Math.PI * 2;
+  // Update inner glow position
+  innerGlow.position.y = params.height * 0.4;
+  innerGlow.intensity = 0.5 + Math.sin(Date.now() * 0.002) * 0.2;
+}
 
-                    // Outer point
-                    positions.push(currentR * Math.cos(angle), y, currentR * Math.sin(angle));
-                    normals.push(Math.cos(angle), 0, Math.sin(angle));
-                    idx++;
+// ==================== PARAMETER UPDATES ====================
+function updateParam(name, value) {
+  value = parseFloat(value) || value;
+  params[name] = value;
+  
+  // Update displays
+  const displayMap = {
+    'height': 'val-height', 'bottomR': 'val-bottomR', 'topR': 'val-topR',
+    'sides': 'val-sides', 'wall': 'val-wall', 'curve': 'val-curve',
+    'cellSize': 'val-cell', 'cutDepth': 'val-cutDepth', 'spiralTurns': 'val-spiral',
+    'ribs': 'val-ribs', 'baseR': 'val-baseR', 'baseH': 'val-baseH',
+    'ledHole': 'val-ledHole', 'topCap': 'val-topCap', 'topCapR': 'val-topCapR'
+  };
+  if (displayMap[name]) {
+    document.getElementById(displayMap[name]).textContent = value;
+  }
 
-                    // Inner point
-                    positions.push(currentRInner * Math.cos(angle), y, currentRInner * Math.sin(angle));
-                    normals.push(-Math.cos(angle), 0, -Math.sin(angle));
-                    idx++;
+  updateLamp();
+}
 
-                    // Bottom face triangles
-                    if (ring === 0) {
-                        const prevIdx = idx - 4;
-                        indices.push(prevIdx, prevIdx + 1, idx - 1);
-                        indices.push(prevIdx, idx - 1, idx - 2);
-                    }
+// ==================== TABS ====================
+function switchTab(tabName, btn) {
+  document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+  document.getElementById('tab-' + tabName).classList.remove('hidden');
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+}
 
-                    // Vertical faces
-                    if (ring > 0) {
-                        const a = idx - 4;
-                        const b = idx - 3;
-                        const c = idx - 2;
-                        const d = idx - 1;
-                        indices.push(a, b, c);
-                        indices.push(b, c, d);
-                    }
-                }
-            }
-        }
+// ==================== PRESETS ====================
+const presets = {
+  classic: { height: 120, bottomR: 45, topR: 35, sides: 24, wall: 1.5, curve: 15, patternType: 'solid', cellSize: 8, cutDepth: 0.8, spiralTurns: 5, innerPattern: false, ribs: 0, baseType: 'flat', baseR: 50, baseH: 8, ledHole: 20, topCap: 1, topCapR: 30 },
+  spiral: { height: 150, bottomR: 40, topR: 40, sides: 32, wall: 2, curve: 0, patternType: 'spiral', cellSize: 6, cutDepth: 1.0, spiralTurns: 8, innerPattern: false, ribs: 0, baseType: 'rounded', baseR: 55, baseH: 10, ledHole: 25, topCap: 0, topCapR: 30 },
+  voronoi: { height: 140, bottomR: 50, topR: 30, sides: 24, wall: 2, curve: 10, patternType: 'voronoi', cellSize: 12, cutDepth: 1.2, spiralTurns: 5, innerPattern: true, ribs: 0, baseType: 'flared', baseR: 60, baseH: 12, ledHole: 20, topCap: 1, topCapR: 25 },
+  geometric: { height: 100, bottomR: 45, topR: 45, sides: 6, wall: 1.5, curve: 0, patternType: 'hex', cellSize: 10, cutDepth: 0.8, spiralTurns: 5, innerPattern: false, ribs: 6, baseType: 'flat', baseR: 55, baseH: 6, ledHole: 20, topCap: 0, topCapR: 30 },
+  flower: { height: 130, bottomR: 35, topR: 55, sides: 32, wall: 1.2, curve: 30, patternType: 'waves', cellSize: 7, cutDepth: 0.6, spiralTurns: 3, innerPattern: true, ribs: 0, baseType: 'rounded', baseR: 45, baseH: 8, ledHole: 18, topCap: 0, topCapR: 30 },
+  modern: { height: 160, bottomR: 30, topR: 30, sides: 48, wall: 1.0, curve: 0, patternType: 'circles', cellSize: 8, cutDepth: 0.5, spiralTurns: 5, innerPattern: false, ribs: 0, baseType: 'ring', baseR: 40, baseH: 5, ledHole: 15, topCap: 1, topCapR: 25 },
+  tube: { height: 200, bottomR: 25, topR: 25, sides: 24, wall: 1.5, curve: 0, patternType: 'spiral', cellSize: 4, cutDepth: 0.4, spiralTurns: 15, innerPattern: false, ribs: 0, baseType: 'flat', baseR: 35, baseH: 6, ledHole: 20, topCap: 0, topCapR: 20 },
+  lantern: { height: 110, bottomR: 55, topR: 40, sides: 8, wall: 2, curve: 5, patternType: 'diamond', cellSize: 10, cutDepth: 1.0, spiralTurns: 5, innerPattern: false, ribs: 8, baseType: 'flared', baseR: 65, baseH: 12, ledHole: 22, topCap: 1, topCapR: 35 }
+};
 
-        const geo = new THREE.BufferGeometry();
-        geo.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
-        geo.setAttribute('normal', new THREE.Float32BufferAttribute(normals, 3));
-        geo.setIndex(indices);
-        return geo;
+function applyPreset(name) {
+  const p = presets[name];
+  if (!p) return;
+  Object.assign(params, p);
+  
+  // Update all UI elements
+  document.getElementById('lampHeight').value = p.height;
+  document.getElementById('val-height').textContent = p.height;
+  document.getElementById('bottomRadius').value = p.bottomR;
+  document.getElementById('val-bottomR').textContent = p.bottomR;
+  document.getElementById('topRadius').value = p.topR;
+  document.getElementById('val-topR').textContent = p.topR;
+  document.getElementById('sides').value = p.sides;
+  document.getElementById('val-sides').textContent = p.sides;
+  document.getElementById('wallThickness').value = p.wall;
+  document.getElementById('val-wall').textContent = p.wall;
+  document.getElementById('curvature').value = p.curve;
+  document.getElementById('val-curve').textContent = p.curve;
+  document.getElementById('patternType').value = p.patternType;
+  document.getElementById('cellSize').value = p.cellSize;
+  document.getElementById('val-cell').textContent = p.cellSize;
+  document.getElementById('cutDepth').value = p.cutDepth;
+  document.getElementById('val-cutDepth').textContent = p.cutDepth;
+  document.getElementById('spiralTurns').value = p.spiralTurns;
+  document.getElementById('val-spiral').textContent = p.spiralTurns;
+  document.getElementById('ribs').value = p.ribs;
+  document.getElementById('val-ribs').textContent = p.ribs;
+  document.getElementById('baseType').value = p.baseType;
+  document.getElementById('baseRadius').value = p.baseR;
+  document.getElementById('val-baseR').textContent = p.baseR;
+  document.getElementById('baseHeight').value = p.baseH;
+  document.getElementById('val-baseH').textContent = p.baseH;
+  document.getElementById('ledHole').value = p.ledHole;
+  document.getElementById('val-ledHole').textContent = p.ledHole;
+  document.getElementById('topCap').value = p.topCap;
+  document.getElementById('val-topCap').textContent = p.topCap;
+  document.getElementById('topCapRadius').value = p.topCapR;
+  document.getElementById('val-topCapR').textContent = p.topCapR;
+
+  // Update active preset button
+  document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
+  event.target.classList.add('active');
+
+  updateLamp();
+}
+
+// ==================== RANDOMIZE ====================
+function randomize() {
+  const patternTypes = ['solid','spiral','hex','circles','diamond','waves','stars','voronoi'];
+  const baseTypes = ['flat','rounded','flared','ring'];
+  
+  params.height = 60 + Math.random() * 180;
+  params.bottomR = 20 + Math.random() * 50;
+  params.topR = 15 + Math.random() * 55;
+  params.sides = Math.floor(4 + Math.random() * 40);
+  params.wall = 0.8 + Math.random() * 3;
+  params.curve = -30 + Math.random() * 60;
+  params.patternType = patternTypes[Math.floor(Math.random() * patternTypes.length)];
+  params.cellSize = 3 + Math.random() * 15;
+  params.cutDepth = 0.3 + Math.random() * 1.2;
+  params.spiralTurns = 1 + Math.random() * 15;
+  params.ribs = Math.floor(Math.random() * 8);
+  params.baseType = baseTypes[Math.floor(Math.random() * baseTypes.length)];
+  params.baseR = 25 + Math.random() * 55;
+  params.baseH = 4 + Math.random() * 15;
+  params.ledHole = Math.random() > 0.3 ? 10 + Math.random() * 30 : 0;
+  params.topCap = Math.random() > 0.5 ? 1 : 0;
+  params.topCapR = 15 + Math.random() * 40;
+
+  // Update UI
+  document.getElementById('lampHeight').value = params.height;
+  document.getElementById('val-height').textContent = Math.round(params.height);
+  document.getElementById('bottomRadius').value = params.bottomR;
+  document.getElementById('val-bottomR').textContent = Math.round(params.bottomR);
+  document.getElementById('topRadius').value = params.topR;
+  document.getElementById('val-topR').textContent = Math.round(params.topR);
+  document.getElementById('sides').value = params.sides;
+  document.getElementById('val-sides').textContent = params.sides;
+  document.getElementById('wallThickness').value = params.wall;
+  document.getElementById('val-wall').textContent = params.wall.toFixed(1);
+  document.getElementById('curvature').value = params.curve;
+  document.getElementById('val-curve').textContent = Math.round(params.curve);
+  document.getElementById('patternType').value = params.patternType;
+  document.getElementById('cellSize').value = params.cellSize;
+  document.getElementById('val-cell').textContent = Math.round(params.cellSize);
+  document.getElementById('cutDepth').value = params.cutDepth;
+  document.getElementById('val-cutDepth').textContent = params.cutDepth.toFixed(1);
+  document.getElementById('spiralTurns').value = params.spiralTurns;
+  document.getElementById('val-spiral').textContent = Math.round(params.spiralTurns);
+  document.getElementById('ribs').value = params.ribs;
+  document.getElementById('val-ribs').textContent = params.ribs;
+  document.getElementById('baseType').value = params.baseType;
+  document.getElementById('baseRadius').value = params.baseR;
+  document.getElementById('val-baseR').textContent = Math.round(params.baseR);
+  document.getElementById('baseHeight').value = params.baseH;
+  document.getElementById('val-baseH').textContent = Math.round(params.baseH);
+  document.getElementById('ledHole').value = params.ledHole;
+  document.getElementById('val-ledHole').textContent = Math.round(params.ledHole);
+  document.getElementById('topCap').value = params.topCap;
+  document.getElementById('val-topCap').textContent = params.topCap;
+  document.getElementById('topCapRadius').value = params.topCapR;
+  document.getElementById('val-topCapR').textContent = Math.round(params.topCapR);
+
+  document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
+  updateLamp();
+}
+
+function resetParams() {
+  applyPreset('classic');
+  document.getElementById('lampHeight').value = 120;
+  document.getElementById('bottomRadius').value = 45;
+  document.getElementById('topRadius').value = 35;
+  document.getElementById('sides').value = 24;
+  document.getElementById('wallThickness').value = 1.5;
+  document.getElementById('curvature').value = 0;
+  document.getElementById('patternType').value = 'solid';
+  document.getElementById('cellSize').value = 8;
+  document.getElementById('cutDepth').value = 0.8;
+  document.getElementById('spiralTurns').value = 5;
+  document.getElementById('ribs').value = 0;
+  document.getElementById('baseType').value = 'flat';
+  document.getElementById('baseRadius').value = 50;
+  document.getElementById('baseHeight').value = 8;
+  document.getElementById('ledHole').value = 20;
+  document.getElementById('topCap').value = 0;
+  document.getElementById('topCapRadius').value = 30;
+  
+  params.height = 120; params.bottomR = 45; params.topR = 35; params.sides = 24;
+  params.wall = 1.5; params.curve = 0; params.patternType = 'solid'; params.cellSize = 8;
+  params.cutDepth = 0.8; params.spiralTurns = 5; params.ribs = 0;
+  params.baseType = 'flat'; params.baseR = 50; params.baseH = 8;
+  params.ledHole = 20; params.topCap = 0; params.topCapR = 30;
+  params.innerPattern = false;
+  
+  updateLamp();
+}
+
+// ==================== STL EXPORT ====================
+function exportSTL() {
+  const geo = generateLampMesh();
+  const positions = geo.attributes.position.array;
+  const normals = geo.attributes.normal.array;
+  const index = geo.index ? geo.index.array : null;
+  
+  let numTriangles = index ? index.length / 3 : positions.length / 9;
+  
+  // Binary STL
+  const buffer = new ArrayBuffer(84 + numTriangles * 50);
+  const view = new DataView(buffer);
+  
+  // Header (80 bytes)
+  const header = 'LampGenerator3D';
+  for (let i = 0; i < 80; i++) {
+    view.setUint8(i, i < header.length ? header.charCodeAt(i) : 0);
+  }
+  
+  // Number of triangles
+  view.setUint32(80, numTriangles, true);
+  
+  let offset = 84;
+  
+  for (let i = 0; i < numTriangles; i++) {
+    let i0, i1, i2;
+    if (index) {
+      i0 = index[i*3]; i1 = index[i*3+1]; i2 = index[i*3+2];
+    } else {
+      i0 = i*3; i1 = i*3+1; i2 = i*3+2;
     }
-
-    function createLatticeCone(bottomR, topR, height, segments, thickness) {
-        const group = new THREE.BufferGeometry();
-        const positions = [];
-        const normals = [];
-        const indices = [];
-        let idx = 0;
-
-        const verticalRibs = segments;
-        const horizontalRings = 5;
-        const ribWidth = thickness;
-
-        // Create horizontal rings as thin cylinders
-        for (let ring = 0; ring <= horizontalRings; ring++) {
-            const t = ring / horizontalRings;
-            const y = t * height;
-            const currentR = bottomR + (topR - bottomR) * t;
-            const ringSegs = 24;
-
-            for (let i = 0; i < ringSegs; i++) {
-                const angle = (i / ringSegs) * Math.PI * 2;
-                const nextAngle = ((i + 1) / ringSegs) * Math.PI * 2;
-
-                const ox1 = currentR * Math.cos(angle);
-                const oz1 = currentR * Math.sin(angle);
-                const ox2 = currentR * Math.cos(nextAngle);
-                const oz2 = currentR * Math.sin(nextAngle);
-
-                const ix1 = (currentR - ribWidth) * Math.cos(angle);
-                const iz1 = (currentR - ribWidth) * Math.sin(angle);
-                const ix2 = (currentR - ribWidth) * Math.cos(nextAngle);
-                const iz2 = (currentR - ribWidth) * Math.sin(nextAngle);
-
-                positions.push(ox1, y, oz1, ix1, y, iz1, ox2, y, oz2, ix2, y, iz2);
-                const n = ringSegs;
-                normals.push(Math.cos(angle), 0, Math.sin(angle), -Math.cos(angle), 0, -Math.sin(angle), Math.cos(angle), 0, Math.sin(angle), -Math.cos(angle), 0, -Math.sin(angle));
-
-                indices.push(idx, idx + 1, idx + 2, idx + 1, idx + 2, idx + 3);
-                idx += 4;
-            }
-        }
-
-        // Create vertical ribs
-        for (let v = 0; v < verticalRibs; v++) {
-            const angle = (v / verticalRibs) * Math.PI * 2;
-            const ribSegs = 8;
-
-            for (let seg = 0; seg < ribSegs; seg++) {
-                const t1 = seg / ribSegs;
-                const t2 = (seg + 1) / ribSegs;
-                const y1 = t1 * height;
-                const y2 = t2 * height;
-                const r1 = bottomR + (topR - bottomR) * t1;
-                const r2 = bottomR + (topR - bottomR) * t2;
-
-                const halfW = ribWidth / 2;
-
-                const perpAngle = angle + Math.PI / 2;
-                const px = Math.cos(perpAngle) * halfW;
-                const pz = Math.sin(perpAngle) * halfW;
-
-                const cosA = Math.cos(angle);
-                const sinA = Math.sin(angle);
-
-                const o1x = r1 * cosA + px;
-                const o1z = r1 * sinA + pz;
-                const i1x = (r1 - ribWidth) * cosA - px;
-                const i1z = (r1 - ribWidth) * sinA - pz;
-
-                const o2x = r2 * cosA + px;
-                const o2z = r2 * sinA + pz;
-                const i2x = (r2 - ribWidth) * cosA - px;
-                const i2z = (r2 - ribWidth) * sinA - pz;
-
-                positions.push(o1x, y1, o1z, i1x, y1, i1z, o2x, y2, o2z, i2x, y2, i2z);
-                normals.push(cosA, 0, sinA, -cosA, 0, -sinA, cosA, 0, sinA, -cosA, 0, -sinA);
-                indices.push(idx, idx + 1, idx + 2, idx + 1, idx + 2, idx + 3);
-                idx += 4;
-            }
-        }
-
-        const geo = new THREE.BufferGeometry();
-        geo.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
-        geo.setAttribute('normal', new THREE.Float32BufferAttribute(normals, 3));
-        geo.setIndex(indices);
-        return geo;
-    }
-
-    function createCylinderShade(r, height, segments, thickness, radialSegs) {
-        const topR = r * 0.8;
-        return createConeShade(r, topR, height, segments, thickness, radialSegs);
-    }
-
-    function createSphereShade(r, height, segments, thickness, radialSegs) {
-        const geo = new THREE.SphereGeometry(r, radialSegs, Math.floor(radialSegs / 2), 0, Math.PI * 2, 0, Math.PI * 0.6);
-        return geo;
-    }
-
-    function createGeodesicShade(r, height, segments, thickness) {
-        const detail = params.detail;
-        const geo = new THREE.IcosahedronGeometry(r, detail === 1 ? 0 : detail === 2 ? 1 : 2);
-
-        // Flatten top and cut bottom
-        const pos = geo.attributes.position;
-        for (let i = 0; i < pos.count; i++) {
-            const y = pos.getY(i);
-            if (y > height * 0.4) {
-                pos.setY(i, height * 0.4);
-            }
-            if (y < 0) {
-                pos.setY(i, 0);
-            }
-        }
-        geo.computeVertexNormals();
-        return geo;
-    }
-
-    function buildWireframe() {
-        while (wireframeGroup.children.length) {
-            wireframeGroup.children[0].geometry?.dispose();
-            wireframeGroup.children[0].material?.dispose();
-            wireframeGroup.remove(wireframeGroup.children[0]);
-        }
-
-        if (!isWireframe) return;
-
-        lampGroup.children.forEach(child => {
-            const wireMat = new THREE.MeshBasicMaterial({
-                color: 0x6366f1,
-                wireframe: true,
-                transparent: true,
-                opacity: 0.3
-            });
-            const wireMesh = new THREE.Mesh(child.geometry.clone(), wireMat);
-            wireMesh.position.copy(child.position);
-            wireMesh.scale.copy(child.scale);
-            wireframeGroup.add(wireMesh);
-        });
-    }
-
-    function updateLamp() {
-        buildLamp();
-    }
-
-    // Tab switching
-    function switchTab(tab) {
-        currentTab = tab;
-        document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
-        document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
-        document.getElementById('tab-' + tab).classList.remove('hidden');
-        document.getElementById('tab-' + tab).classList.add('fade-in');
-        event.target.classList.add('active');
-    }
-
-    // Shape selection
-    function setBaseShape(shape, btn) {
-        params.baseShape = shape;
-        btn.closest('.grid').querySelectorAll('.shape-btn').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        updateLamp();
-    }
-
-    function setStemShape(shape, btn) {
-        params.stemShape = shape;
-        btn.closest('.grid').querySelectorAll('.shape-btn').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        updateLamp();
-    }
-
-    function setShadeShape(shape, btn) {
-        params.shadeShape = shape;
-        btn.closest('.grid').querySelectorAll('.shape-btn').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        updateLamp();
-    }
-
-    function setShadeStyle(style, btn) {
-        params.shadeStyle = style;
-        btn.closest('.grid').querySelectorAll('.shape-btn').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        updateLamp();
-    }
-
-    // Viewport controls
-    function toggleWireframe() {
-        isWireframe = !isWireframe;
-        document.getElementById('wireframeBtn').classList.toggle('text-indigo-400');
-        lampGroup.children.forEach(child => {
-            if (child.material) {
-                child.material.wireframe = isWireframe;
-                child.material.transparent = isWireframe;
-                child.material.opacity = isWireframe ? 0.7 : 1;
-            }
-        });
-        buildWireframe();
-    }
-
-    function toggleGrid() {
-        gridHelper.visible = !gridHelper.visible;
-        document.getElementById('gridBtn').classList.toggle('text-indigo-400');
-    }
-
-    function resetCamera() {
-        if (window._orbitState) {
-            window._orbitState.spherical = { theta: Math.PI / 4, phi: Math.PI / 3, radius: 120 };
-            window._orbitState.target.set(0, 40, 0);
-            window._orbitState.updateCamera();
-        }
-    }
-
-    // STL Export - Binary format
-    function exportSTL() {
-        const loading = document.getElementById('loading');
-        loading.classList.remove('hidden');
-
-        setTimeout(() => {
-            try {
-                const mergedGeometry = mergeLampGeometry();
-                const stlData = generateBinarySTL(mergedGeometry);
-                downloadBlob(stlData, 'lamp.stl', 'application/octet-stream');
-                showToast('✅ STL файл сохранён!');
-            } catch (err) {
-                showToast('❌ Ошибка: ' + err.message);
-                console.error(err);
-            }
-            loading.classList.add('hidden');
-        }, 100);
-    }
-
-    function exportOBJ() {
-        const loading = document.getElementById('loading');
-        loading.classList.remove('hidden');
-
-        setTimeout(() => {
-            try {
-                const mergedGeometry = mergeLampGeometry();
-                const objData = generateOBJ(mergedGeometry);
-                downloadBlob(new Blob([objData], { type: 'text/plain' }), 'lamp.obj', 'text/plain');
-                showToast('✅ OBJ файл сохранён!');
-            } catch (err) {
-                showToast('❌ Ошибка: ' + err.message);
-                console.error(err);
-            }
-            loading.classList.add('hidden');
-        }, 100);
-    }
-
-    function mergeLampGeometry() {
-        const geometries = [];
-        const transforms = [];
-
-        lampGroup.children.forEach(child => {
-            if (child.geometry) {
-                geometries.push(child.geometry);
-                transforms.push({
-                    position: child.position.clone(),
-                    rotation: child.rotation.clone(),
-                    scale: child.scale.clone()
-                });
-            }
-        });
-
-        if (geometries.length === 0) throw new Error('Нет геометрии');
-
-        // Merge all geometries
-        let totalVerts = 0;
-        let totalIndices = 0;
-        geometries.forEach(g => {
-            const idx = g.index ? g.index.count : g.attributes.position.count;
-            totalIndices += idx;
-            totalVerts += g.attributes.position.count;
-        });
-
-        const positions = new Float32Array(totalVerts * 3);
-        const normals = new Float32Array(totalVerts * 3);
-        const indices = new Uint32Array(totalIndices);
-
-        let vertOffset = 0;
-        let idxOffset = 0;
-
-        geometries.forEach((geo, gi) => {
-            const posAttr = geo.attributes.position;
-            const normAttr = geo.attributes.normal || null;
-            const transform = transforms[gi];
-            const matrix = new THREE.Matrix4();
-            matrix.compose(transform.position, new THREE.Quaternion().setFromEuler(transform.rotation), transform.scale);
-
-            const localPositions = posAttr.array;
-            const vertCount = posAttr.count;
-
-            for (let i = 0; i < vertCount; i++) {
-                const v = new THREE.Vector3(localPositions[i * 3], localPositions[i * 3 + 1], localPositions[i * 3 + 2]);
-                v.applyMatrix4(matrix);
-                positions[(vertOffset + i) * 3] = v.x;
-                positions[(vertOffset + i) * 3 + 1] = v.y;
-                positions[(vertOffset + i) * 3 + 2] = v.z;
-
-                if (normAttr) {
-                    const n = new THREE.Vector3(normAttr.array[i * 3], normAttr.array[i * 3 + 1], normAttr.array[i * 3 + 2]);
-                    n.transformDirection(matrix).normalize();
-                    normals[(vertOffset + i) * 3] = n.x;
-                    normals[(vertOffset + i) * 3 + 1] = n.y;
-                    normals[(vertOffset + i) * 3 + 2] = n.z;
-                }
-            }
-
-            if (geo.index) {
-                const localIdx = geo.index.array;
-                for (let i = 0; i < localIdx.length; i++) {
-                    indices[idxOffset + i] = localIdx[i] + vertOffset;
-                }
-            } else {
-                for (let i = 0; i < vertCount; i++) {
-                    indices[idxOffset + i] = vertOffset + i;
-                }
-            }
-
-            idxOffset += geo.index ? geo.index.count : vertCount;
-            vertOffset += vertCount;
-        });
-
-        const mergedGeo = new THREE.BufferGeometry();
-        mergedGeo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-        mergedGeo.setAttribute('normal', new THREE.BufferAttribute(normals, 3));
-        mergedGeo.setIndex(new THREE.BufferAttribute(indices, 1));
-        return mergedGeo;
-    }
-
-    function generateBinarySTL(geometry) {
-        const positions = geometry.attributes.position.array;
-        const normals = geometry.attributes.normal.array;
-        const indices = geometry.index ? geometry.index.array : null;
-        const faceCount = indices ? indices.length / 3 : positions.length / 9;
-
-        // Binary STL: 80 bytes header + 4 bytes triangle count + 50 bytes per triangle
-        const bufferSize = 80 + 4 + faceCount * 50;
-        const buffer = new ArrayBuffer(bufferSize);
-        const view = new DataView(buffer);
-
-        // Header (80 bytes) - can be anything
-        const header = 'Lamp Generator 3D Print STL';
-        for (let i = 0; i < 80; i++) {
-            view.setUint8(i, i < header.length ? header.charCodeAt(i) : 0);
-        }
-
-        // Number of triangles
-        view.setUint32(80, faceCount, true);
-
-        // Triangles
-        let offset = 84;
-        for (let i = 0; i < faceCount; i++) {
-            let i0, i1, i2;
-            if (indices) {
-                i0 = indices[i * 3];
-                i1 = indices[i * 3 + 1];
-                i2 = indices[i * 3 + 2];
-            } else {
-                i0 = i * 3;
-                i1 = i * 3 + 1;
-                i2 = i * 3 + 2;
-            }
-
-            // Normal
-            view.setFloat32(offset, normals[i0 * 3], true);
-            view.setFloat32(offset + 4, normals[i0 * 3 + 1], true);
-            view.setFloat32(offset + 8, normals[i0 * 3 + 2], true);
-            offset += 12;
-
-            // Vertex 1
-            view.setFloat32(offset, positions[i0 * 3], true);
-            view.setFloat32(offset + 4, positions[i0 * 3 + 1], true);
-            view.setFloat32(offset + 8, positions[i0 * 3 + 2], true);
-            offset += 12;
-
-            // Vertex 2
-            view.setFloat32(offset, positions[i1 * 3], true);
-            view.setFloat32(offset + 4, positions[i1 * 3 + 1], true);
-            view.setFloat32(offset + 8, positions[i1 * 3 + 2], true);
-            offset += 12;
-
-            // Vertex 3
-            view.setFloat32(offset, positions[i2 * 3], true);
-            view.setFloat32(offset + 4, positions[i2 * 3 + 1], true);
-            view.setFloat32(offset + 8, positions[i2 * 3 + 2], true);
-            offset += 12;
-
-            // Attribute byte count
-            view.setUint16(offset, 0, true);
-            offset += 2;
-        }
-
-        return new Blob([buffer], { type: 'application/octet-stream' });
-    }
-
-    function generateOBJ(geometry) {
-        const positions = geometry.attributes.position.array;
-        const normals = geometry.attributes.normal.array;
-        const indices = geometry.index ? geometry.index.array : null;
-        const faceCount = indices ? indices.length / 3 : positions.length / 9;
-
-        let obj = '# Lamp Generator 3D Print Model\n';
-        obj += '# Vertices: ' + (positions.length / 3) + '\n';
-        obj += '# Faces: ' + faceCount + '\n\n';
-
-        // Vertices
-        for (let i = 0; i < positions.length; i += 3) {
-            obj += `v ${positions[i].toFixed(6)} ${positions[i+1].toFixed(6)} ${positions[i+2].toFixed(6)}\n`;
-        }
-
-        // Normals
-        for (let i = 0; i < normals.length; i += 3) {
-            obj += `vn ${normals[i].toFixed(6)} ${normals[i+1].toFixed(6)} ${normals[i+2].toFixed(6)}\n`;
-        }
-
-        // Faces
-        obj += '\n';
-        for (let i = 0; i < faceCount; i++) {
-            let i0, i1, i2;
-            if (indices) {
-                i0 = indices[i * 3] + 1;
-                i1 = indices[i * 3 + 1] + 1;
-                i2 = indices[i * 3 + 2] + 1;
-            } else {
-                i0 = i * 3 + 1;
-                i1 = i * 3 + 2;
-                i2 = i * 3 + 3;
-            }
-            obj += `f ${i0}//${i0} ${i1}//${i1} ${i2}//${i2}\n`;
-        }
-
-        return obj;
-    }
-
-    function downloadBlob(blob, filename, mimeType) {
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = filename;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-    }
-
-    function resetAll() {
-        document.getElementById('baseHeight').value = 12;
-        document.getElementById('baseRadius').value = 30;
-        document.getElementById('baseBevel').value = 1;
-        document.getElementById('baseHollow').checked = false;
-        document.getElementById('baseWall').checked = true;
-        document.getElementById('stemHeight').value = 80;
-        document.getElementById('stemRadius').value = 6;
-        document.getElementById('stemCurve').value = 0;
-        document.getElementById('stemSegments').value = 16;
-        document.getElementById('shadeHeight').value = 45;
-        document.getElementById('shadeRadius').value = 35;
-        document.getElementById('shadeTopHole').value = 5;
-        document.getElementById('shadeSegments').value = 12;
-        document.getElementById('shadeThickness').value = 2;
-        document.getElementById('lampColor').value = '#ffffff';
-        document.getElementById('scaleFactor').value = 1;
-        document.getElementById('meshDetail').value = 2;
-
-        // Reset active buttons
-        document.querySelectorAll('.grid').forEach(grid => {
-            const buttons = grid.querySelectorAll('.shape-btn');
-            buttons.forEach(b => b.classList.remove('active'));
-            if (buttons[0]) buttons[0].classList.add('active');
-        });
-
-        updateLamp();
-        showToast('🔄 Настройки сброшены');
-    }
-
-    function showToast(message) {
-        const container = document.getElementById('toast-container');
-        const toast = document.createElement('div');
-        toast.className = 'toast glass-panel px-4 py-3 rounded-lg text-sm text-white mb-2 border border-indigo-500/20';
-        toast.textContent = message;
-        container.appendChild(toast);
-        setTimeout(() => toast.remove(), 3000);
-    }
-
-    // Shade style buttons fix - need to select the correct buttons
-    function setShadeStyleFixed(style, btn) {
-        params.shadeStyle = style;
-        // Find the correct grid container
-        const shadeTab = document.getElementById('tab-shade');
-        const allShapeBtns = shadeTab.querySelectorAll('.shape-btn');
-        allShapeBtns.forEach(b => {
-            if (b.textContent.trim() === 'Сплошной' || b.textContent.trim() === 'Рёбра' || b.textContent.trim() === 'Решётка') {
-                b.classList.remove('active');
-            }
-        });
-        btn.classList.add('active');
-        updateLamp();
-    }
-
-    // Override the shade style function
-    window.setShadeStyle = setShadeStyleFixed;
-
-    // Fix shade style button selection
-    document.addEventListener('DOMContentLoaded', () => {
-        init();
-    });
-
-    // Start immediately
-    init();
-    </script>
+    
+    // Normal
+    view.setFloat32(offset, normals[i0*3], true); offset += 4;
+    view.setFloat32(offset, normals[i0*3+1], true); offset += 4;
+    view.setFloat32(offset, normals[i0*3+2], true); offset += 4;
+    
+    // Vertex 1
+    view.setFloat32(offset, positions[i0*3], true); offset += 4;
+    view.setFloat32(offset, positions[i0*3+1], true); offset += 4;
+    view.setFloat32(offset, positions[i0*3+2], true); offset += 4;
+    
+    // Vertex 2
+    view.setFloat32(offset, positions[i1*3], true); offset += 4;
+    view.setFloat32(offset, positions[i1*3+1], true); offset += 4;
+    view.setFloat32(offset, positions[i1*3+2], true); offset += 4;
+    
+    // Vertex 3
+    view.setFloat32(offset, positions[i2*3], true); offset += 4;
+    view.setFloat32(offset, positions[i2*3+1], true); offset += 4;
+    view.setFloat32(offset, positions[i2*3+2], true); offset += 4;
+    
+    // Attribute byte count
+    view.setUint16(offset, 0, true); offset += 2;
+  }
+  
+  // Download
+  const blob = new Blob([buffer], { type: 'application/octet-stream' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'lamp_3d_print.stl';
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+// ==================== ANIMATION LOOP ====================
+function animate() {
+  requestAnimationFrame(animate);
+  updateCamera();
+  innerGlow.intensity = 0.5 + Math.sin(Date.now() * 0.003) * 0.3;
+  renderer.render(scene, camera);
+}
+
+// ==================== INIT ====================
+window.addEventListener('resize', () => {
+  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+});
+
+updateLamp();
+animate();
+</script>
 </body>
 </html>
 
