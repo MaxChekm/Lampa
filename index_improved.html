@@ -1,0 +1,1226 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🔧 Генератор Ламп 3D Pro | Ultimate Edition</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --primary:#8b5cf6;
+  --primary-dark:#7c3aed;
+  --primary-light:#a78bfa;
+  --accent:#06b6d4;
+  --success:#10b981;
+  --warning:#f59e0b;
+  --bg-dark:#0a0a0f;
+  --bg-panel:rgba(15,15,25,0.75);
+  --border:rgba(255,255,255,0.08);
+  --text-primary:#f8fafc;
+  --text-secondary:#94a3b8;
+  --text-muted:#64748b;
+}
+body{font-family:'Inter',sans-serif;background:var(--bg-dark);color:var(--text-primary);overflow:hidden}
+#canvas3d{position:absolute;top:0;left:0;width:100%;height:100%}
+
+/* Glassmorphism Panels */
+.panel{
+  backdrop-filter:blur(32px) saturate(180%);
+  background:var(--bg-panel);
+  border:1px solid var(--border);
+  box-shadow:0 8px 32px rgba(0,0,0,0.4),inset 0 1px 0 rgba(255,255,255,0.1);
+}
+
+/* Animated Gradients */
+.gradient-bg{
+  background:linear-gradient(-45deg,#0a0a0f,#1a1a2e,#1e1b4b,#0f172a);
+  background-size:400% 400%;
+  animation:gradientShift 15s ease infinite;
+}
+@keyframes gradientShift{
+  0%{background-position:0% 50%}
+  50%{background-position:100% 50%}
+  100%{background-position:0% 50%}
+}
+
+/* Enhanced Buttons */
+.btn{
+  position:relative;
+  overflow:hidden;
+  transition:all 0.3s cubic-bezier(0.4,0,0.2,1);
+}
+.btn::before{
+  content:'';
+  position:absolute;
+  top:0;left:-100%;
+  width:100%;height:100%;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,0.2),transparent);
+  transition:left 0.5s;
+}
+.btn:hover::before{left:100%}
+.btn:hover{transform:translateY(-2px);box-shadow:0 12px 40px rgba(139,92,246,0.4)}
+.btn:active{transform:translateY(0)}
+
+.btn-primary{
+  background:linear-gradient(135deg,var(--primary),var(--primary-dark));
+  color:white;
+}
+.btn-success{
+  background:linear-gradient(135deg,var(--success),#059669);
+  color:white;
+}
+.btn-secondary{
+  background:rgba(255,255,255,0.05);
+  border:1px solid var(--border);
+  color:var(--text-secondary);
+}
+.btn-secondary:hover{
+  background:rgba(255,255,255,0.1);
+  color:var(--text-primary);
+}
+
+/* Sliders */
+.slider-group{
+  margin-bottom:1rem;
+  padding:0.75rem;
+  background:rgba(255,255,255,0.02);
+  border-radius:12px;
+  border:1px solid transparent;
+  transition:all 0.2s;
+}
+.slider-group:hover{
+  background:rgba(255,255,255,0.04);
+  border-color:rgba(139,92,246,0.2);
+}
+.slider-group label{
+  display:flex;
+  align-items:center;
+  gap:0.5rem;
+  font-size:0.75rem;
+  color:var(--text-secondary);
+  text-transform:uppercase;
+  letter-spacing:0.08em;
+  font-weight:600;
+  margin-bottom:0.5rem;
+}
+.tooltip-icon{
+  width:16px;height:16px;
+  border-radius:50%;
+  background:rgba(139,92,246,0.2);
+  color:var(--primary-light);
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  font-size:10px;
+  cursor:help;
+  transition:all 0.2s;
+}
+.tooltip-icon:hover{
+  background:var(--primary);
+  color:white;
+}
+input[type=range]{
+  -webkit-appearance:none;
+  width:100%;
+  height:6px;
+  border-radius:3px;
+  background:rgba(255,255,255,0.1);
+  outline:none;
+  cursor:pointer;
+}
+input[type=range]::-webkit-slider-thumb{
+  -webkit-appearance:none;
+  width:18px;height:18px;
+  border-radius:50%;
+  background:linear-gradient(135deg,var(--primary-light),var(--primary-dark));
+  cursor:pointer;
+  border:2px solid white;
+  box-shadow:0 2px 8px rgba(0,0,0,0.3);
+  transition:all 0.2s;
+}
+input[type=range]::-webkit-slider-thumb:hover{
+  transform:scale(1.15);
+  box-shadow:0 4px 12px rgba(139,92,246,0.5);
+}
+input[type=range]::-webkit-slider-thumb:active{
+  transform:scale(0.95);
+}
+
+/* Select Dropdowns */
+select{
+  width:100%;
+  background:rgba(15,15,25,0.8);
+  border:1px solid var(--border);
+  color:var(--text-primary);
+  border-radius:10px;
+  padding:0.625rem 0.875rem;
+  font-size:0.875rem;
+  font-weight:500;
+  cursor:pointer;
+  transition:all 0.2s;
+  outline:none;
+}
+select:hover{border-color:var(--primary-light)}
+select:focus{
+  border-color:var(--primary);
+  box-shadow:0 0 0 3px rgba(139,92,246,0.2);
+}
+
+/* Preset Buttons */
+.preset-btn{
+  padding:0.625rem 0.875rem;
+  border-radius:10px;
+  font-size:0.8125rem;
+  font-weight:500;
+  background:rgba(255,255,255,0.03);
+  border:1px solid var(--border);
+  color:var(--text-secondary);
+  cursor:pointer;
+  transition:all 0.3s cubic-bezier(0.4,0,0.2,1);
+  text-align:left;
+  width:100%;
+}
+.preset-btn:hover{
+  background:rgba(139,92,246,0.15);
+  border-color:var(--primary);
+  color:var(--primary-light);
+  transform:translateX(4px);
+}
+.preset-btn.active{
+  background:linear-gradient(135deg,rgba(139,92,246,0.3),rgba(124,58,237,0.2));
+  border-color:var(--primary);
+  color:var(--primary-light);
+  box-shadow:0 4px 12px rgba(139,92,246,0.2);
+}
+
+/* Color Picker */
+.color-picker-grid{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:0.5rem;
+}
+.color-dot{
+  width:36px;height:36px;
+  border-radius:10px;
+  cursor:pointer;
+  border:2px solid transparent;
+  transition:all 0.2s;
+  position:relative;
+  overflow:hidden;
+}
+.color-dot::after{
+  content:'';
+  position:absolute;
+  inset:0;
+  background:linear-gradient(135deg,rgba(255,255,255,0.3),transparent);
+}
+.color-dot:hover{transform:scale(1.1)}
+.color-dot.active{
+  border-color:white;
+  box-shadow:0 4px 12px rgba(0,0,0,0.4);
+  transform:scale(1.05);
+}
+.color-custom{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  background:rgba(255,255,255,0.05);
+  border:2px dashed var(--border);
+  font-size:1.25rem;
+}
+.color-custom:hover{
+  border-color:var(--primary);
+  background:rgba(139,92,246,0.1);
+}
+
+/* Tabs */
+.tab-container{
+  display:flex;
+  gap:0.375rem;
+  background:rgba(0,0,0,0.3);
+  padding:0.375rem;
+  border-radius:12px;
+  margin-bottom:1rem;
+}
+.tab-btn{
+  flex:1;
+  padding:0.5rem 0.25rem;
+  border-radius:8px;
+  font-size:0.75rem;
+  font-weight:600;
+  color:var(--text-muted);
+  background:transparent;
+  border:none;
+  cursor:pointer;
+  transition:all 0.3s;
+}
+.tab-btn:hover{color:var(--text-secondary)}
+.tab-btn.active{
+  background:linear-gradient(135deg,var(--primary),var(--primary-dark));
+  color:white;
+  box-shadow:0 4px 12px rgba(139,92,246,0.3);
+}
+
+/* Value Display */
+.val-display{
+  font-family:'JetBrains Mono',monospace;
+  background:rgba(139,92,246,0.15);
+  color:var(--primary-light);
+  padding:0.25rem 0.5rem;
+  border-radius:6px;
+  font-size:0.8125rem;
+  font-weight:700;
+  min-width:2.5rem;
+  text-align:center;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar{width:6px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{
+  background:rgba(139,92,246,0.3);
+  border-radius:3px;
+}
+::-webkit-scrollbar-thumb:hover{background:rgba(139,92,246,0.5)}
+
+/* Animations */
+@keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.6}}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
+
+.animate-fadeIn{animation:fadeIn 0.4s ease-out forwards}
+.animate-pulse{animation:pulse 2s ease-in-out infinite}
+.animate-float{animation:float 3s ease-in-out infinite}
+
+/* Glow Effects */
+.glow-text{
+  text-shadow:0 0 20px rgba(139,92,246,0.5),0 0 40px rgba(139,92,246,0.3);
+}
+.glow-border{
+  box-shadow:0 0 20px rgba(139,92,246,0.3),inset 0 0 20px rgba(139,92,246,0.1);
+}
+
+/* Info Badge */
+.info-badge{
+  display:inline-flex;
+  align-items:center;
+  gap:0.375rem;
+  padding:0.25rem 0.625rem;
+  background:rgba(6,182,212,0.15);
+  color:var(--accent);
+  border-radius:9999px;
+  font-size:0.6875rem;
+  font-weight:600;
+  text-transform:uppercase;
+  letter-spacing:0.05em;
+}
+
+/* History Panel */
+.history-item{
+  padding:0.5rem;
+  border-radius:8px;
+  background:rgba(255,255,255,0.03);
+  border:1px solid transparent;
+  cursor:pointer;
+  transition:all 0.2s;
+  font-size:0.75rem;
+}
+.history-item:hover{
+  background:rgba(139,92,246,0.1);
+  border-color:var(--primary);
+}
+
+/* Responsive */
+@media(max-width:1024px){
+  .left-panel{top:80px!important;left:50%!important;transform:translateX(-50%);width:90%!important;max-height:200px;overflow-y:auto}
+  .right-panel{top:auto!important;bottom:80px!important;left:50%!important;transform:translateX(-50%);width:90%!important;max-height:40vh}
+}
+@media(max-width:640px){
+  h1{font-size:1rem!important}
+  .btn span{display:none}
+  .preset-btn{padding:0.5rem;font-size:0.75rem}
+}
+
+/* Loading State */
+.loading-skeleton{
+  background:linear-gradient(90deg,rgba(255,255,255,0.05) 25%,rgba(255,255,255,0.1) 50%,rgba(255,255,255,0.05) 75%);
+  background-size:200% 100%;
+  animation:shimmer 1.5s infinite;
+}
+@keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
+
+/* Toast Notifications */
+.toast{
+  position:fixed;
+  bottom:100px;
+  left:50%;
+  transform:translateX(-50%) translateY(20px);
+  background:rgba(15,15,25,0.95);
+  border:1px solid var(--border);
+  padding:0.75rem 1.5rem;
+  border-radius:12px;
+  font-size:0.875rem;
+  color:var(--text-primary);
+  box-shadow:0 10px 40px rgba(0,0,0,0.5);
+  opacity:0;
+  visibility:hidden;
+  transition:all 0.3s;
+  z-index:1000;
+}
+.toast.show{
+  opacity:1;
+  visibility:visible;
+  transform:translateX(-50%) translateY(0);
+}
+.toast.success{border-left:3px solid var(--success)}
+.toast.error{border-left:3px solid #ef4444}
+</style>
+</head>
+<body class="gradient-bg">
+<div style="height:100vh;position:relative;overflow:hidden">
+<div id="canvas3d"></div>
+
+<!-- Header -->
+<div class="absolute top-0 left-0 right-0 z-20 p-4">
+  <div class="flex items-center justify-between">
+    <div class="flex items-center gap-3">
+      <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-violet-500 to-purple-700 flex items-center justify-center text-xl animate-float">💡</div>
+      <div>
+        <h1 class="text-xl font-bold glow-text">Lamp Generator 3D Pro</h1>
+        <p class="text-xs text-gray-500">Ultimate Edition • v2.0</p>
+      </div>
+    </div>
+    <div class="flex items-center gap-2">
+      <button onclick="undo()" class="btn btn-secondary px-3 py-2 rounded-xl text-xs font-semibold" title="Отменить (Ctrl+Z)">↩️</button>
+      <button onclick="redo()" class="btn btn-secondary px-3 py-2 rounded-xl text-xs font-semibold" title="Вернуть (Ctrl+Y)">↪️</button>
+      <button onclick="randomizeAll()" class="btn btn-secondary px-4 py-2 rounded-xl text-xs font-bold"><span>🎲 </span><span class="hidden sm:inline">Рандом</span></button>
+      <button onclick="exportSTL()" class="btn btn-success px-5 py-2 rounded-xl text-xs font-bold"><span>⬇ </span><span class="hidden sm:inline">Скачать STL</span></button>
+    </div>
+  </div>
+</div>
+
+<!-- Left Panel: Presets & Colors -->
+<div class="left-panel absolute top-20 left-4 z-10 panel rounded-2xl p-4 w-56 max-h-[calc(100vh-7rem)] overflow-y-auto animate-fadeIn">
+  <div class="flex items-center gap-2 mb-3">
+    <span class="text-xs font-bold text-gray-400 uppercase tracking-wider">📚 Стили</span>
+    <span class="info-badge">10 пресетов</span>
+  </div>
+  <div class="space-y-1.5" id="presetsList">
+    <button class="preset-btn active" onclick="applyPreset('classic')" data-preset="classic">🏛 Классика</button>
+    <button class="preset-btn" onclick="applyPreset('modern')" data-preset="modern">⬜ Модерн</button>
+    <button class="preset-btn" onclick="applyPreset('artdeco')" data-preset="artdeco">✨ Арт-деко</button>
+    <button class="preset-btn" onclick="applyPreset('japanese')" data-preset="japanese">🎋 Японский</button>
+    <button class="preset-btn" onclick="applyPreset('industrial')" data-preset="industrial">🔩 Индастриал</button>
+    <button class="preset-btn" onclick="applyPreset('organic')" data-preset="organic">🌿 Органик</button>
+    <button class="preset-btn" onclick="applyPreset('futuristic')" data-preset="futuristic">🚀 Футуризм</button>
+    <button class="preset-btn" onclick="applyPreset('vintage')" data-preset="vintage">🕰 Винтаж</button>
+    <button class="preset-btn" onclick="applyPreset('geometric')" data-preset="geometric">🔷 Геометрия</button>
+    <button class="preset-btn" onclick="applyPreset('minimal')" data-preset="minimal">⚪ Минимал</button>
+  </div>
+  
+  <div class="mt-5 pt-4 border-t border-white/10">
+    <div class="flex items-center gap-2 mb-3">
+      <span class="text-xs font-bold text-gray-400 uppercase tracking-wider">🎨 Материал</span>
+    </div>
+    <div class="color-picker-grid" id="colorPicker">
+      <div class="color-dot active" style="background:#e8e8f0" onclick="setColor('#e8e8f0',this)" title="Белый мрамор"></div>
+      <div class="color-dot" style="background:#1a1a2e" onclick="setColor('#1a1a2e',this)" title="Ночной синий"></div>
+      <div class="color-dot" style="background:#d4a574" onclick="setColor('#d4a574',this)" title="Золотой песок"></div>
+      <div class="color-dot" style="background:#8b0000" onclick="setColor('#8b0000',this)" title="Бордовый"></div>
+      <div class="color-dot" style="background:#2d5016" onclick="setColor('#2d5016',this)" title="Лесной зелёный"></div>
+      <div class="color-dot" style="background:#1e3a5f" onclick="setColor('#1e3a5f',this)" title="Глубокий синий"></div>
+      <div class="color-dot" style="background:#f5f5dc" onclick="setColor('#f5f5dc',this)" title="Бежевый"></div>
+      <div class="color-dot" style="background:#c0c0c0" onclick="setColor('#c0c0c0',this)" title="Серебро"></div>
+      <div class="color-dot" style="background:#ff6b6b" onclick="setColor('#ff6b6b',this)" title="Коралловый"></div>
+      <div class="color-dot" style="background:#4ecdc4" onclick="setColor('#4ecdc4',this)" title="Бирюза"></div>
+      <div class="color-dot" style="background:#ffe66d" onclick="setColor('#ffe66d',this)" title="Лимонный"></div>
+      <div class="color-dot color-custom" onclick="openColorPicker()" title="Выбрать цвет">🎨</div>
+    </div>
+    <input type="color" id="customColorInput" onchange="setColor(this.value,document.querySelector('.color-dot.active'))" style="display:none">
+  </div>
+  
+  <!-- History -->
+  <div class="mt-5 pt-4 border-t border-white/10">
+    <div class="flex items-center justify-between mb-2">
+      <span class="text-xs font-bold text-gray-400 uppercase tracking-wider">📜 История</span>
+      <button onclick="clearHistory()" class="text-xs text-gray-500 hover:text-red-400">Очистить</button>
+    </div>
+    <div id="historyList" class="space-y-1 max-h-32 overflow-y-auto"></div>
+  </div>
+</div>
+
+<!-- Right Panel: Controls -->
+<div class="right-panel absolute top-20 right-4 z-10 panel rounded-2xl p-4 w-80 max-h-[calc(100vh-7rem)] overflow-y-auto animate-fadeIn">
+  <!-- Tabs -->
+  <div class="tab-container">
+    <button class="tab-btn active" onclick="switchTab('shade',this)">💡 Плафон</button>
+    <button class="tab-btn" onclick="switchTab('neck',this)">🦴 Ножка</button>
+    <button class="tab-btn" onclick="switchTab('socket',this)">🔌 Патрон</button>
+    <button class="tab-btn" onclick="switchTab('pattern',this)">✨ Узор</button>
+  </div>
+  
+  <!-- Shade Tab -->
+  <div id="tab-shade" class="tab-content space-y-2">
+    <div class="slider-group">
+      <label>
+        Форма плафона
+        <span class="tooltip-icon" title="Основная форма вашего светильника">?</span>
+      </label>
+      <select id="shadeShape" onchange="up('shadeShape',this.value)">
+        <option value="cylinder">Цилиндр</option>
+        <option value="sphere">Сфера</option>
+        <option value="cone">Конус</option>
+        <option value="dome">Купол</option>
+        <option value="barrel">Бочка</option>
+        <option value="hourglass">Песочные часы</option>
+        <option value="bell">Колокол</option>
+        <option value="inverted">Перевёрнутый</option>
+        <option value="twisted">Скрученный</option>
+        <option value="hexagonal">Шестиугольник</option>
+        <option value="teardrop">Капля</option>
+        <option value="diamond">Ромб</option>
+      </select>
+    </div>
+    <div class="slider-group">
+      <div class="flex justify-between mb-1">
+        <label class="mb-0">Высота <span class="tooltip-icon" title="Вертикальный размер плафона">?</span></label>
+        <span class="val-display" id="v-sh">100</span>
+      </div>
+      <input type="range" min="30" max="220" value="100" id="shadeH" oninput="up('shadeH',+this.value)">
+    </div>
+    <div class="slider-group">
+      <div class="flex justify-between mb-1">
+        <label class="mb-0">Нижний Ø <span class="tooltip-icon" title="Диаметр основания плафона">?</span></label>
+        <span class="val-display" id="v-sb">50</span>
+      </div>
+      <input type="range" min="15" max="90" value="50" id="shadeBotR" oninput="up('shadeBotR',+this.value)">
+    </div>
+    <div class="slider-group">
+      <div class="flex justify-between mb-1">
+        <label class="mb-0">Верхний Ø <span class="tooltip-icon" title="Диаметр верхнего отверстия">?</span></label>
+        <span class="val-display" id="v-st">40</span>
+      </div>
+      <input type="range" min="5" max="90" value="40" id="shadeTopR" oninput="up('shadeTopR',+this.value)">
+    </div>
+    <div class="slider-group">
+      <div class="flex justify-between mb-1">
+        <label class="mb-0">Толщина стенки <span class="tooltip-icon" title="Толщина материала для 3D-печати">?</span></label>
+        <span class="val-display" id="v-sw">1.5</span>
+      </div>
+      <input type="range" min="0.8" max="5" step="0.1" value="1.5" id="shadeWall" oninput="up('shadeWall',+this.value)">
+    </div>
+    <div class="slider-group">
+      <div class="flex justify-between mb-1">
+        <label class="mb-0">Сегменты <span class="tooltip-icon" title="Количество граней (влияет на гладкость)">?</span></label>
+        <span class="val-display" id="v-ss">32</span>
+      </div>
+      <input type="range" min="3" max="64" value="32" id="shadeSegs" oninput="up('shadeSegs',+this.value)">
+    </div>
+    <div class="slider-group">
+      <div class="flex justify-between mb-1">
+        <label class="mb-0">Отступ снизу <span class="tooltip-icon" title="Расстояние от основания до начала плафона">?</span></label>
+        <span class="val-display" id="v-so">5</span>
+      </div>
+      <input type="range" min="0" max="30" value="5" id="shadeOffset" oninput="up('shadeOffset',+this.value)">
+    </div>
+  </div>
+  
+  <!-- Neck Tab -->
+  <div id="tab-neck" class="tab-content space-y-2 hidden">
+    <div class="slider-group">
+      <label>
+        Форма ножки
+        <span class="tooltip-icon" title="Дизайн центральной опоры">?</span>
+      </label>
+      <select id="neckShape" onchange="up('neckShape',this.value)">
+        <option value="cylinder">Цилиндр</option>
+        <option value="tapered">Конусная</option>
+        <option value="turned">Точёная</option>
+        <option value="spiral">Спиральная</option>
+        <option value="crystal">Кристалл</option>
+        <option value="branch">Ветвь</option>
+      </select>
+    </div>
+    <div class="slider-group">
+      <div class="flex justify-between mb-1">
+        <label class="mb-0">Высота <span class="tooltip-icon" title="Длина ножки лампы">?</span></label>
+        <span class="val-display" id="v-nh">30</span>
+      </div>
+      <input type="range" min="0" max="120" value="30" id="neckH" oninput="up('neckH',+this.value)">
+    </div>
+    <div class="slider-group">
+      <div class="flex justify-between mb-1">
+        <label class="mb-0">Нижний Ø <span class="tooltip-icon" title="Диаметр основания ножки">?</span></label>
+        <span class="val-display" id="v-nb">40</span>
+      </div>
+      <input type="range" min="10" max="80" value="40" id="neckBotR" oninput="up('neckBotR',+this.value)">
+    </div>
+    <div class="slider-group">
+      <div class="flex justify-between mb-1">
+        <label class="mb-0">Верхний Ø <span class="tooltip-icon" title="Диаметр соединения с патроном">?</span></label>
+        <span class="val-display" id="v-nt">25</span>
+      </div>
+      <input type="range" min="5" max="60" value="25" id="neckTopR" oninput="up('neckTopR',+this.value)">
+    </div>
+    <div class="slider-group">
+      <div class="flex justify-between mb-1">
+        <label class="mb-0">Детали точения <span class="tooltip-icon" title="Декоративные элементы на ножке">?</span></label>
+        <span class="val-display" id="v-nd">0</span>
+      </div>
+      <input type="range" min="0" max="8" value="0" id="neckDetails" oninput="up('neckDetails',+this.value)">
+    </div>
+    <div class="slider-group">
+      <div class="flex justify-between mb-1">
+        <label class="mb-0">Витки спирали <span class="tooltip-icon" title="Количество спиральных оборотов">?</span></label>
+        <span class="val-display" id="v-ns">3</span>
+      </div>
+      <input type="range" min="1" max="12" value="3" id="neckSpiral" oninput="up('neckSpiral',+this.value)">
+    </div>
+  </div>
+  
+  <!-- Socket Tab -->
+  <div id="tab-socket" class="tab-content space-y-2 hidden">
+    <div class="slider-group">
+      <label>
+        Тип патрона
+        <span class="tooltip-icon" title="Стандарт цоколя лампы">?</span>
+      </label>
+      <select id="socketType" onchange="up('socketType',this.value)">
+        <option value="e27">E27 (стандарт)</option>
+        <option value="e14">E14 (миньон)</option>
+        <option value="gu10">GU10 (направл.)</option>
+        <option value="e40">E40 (мощный)</option>
+        <option value="none">Без патрона</option>
+      </select>
+    </div>
+    <div class="slider-group">
+      <div class="flex justify-between mb-1">
+        <label class="mb-0">Выступающая часть <span class="tooltip-icon" title="Длина видимой части патрона">?</span></label>
+        <span class="val-display" id="v-sx">15</span>
+      </div>
+      <input type="range" min="0" max="40" value="15" id="socketExt" oninput="up('socketExt',+this.value)">
+    </div>
+    <div class="slider-group">
+      <div class="flex justify-between mb-1">
+        <label class="mb-0">Диаметр <span class="tooltip-icon" title="Диаметр патрона">?</span></label>
+        <span class="val-display" id="v-sd">27</span>
+      </div>
+      <input type="range" min="14" max="45" value="27" id="socketDia" oninput="up('socketDia',+this.value)">
+    </div>
+    <div class="slider-group">
+      <div class="flex justify-between mb-1">
+        <label class="mb-0">Глубина посадки <span class="tooltip-icon" title="Глубина установки лампы">?</span></label>
+        <span class="val-display" id="v-sdp">25</span>
+      </div>
+      <input type="range" min="10" max="50" value="25" id="socketDepth" oninput="up('socketDepth',+this.value)">
+    </div>
+    <div class="slider-group">
+      <label class="flex items-center gap-2 cursor-pointer">
+        <input type="checkbox" id="socketFlange" onchange="up('socketFlange',this.checked)" class="w-4 h-4 accent-violet-500">
+        <span class="text-xs text-gray-400">Фланец крепления</span>
+        <span class="tooltip-icon" title="Дополнительное крепление для монтажа">?</span>
+      </label>
+    </div>
+  </div>
+  
+  <!-- Pattern Tab -->
+  <div id="tab-pattern" class="tab-content space-y-2 hidden">
+    <div class="slider-group">
+      <label>
+        Тип узора
+        <span class="tooltip-icon" title="Декоративная перфорация на плафоне">?</span>
+      </label>
+      <select id="patternType" onchange="up('patternType',this.value)">
+        <option value="solid">Сплошной</option>
+        <option value="spiral">Спираль</option>
+        <option value="hex">Шестиугольники</option>
+        <option value="circles">Круги</option>
+        <option value="diamond">Ромбы</option>
+        <option value="waves">Волны</option>
+        <option value="stars">Звёзды</option>
+        <option value="voronoi">Вороной</option>
+        <option value="random">🎲 Случайный</option>
+        <option value="lines">Линии</option>
+        <option value="cross">Крестики</option>
+        <option value="lattice">Решётка</option>
+      </select>
+    </div>
+    <div class="slider-group">
+      <div class="flex justify-between mb-1">
+        <label class="mb-0">Размер ячейки <span class="tooltip-icon" title="Размер элементов узора">?</span></label>
+        <span class="val-display" id="v-pc">8</span>
+      </div>
+      <input type="range" min="3" max="25" value="8" id="patternCell" oninput="up('patternCell',+this.value)">
+    </div>
+    <div class="slider-group">
+      <div class="flex justify-between mb-1">
+        <label class="mb-0">Глубина прорези <span class="tooltip-icon" title="Глубина перфорации узора">?</span></label>
+        <span class="val-display" id="v-pd">0.8</span>
+      </div>
+      <input type="range" min="0.1" max="2" step="0.1" value="0.8" id="patternDepth" oninput="up('patternDepth',+this.value)">
+    </div>
+    <div class="slider-group">
+      <div class="flex justify-between mb-1">
+        <label class="mb-0">Спиральные витки <span class="tooltip-icon" title="Количество спиралей в узоре">?</span></label>
+        <span class="val-display" id="v-ps">5</span>
+      </div>
+      <input type="range" min="1" max="20" value="5" id="patternSpiral" oninput="up('patternSpiral',+this.value)">
+    </div>
+    <div class="slider-group">
+      <div class="flex justify-between mb-1">
+        <label class="mb-0">Рёбра жёсткости <span class="tooltip-icon" title="Дополнительные усиливающие элементы">?</span></label>
+        <span class="val-display" id="v-pr">0</span>
+      </div>
+      <input type="range" min="0" max="16" value="0" id="patternRibs" oninput="up('patternRibs',+this.value)">
+    </div>
+    <div class="slider-group">
+      <label class="flex items-center gap-2 cursor-pointer">
+        <input type="checkbox" id="patternInner" onchange="up('patternInner',this.checked)" class="w-4 h-4 accent-violet-500">
+        <span class="text-xs text-gray-400">Внутренний рельеф</span>
+        <span class="tooltip-icon" title="Добавляет рельеф с внутренней стороны">?</span>
+      </label>
+    </div>
+    <div class="slider-group">
+      <div class="flex justify-between mb-1">
+        <label class="mb-0">Seed (для случайных) <span class="tooltip-icon" title="Число для генерации случайного узора">?</span></label>
+        <span class="val-display" id="v-seed">42</span>
+      </div>
+      <input type="range" min="1" max="999" value="42" id="patternSeed" oninput="up('patternSeed',+this.value)">
+    </div>
+  </div>
+  
+  <!-- Info Section -->
+  <div class="mt-4 pt-4 border-t border-white/10">
+    <div class="flex items-center gap-2 mb-2">
+      <span class="info-badge">ℹ️ Информация</span>
+    </div>
+    <div class="text-xs text-gray-400 space-y-1" id="info-text">Загрузка...</div>
+  </div>
+  
+  <!-- Quick Stats -->
+  <div class="mt-3 grid grid-cols-2 gap-2">
+    <div class="bg-white/5 rounded-lg p-2 text-center">
+      <div class="text-xs text-gray-500">Граней</div>
+      <div class="text-sm font-bold text-violet-400" id="stat-faces">~0</div>
+    </div>
+    <div class="bg-white/5 rounded-lg p-2 text-center">
+      <div class="text-xs text-gray-500">Объём</div>
+      <div class="text-sm font-bold text-cyan-400" id="stat-volume">~0 см³</div>
+    </div>
+  </div>
+</div>
+
+<!-- Bottom Controls Hint -->
+<div class="absolute bottom-4 left-1/2 -translate-x-1/2 z-10 panel rounded-full px-6 py-2.5 animate-float">
+  <div class="flex items-center gap-4 text-xs text-gray-400">
+    <span class="flex items-center gap-1.5"><span class="w-5 h-5 rounded-full bg-white/10 flex items-center justify-center text-xs">🖱</span> ЛКМ вращение</span>
+    <span class="flex items-center gap-1.5"><span class="w-5 h-5 rounded-full bg-white/10 flex items-center justify-center text-xs">🔍</span> Колесо масштаб</span>
+    <span class="flex items-center gap-1.5"><span class="w-5 h-5 rounded-full bg-white/10 flex items-center justify-center text-xs">✋</span> ПКМ перемещение</span>
+  </div>
+</div>
+
+<!-- Toast Notification -->
+<div id="toast" class="toast">Действие выполнено</div>
+</div>
+
+<script>
+// ==================== STATE MANAGEMENT ====================
+let historyStack=[];
+let historyIndex=-1;
+const MAX_HISTORY=50;
+
+function saveState(){
+  const state={...P,timestamp:Date.now()};
+  historyStack=historyStack.slice(0,historyIndex+1);
+  historyStack.push(state);
+  if(historyStack.length>MAX_HISTORY)historyStack.shift();
+  else historyIndex++;
+  updateHistoryUI();
+}
+
+function undo(){
+  if(historyIndex>0){
+    historyIndex--;
+    restoreState(historyStack[historyIndex]);
+    showToast('Отменено','success');
+  }else{showToast('Нечего отменять','error')}
+}
+
+function redo(){
+  if(historyIndex<historyStack.length-1){
+    historyIndex++;
+    restoreState(historyStack[historyIndex]);
+    showToast('Восстановлено','success');
+  }else{showToast('Нечего восстанавливать','error')}
+}
+
+function restoreState(state){
+  Object.assign(P,state);
+  // Update all UI elements
+  document.getElementById('shadeShape').value=P.shadeShape;
+  document.getElementById('shadeH').value=P.shadeH;document.getElementById('v-sh').textContent=Math.round(P.shadeH);
+  document.getElementById('shadeBotR').value=P.shadeBotR;document.getElementById('v-sb').textContent=Math.round(P.shadeBotR);
+  document.getElementById('shadeTopR').value=P.shadeTopR;document.getElementById('v-st').textContent=Math.round(P.shadeTopR);
+  document.getElementById('shadeWall').value=P.shadeWall;document.getElementById('v-sw').textContent=P.shadeWall.toFixed(1);
+  document.getElementById('shadeSegs').value=P.shadeSegs;document.getElementById('v-ss').textContent=P.shadeSegs;
+  document.getElementById('shadeOffset').value=P.shadeOffset;document.getElementById('v-so').textContent=P.shadeOffset;
+  document.getElementById('neckShape').value=P.neckShape;
+  document.getElementById('neckH').value=P.neckH;document.getElementById('v-nh').textContent=P.neckH;
+  document.getElementById('neckBotR').value=P.neckBotR;document.getElementById('v-nb').textContent=Math.round(P.neckBotR);
+  document.getElementById('neckTopR').value=P.neckTopR;document.getElementById('v-nt').textContent=Math.round(P.neckTopR);
+  document.getElementById('neckDetails').value=P.neckDetails;document.getElementById('v-nd').textContent=P.neckDetails;
+  document.getElementById('neckSpiral').value=P.neckSpiral;document.getElementById('v-ns').textContent=P.neckSpiral;
+  document.getElementById('socketType').value=P.socketType;
+  document.getElementById('socketExt').value=P.socketExt;document.getElementById('v-sx').textContent=P.socketExt;
+  document.getElementById('socketDia').value=P.socketDia;document.getElementById('v-sd').textContent=Math.round(P.socketDia);
+  document.getElementById('socketDepth').value=P.socketDepth;document.getElementById('v-sdp').textContent=P.socketDepth;
+  document.getElementById('socketFlange').checked=P.socketFlange;
+  document.getElementById('patternType').value=P.patternType;
+  document.getElementById('patternCell').value=P.patternCell;document.getElementById('v-pc').textContent=Math.round(P.patternCell);
+  document.getElementById('patternDepth').value=P.patternDepth;document.getElementById('v-pd').textContent=P.patternDepth.toFixed(1);
+  document.getElementById('patternSpiral').value=P.patternSpiral;document.getElementById('v-ps').textContent=P.patternSpiral;
+  document.getElementById('patternRibs').value=P.patternRibs;document.getElementById('v-pr').textContent=P.patternRibs;
+  document.getElementById('patternSeed').value=P.patternSeed;document.getElementById('v-seed').textContent=P.patternSeed;
+  refreshLamp();
+}
+
+function updateHistoryUI(){
+  const list=document.getElementById('historyList');
+  list.innerHTML='';
+  historyStack.slice(Math.max(0,historyIndex-4)).forEach((state,idx)=>{
+    const item=document.createElement('div');
+    item.className='history-item';
+    item.textContent=`#${idx+1} • ${new Date(state.timestamp).toLocaleTimeString()}`;
+    item.onclick=()=>{historyIndex=idx;restoreState(state);showToast(`Восстановлена версия #${idx+1}`,'success')};
+    list.appendChild(item);
+  });
+}
+
+function clearHistory(){
+  historyStack=[];
+  historyIndex=-1;
+  saveState();
+  showToast('История очищена');
+}
+
+function showToast(message,type='success'){
+  const toast=document.getElementById('toast');
+  toast.textContent=message;
+  toast.className='toast show '+type;
+  setTimeout(()=>toast.classList.remove('show'),2500);
+}
+
+// Keyboard shortcuts
+document.addEventListener('keydown',e=>{
+  if(e.ctrlKey&&e.key==='z'){e.preventDefault();undo()}
+  if(e.ctrlKey&&e.key==='y'){e.preventDefault();redo()}
+});
+
+function openColorPicker(){document.getElementById('customColorInput').click()}
+
+// ==================== THREE.JS ====================
+const C=document.getElementById('canvas3d');
+const scene=new THREE.Scene();
+const camera=new THREE.PerspectiveCamera(45,innerWidth/innerHeight,0.1,2000);
+camera.position.set(120,140,160);
+
+const renderer=new THREE.WebGLRenderer({antialias:true,alpha:true});
+renderer.setSize(innerWidth,innerHeight);
+renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+renderer.shadowMap.enabled=true;
+renderer.shadowMap.type=THREE.PCFSoftShadowMap;
+renderer.toneMapping=THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure=1.3;
+C.appendChild(renderer.domElement);
+
+scene.add(new THREE.AmbientLight(0x404060,0.5));
+const dl=new THREE.DirectionalLight(0xffffff,1.2);dl.position.set(80,200,80);dl.castShadow=true;dl.shadow.mapSize.set(2048,2048);scene.add(dl);
+const fl=new THREE.DirectionalLight(0x7c3aed,0.25);fl.position.set(-60,80,-40);scene.add(fl);
+const rl=new THREE.DirectionalLight(0xff6c6c,0.15);rl.position.set(0,50,-100);scene.add(rl);
+const glow=new THREE.PointLight(0xffaa44,0.6,250);glow.position.set(0,60,0);scene.add(glow);
+
+const gnd=new THREE.Mesh(new THREE.PlaneGeometry(600,600),new THREE.MeshStandardMaterial({color:0x0a0a15,roughness:0.95}));
+gnd.rotation.x=-Math.PI/2;gnd.receiveShadow=true;scene.add(gnd);
+scene.add(new THREE.GridHelper(300,30,0x1a1a33,0x111122));
+
+// Orbit controls
+let drag=false,pan=false,pm={x:0,y:0},oa={t:Math.PI/4,p:Math.PI/3},od=190,ot=new THREE.Vector3(0,55,0);
+renderer.domElement.addEventListener('mousedown',e=>{if(e.button===2)pan=true;else drag=true;pm={x:e.clientX,y:e.clientY};e.preventDefault()});
+renderer.domElement.addEventListener('mousemove',e=>{const dx=e.clientX-pm.x,dy=e.clientY-pm.y;if(drag){oa.t-=dx*.005;oa.p=Math.max(.1,Math.min(Math.PI-.1,oa.p-dy*.005))}if(pan){const r=new THREE.Vector3(),u=new THREE.Vector3();camera.getWorldDirection(new THREE.Vector3());r.crossVectors(camera.up,new THREE.Vector3().subVectors(camera.position,ot)).normalize();u.copy(camera.up);ot.add(r.multiplyScalar(-dx*.3));ot.add(u.multiplyScalar(dy*.3))}pm={x:e.clientX,y:e.clientY}});
+renderer.domElement.addEventListener('mouseup',()=>{drag=false;pan=false});
+renderer.domElement.addEventListener('wheel',e=>{od=Math.max(40,Math.min(500,od+e.deltaY*.25));e.preventDefault()},{passive:false});
+renderer.domElement.addEventListener('contextmenu',e=>e.preventDefault());
+
+function updateCam(){camera.position.x=ot.x+od*Math.sin(oa.p)*Math.cos(oa.t);camera.position.y=ot.y+od*Math.cos(oa.p);camera.position.z=ot.z+od*Math.sin(oa.p)*Math.sin(oa.t);camera.lookAt(ot)}
+
+// ==================== PARAMS ====================
+const P={shadeShape:'cylinder',shadeH:100,shadeBotR:50,shadeTopR:40,shadeWall:1.5,shadeSegs:32,shadeOffset:5,neckShape:'cylinder',neckH:30,neckBotR:40,neckTopR:25,neckDetails:0,neckSpiral:3,socketType:'e27',socketExt:15,socketDia:27,socketDepth:25,socketFlange:false,patternType:'solid',patternCell:8,patternDepth:.8,patternSpiral:5,patternRibs:0,patternInner:false,patternSeed:42};
+let lampMesh=null;
+const mat=new THREE.MeshStandardMaterial({color:0xe8e8f0,roughness:.3,metalness:.1,side:THREE.DoubleSide});
+
+// Seeded random
+function seededRandom(seed){let s=seed;return()=>{s=(s*16807)%2147483647;return(s-1)/2147483646}}
+
+// ==================== MESH GEN ====================
+function generateMesh(){
+  const V=[],N=[],Idx=[];
+  let vCount=0;
+  function addTri(a,b,c){
+    V.push(...a,...b,...c);
+    const ux=b[0]-a[0],uy=b[1]-a[1],uz=b[2]-a[2],vx=c[0]-a[0],vy=c[1]-a[1],vz=c[2]-a[2];
+    let nnx=uy*vz-uz*vy,nny=uz*vx-ux*vz,nnz=ux*vy-uy*vx;
+    const nl=Math.sqrt(nnx*nnx+nny*nny+nnz*nnz)||1;nnx/=nl;nny/=nl;nnz/=nl;
+    N.push(nnx,nny,nnz,nnx,nny,nnz,nnx,nny,nnz);
+    Idx.push(vCount,vCount+1,vCount+2);vCount+=3;
+  }
+
+  function getShadeR(y){
+    const t=y/P.shadeH;
+    let r;
+    switch(P.shadeShape){
+      case'cylinder':r=P.shadeBotR+(P.shadeTopR-P.shadeBotR)*t;break;
+      case'sphere':r=P.shadeBotR*Math.sin(t*Math.PI)*1.2;break;
+      case'cone':r=P.shadeBotR*(1-t)+Math.max(P.shadeTopR,3)*t;break;
+      case'dome':r=P.shadeBotR*Math.sqrt(1-(1-t)*(1-t));break;
+      case'barrel':r=P.shadeBotR+Math.sin(t*Math.PI)*25;break;
+      case'hourglass':r=P.shadeBotR*(1-Math.sin(t*Math.PI)*.6);break;
+      case'bell':{const bt=t<.5?1-t*1.2:.3+(t-.5)*.4;r=P.shadeBotR*Math.max(.2,bt);break}
+      case'inverted':r=P.shadeTopR+(P.shadeBotR-P.shadeTopR)*(1-t);break;
+      case'twisted':{const base=P.shadeBotR+(P.shadeTopR-P.shadeBotR)*t;r=base+Math.sin(t*Math.PI*3)*8;break}
+      case'hexagonal':r=P.shadeBotR+(P.shadeTopR-P.shadeBotR)*t;break;
+      case'teardrop':r=P.shadeBotR*Math.pow(Math.sin(t*Math.PI),.7);break;
+      case'diamond':r=P.shadeBotR*Math.sin(t*Math.PI)*1.5;break;
+      default:r=P.shadeBotR;
+    }
+    return Math.max(r,2);
+  }
+
+  function getPatternOff(y,angle){
+    const t=y/P.shadeH;const c=P.patternCell;const d=P.patternDepth;
+    const rng=seededRandom(P.patternSeed+Math.floor(y*3.7+angle*5.1));
+    switch(P.patternType){
+      case'solid':return 0;
+      case'spiral':{const sv=(angle/(Math.PI*2)+t)*P.patternSpiral;return Math.sin(sv*Math.PI*2)>0?-d:0}
+      case'hex':{const ax=Math.round(angle/(Math.PI/3)),ay=Math.round(t*P.shadeH/(c*.866));return(ax+ay)%3===0?-d:0}
+      case'circles':{const cx=Math.round(angle*P.shadeBotR/c),cy=Math.round(t*P.shadeH/c);const lx=angle*P.shadeBotR-cx*c,ly=t*P.shadeH-cy*c;return lx*lx+ly*ly<c*c*.2?-d:0}
+      case'diamond':{const ax=Math.round(angle/(Math.PI/4)),ay=Math.round(t*P.shadeH/c);return(ax+ay)%2===0?-d:0}
+      case'waves':return Math.sin(angle*8+t*P.patternSpiral)>.3?-d:0;
+      case'stars':{const ax=Math.round(angle/(Math.PI/5)),ay=Math.round(t*P.shadeH/(c*1.2));return(ax+ay)%3===0?-d*1.5:0}
+      case'voronoi':{const s1=Math.sin(angle*3.7+t*7.1)*.5+.5,s2=Math.cos(angle*5.3+t*3.3)*.5+.5;return s1+s2>1.2?-d:0}
+      case'random':{const r=rng();return r>.55?-d*1.2:0}
+      case'lines':{return Math.sin(angle*12+t*P.patternSpiral*2)>.5?-d:0}
+      case'cross':{const ax=Math.round(angle*P.shadeBotR/c),ay=Math.round(t*P.shadeH/c);return((ax+ay)%4===0||ax%4===0)?-d:0}
+      case'lattice':{const ax=Math.round(angle/(Math.PI/6)),ay=Math.round(t*P.shadeH/c);return(ax%2===0&&ay%2===0)?-d:0}
+      default:return 0;
+    }
+  }
+
+  const off=P.shadeOffset;
+  const layers=Math.max(4,Math.ceil(P.shadeH/P.patternCell))+1;
+  const segs=P.shadeSegs;
+
+  // Shade body
+  for(let ly=0;ly<layers;ly++){
+    const y0=off+(ly/(layers-1))*P.shadeH,y1=off+((ly+1)/(layers-1))*P.shadeH;
+    const r0=getShadeR(y0-off),r1=getShadeR(y1-off);
+    const ir0=Math.max(r0-P.shadeWall,1),ir1=Math.max(r1-P.shadeWall,1);
+    for(let s=0;s<segs;s++){
+      const a0=(s/segs)*Math.PI*2,a1=((s+1)/segs)*Math.PI*2;
+      const p00=getPatternOff(y0,a0),p01=getPatternOff(y0,a1),p10=getPatternOff(y1,a0),p11=getPatternOff(y1,a1);
+      const ox00=[Math.cos(a0)*(r0+p00),y0,Math.sin(a0)*(r0+p00)];
+      const ox01=[Math.cos(a1)*(r0+p01),y0,Math.sin(a1)*(r0+p01)];
+      const ox10=[Math.cos(a0)*(r1+p10),y1,Math.sin(a0)*(r1+p10)];
+      const ox11=[Math.cos(a1)*(r1+p11),y1,Math.sin(a1)*(r1+p11)];
+      const ix00=[Math.cos(a0)*ir0,y0,Math.sin(a0)*ir0];
+      const ix01=[Math.cos(a1)*ir0,y0,Math.sin(a1)*ir0];
+      const ix10=[Math.cos(a0)*ir1,y1,Math.sin(a0)*ir1];
+      const ix11=[Math.cos(a1)*ir1,y1,Math.sin(a1)*ir1];
+      addTri(ox00,ox01,ox10);addTri(ox01,ox11,ox10);
+      addTri(ix10,ix01,ix00);addTri(ix10,ix11,ix01);
+      addTri(ox10,ix10,ix11);addTri(ox10,ix11,ox11);
+      addTri(ix00,ox00,ox01);addTri(ix00,ox01,ix01);
+      addTri(ox00,ix00,ix10);addTri(ox00,ix10,ox10);
+    }
+  }
+
+  // Ribs
+  if(P.patternRibs>0){
+    for(let rb=0;rb<P.patternRibs;rb++){
+      const ang=(rb/P.patternRibs)*Math.PI*2;
+      for(let ly=0;ly<layers-1;ly++){
+        const y0=off+(ly/(layers-1))*P.shadeH,y1=off+((ly+1)/(layers-1))*P.shadeH;
+        const sr0=getShadeR(y0-off),sr1=getShadeR(y1-off);
+        const sir0=sr0-P.shadeWall,sir1=sr1-P.shadeWall;
+        const cA=Math.cos(ang),sA=Math.sin(ang);
+        const rw=1.5;
+        addTri([cA*sr0,y0,sA*sr0],[cA*(sr0+rw),y0,sA*(sr0+rw)],[cA*(sr1+rw),y1,sA*(sr1+rw)]);
+        addTri([cA*sr0,y0,sA*sr0],[cA*(sr1+rw),y1,sA*(sr1+rw)],[cA*sr1,y1,sA*sr1]);
+        addTri([cA*sir0,y0,sA*sir0],[cA*(sir0-rw*.5),y0,sA*(sir0-rw*.5)],[cA*(sir1-rw*.5),y1,sA*(sir1-rw*.5)]);
+        addTri([cA*sir0,y0,sA*sir0],[cA*(sir1-rw*.5),y1,sA*(sir1-rw*.5)],[cA*sir1,y1,sA*sir1]);
+      }
+    }
+  }
+
+  // Neck
+  if(P.neckH>0){
+    const nL=12;
+    for(let ly=0;ly<nL;ly++){
+      const t0=ly/nL,t1=(ly+1)/nL;
+      const y0=-P.neckH*t0,y1=-P.neckH*t1;
+      let nr0,nr1;
+      switch(P.neckShape){
+        case'cylinder':nr0=P.neckBotR+(P.neckTopR-P.neckBotR)*t0;nr1=P.neckBotR+(P.neckTopR-P.neckBotR)*t1;break;
+        case'tapered':nr0=P.neckBotR*(1-t0)+P.neckTopR*t0;nr1=P.neckBotR*(1-t1)+P.neckTopR*t1;break;
+        case'turned':{const b0=P.neckBotR+(P.neckTopR-P.neckBotR)*t0;nr0=b0+Math.sin(t0*Math.PI*(P.neckDetails+1))*5;const b1=P.neckBotR+(P.neckTopR-P.neckBotR)*t1;nr1=b1+Math.sin(t1*Math.PI*(P.neckDetails+1))*5;break}
+        case'spiral':nr0=P.neckBotR+(P.neckTopR-P.neckBotR)*t0;nr1=P.neckBotR+(P.neckTopR-P.neckBotR)*t1;break;
+        case'crystal':{const b0=P.neckBotR+(P.neckTopR-P.neckBotR)*t0;const f0=Math.abs(Math.sin(t0*Math.PI*4));nr0=b0*(.7+f0*.3);const b1=P.neckBotR+(P.neckTopR-P.neckBotR)*t1;const f1=Math.abs(Math.sin(t1*Math.PI*4));nr1=b1*(.7+f1*.3);break}
+        case'branch':{const b0=P.neckBotR+(P.neckTopR-P.neckBotR)*t0;nr0=Math.max(b0+Math.sin(t0*Math.PI*3)*8,5);const b1=P.neckBotR+(P.neckTopR-P.neckBotR)*t1;nr1=Math.max(b1+Math.sin(t1*Math.PI*3)*8,5);break}
+        default:nr0=P.neckBotR;nr1=P.neckBotR;
+      }
+      for(let s=0;s<segs;s++){
+        const a0=(s/segs)*Math.PI*2,a1=((s+1)/segs)*Math.PI*2;
+        let sp0=0,sp1=0;
+        if(P.neckShape==='spiral'){sp0=Math.sin(t0*Math.PI*2*P.neckSpiral+a0*P.neckSpiral)*2;sp1=Math.sin(t1*Math.PI*2*P.neckSpiral+a0*P.neckSpiral)*2}
+        const onr0=nr0+sp0,onr1=nr1+sp1;
+        addTri([Math.cos(a0)*nr0,y0,Math.sin(a0)*nr0],[Math.cos(a0)*onr0,y0,Math.sin(a0)*onr0],[Math.cos(a1)*onr1,y1,Math.sin(a1)*onr1]);
+        addTri([Math.cos(a0)*nr0,y0,Math.sin(a0)*nr0],[Math.cos(a1)*onr1,y1,Math.sin(a1)*onr1],[Math.cos(a1)*nr1,y1,Math.sin(a1)*nr1]);
+      }
+    }
+    const nbR=P.neckBotR;
+    for(let s=0;s<segs;s++){const a0=(s/segs)*Math.PI*2,a1=((s+1)/segs)*Math.PI*2;addTri([0,-P.neckH,0],[Math.cos(a1)*nbR,-P.neckH,Math.sin(a1)*nbR],[Math.cos(a0)*nbR,-P.neckH,Math.sin(a0)*nbR])}
+  }
+
+  // Socket
+  if(P.socketType!=='none'){
+    const sDia=P.socketDia,sExt=P.socketExt;
+    const sSegs=24;
+    const sTop=P.neckH>0?-P.neckH:0;
+    const sBot=sTop-sExt;
+    const threadL=Math.floor(sExt/2);
+    for(let tl=0;tl<threadL;tl++){
+      const y0=sTop-tl*2,y1=sTop-(tl+1)*2;
+      const tr=sDia/2,rid=tr+.8;
+      for(let s=0;s<sSegs;s++){
+        const a0=(s/sSegs)*Math.PI*2,a1=((s+1)/sSegs)*Math.PI*2;
+        addTri([Math.cos(a0)*rid,y0,Math.sin(a0)*rid],[Math.cos(a1)*rid,y0,Math.sin(a1)*rid],[Math.cos(a0)*rid,y1,Math.sin(a0)*rid]);
+        addTri([Math.cos(a1)*rid,y0,Math.sin(a1)*rid],[Math.cos(a1)*rid,y1,Math.sin(a1)*rid],[Math.cos(a0)*rid,y1,Math.sin(a0)*rid]);
+      }
+    }
+    for(let s=0;s<sSegs;s++){
+      const a0=(s/sSegs)*Math.PI*2,a1=((s+1)/sSegs)*Math.PI*2;
+      addTri([Math.cos(a0)*sDia/2,sTop,Math.sin(a0)*sDia/2],[Math.cos(a1)*sDia/2,sTop,Math.sin(a1)*sDia/2],[Math.cos(a0)*sDia/2,sBot,Math.sin(a0)*sDia/2]);
+      addTri([Math.cos(a1)*sDia/2,sTop,Math.sin(a1)*sDia/2],[Math.cos(a1)*sDia/2,sBot,Math.sin(a1)*sDia/2],[Math.cos(a0)*sDia/2,sBot,Math.sin(a0)*sDia/2]);
+    }
+    for(let s=0;s<sSegs;s++){const a0=(s/sSegs)*Math.PI*2,a1=((s+1)/segs)*Math.PI*2;addTri([0,sBot,0],[Math.cos(a1)*sDia/2,sBot,Math.sin(a1)*sDia/2],[Math.cos(a0)*sDia/2,sBot,Math.sin(a0)*sDia/2])}
+    if(P.socketFlange){
+      const fR=sDia/2+8,fH=3;
+      for(let s=0;s<sSegs;s++){
+        const a0=(s/sSegs)*Math.PI*2,a1=((s+1)/sSegs)*Math.PI*2;
+        addTri([Math.cos(a0)*sDia/2,sTop,Math.sin(a0)*sDia/2],[Math.cos(a0)*fR,sTop,Math.sin(a0)*fR],[Math.cos(a1)*fR,sTop,Math.sin(a1)*fR]);
+        addTri([Math.cos(a0)*sDia/2,sTop,Math.sin(a0)*sDia/2],[Math.cos(a1)*fR,sTop,Math.sin(a1)*fR],[Math.cos(a1)*sDia/2,sTop,Math.sin(a1)*sDia/2]);
+        addTri([Math.cos(a0)*fR,sTop,Math.sin(a0)*fR],[Math.cos(a0)*fR,sTop-fH,Math.sin(a0)*fR],[Math.cos(a1)*fR,sTop-fH,Math.sin(a1)*fR]);
+        addTri([Math.cos(a0)*fR,sTop,Math.sin(a0)*fR],[Math.cos(a1)*fR,sTop-fH,Math.sin(a1)*fR],[Math.cos(a1)*fR,sTop,Math.sin(a1)*fR]);
+      }
+    }
+  }
+
+  const geo=new THREE.BufferGeometry();
+  geo.setAttribute('position',new THREE.Float32BufferAttribute(V,3));
+  geo.setAttribute('normal',new THREE.Float32BufferAttribute(N,3));
+  geo.setIndex(Idx);
+  geo.computeBoundingSphere();
+  return geo;
+}
+
+function refreshLamp(){
+  if(lampMesh){scene.remove(lampMesh);lampMesh.geometry.dispose()}
+  const geo=generateMesh();
+  lampMesh=new THREE.Mesh(geo,mat);lampMesh.castShadow=true;lampMesh.receiveShadow=true;scene.add(lampMesh);
+  const triC=Idx.length/3;
+  const vol=(P.shadeBotR*P.shadeBotR*Math.PI*P.shadeH/1000).toFixed(1);
+  document.getElementById('info-text').innerHTML=`<div>Граней: <strong class="text-violet-400">${Math.round(triC)}</strong></div><div>Объём: <strong class="text-cyan-400">${vol} см³</strong></div>`;
+  document.getElementById('stat-faces').textContent='~'+Math.round(triC);
+  document.getElementById('stat-volume').textContent='~'+vol+' см³';
+  glow.position.y=P.shadeOffset+P.shadeH*.4;
+}
+
+// ==================== UI ====================
+function up(name,val){
+  P[name]=val;
+  const m={shadeH:'v-sh',shadeBotR:'v-sb',shadeTopR:'v-st',shadeWall:'v-sw',shadeSegs:'v-ss',shadeOffset:'v-so',neckH:'v-nh',neckBotR:'v-nb',neckTopR:'v-nt',neckDetails:'v-nd',neckSpiral:'v-ns',socketExt:'v-sx',socketDia:'v-sd',socketDepth:'v-sdp',patternCell:'v-pc',patternDepth:'v-pd',patternSpiral:'v-ps',patternRibs:'v-pr',patternSeed:'v-seed'};
+  if(m[name]){
+    const el=document.getElementById(m[name]);
+    if(name==='shadeWall'||name==='patternDepth')el.textContent=val.toFixed(1);
+    else el.textContent=Math.round(val);
+  }
+  refreshLamp();
+  // Auto-save state after debounce
+  clearTimeout(up.timeout);
+  up.timeout=setTimeout(saveState,300);
+}
+
+function switchTab(n,btn){
+  document.querySelectorAll('.tab-content').forEach(e=>e.classList.add('hidden'));
+  document.getElementById('tab-'+n).classList.remove('hidden');
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+function setColor(c,el){
+  mat.color.set(c);
+  document.querySelectorAll('.color-dot').forEach(d=>d.classList.remove('active'));
+  if(el)el.classList.add('active');
+  showToast('Цвет обновлён');
+}
+
+const presets={
+  classic:{shadeShape:'bell',shadeH:100,shadeBotR:50,shadeTopR:20,shadeWall:1.5,shadeSegs:32,shadeOffset:5,neckShape:'turned',neckH:35,neckBotR:40,neckTopR:20,neckDetails:3,neckSpiral:3,socketType:'e27',socketExt:15,socketDia:27,socketDepth:25,socketFlange:true,patternType:'solid',patternCell:8,patternDepth:.8,patternSpiral:5,patternRibs:0,patternInner:false,patternSeed:42},
+  modern:{shadeShape:'cylinder',shadeH:150,shadeBotR:35,shadeTopR:35,shadeWall:1,shadeSegs:48,shadeOffset:5,neckShape:'cylinder',neckH:20,neckBotR:35,neckTopR:35,neckDetails:0,neckSpiral:3,socketType:'e27',socketExt:10,socketDia:27,socketDepth:20,socketFlange:false,patternType:'circles',patternCell:8,patternDepth:.4,patternSpiral:5,patternRibs:0,patternInner:false,patternSeed:42},
+  artdeco:{shadeShape:'dome',shadeH:90,shadeBotR:55,shadeTopR:15,shadeWall:2,shadeSegs:32,shadeOffset:5,neckShape:'crystal',neckH:45,neckBotR:35,neckTopR:15,neckDetails:4,neckSpiral:3,socketType:'e14',socketExt:12,socketDia:14,socketDepth:20,socketFlange:true,patternType:'diamond',patternCell:6,patternDepth:1,patternSpiral:5,patternRibs:8,patternInner:false,patternSeed:77},
+  japanese:{shadeShape:'cylinder',shadeH:120,shadeBotR:45,shadeTopR:45,shadeWall:1,shadeSegs:6,shadeOffset:5,neckShape:'cylinder',neckH:25,neckBotR:45,neckTopR:45,neckDetails:0,neckSpiral:3,socketType:'e27',socketExt:15,socketDia:27,socketDepth:25,socketFlange:false,patternType:'lattice',patternCell:12,patternDepth:.6,patternSpiral:5,patternRibs:0,patternInner:true,patternSeed:42},
+  industrial:{shadeShape:'inverted',shadeH:80,shadeBotR:60,shadeTopR:25,shadeWall:2.5,shadeSegs:32,shadeOffset:5,neckShape:'cylinder',neckH:15,neckBotR:25,neckTopR:25,neckDetails:0,neckSpiral:3,socketType:'e27',socketExt:15,socketDia:27,socketDepth:25,socketFlange:true,patternType:'lines',patternCell:5,patternDepth:.5,patternSpiral:8,patternRibs:0,patternInner:false,patternSeed:42},
+  organic:{shadeShape:'teardrop',shadeH:140,shadeBotR:30,shadeTopR:50,shadeWall:1.2,shadeSegs:32,shadeOffset:5,neckShape:'branch',neckH:50,neckBotR:30,neckTopR:25,neckDetails:2,neckSpiral:3,socketType:'e27',socketExt:15,socketDia:27,socketDepth:25,socketFlange:false,patternType:'voronoi',patternCell:14,patternDepth:1,patternSpiral:5,patternRibs:0,patternInner:true,patternSeed:123},
+  futuristic:{shadeShape:'twisted',shadeH:160,shadeBotR:35,shadeTopR:35,shadeWall:1,shadeSegs:32,shadeOffset:5,neckShape:'spiral',neckH:40,neckBotR:30,neckTopR:25,neckDetails:0,neckSpiral:6,socketType:'gu10',socketExt:10,socketDia:20,socketDepth:20,socketFlange:false,patternType:'spiral',patternCell:5,patternDepth:.8,patternSpiral:12,patternRibs:0,patternInner:false,patternSeed:42},
+  vintage:{shadeShape:'bell',shadeH:110,shadeBotR:55,shadeTopR:25,shadeWall:2,shadeSegs:32,shadeOffset:5,neckShape:'turned',neckH:40,neckBotR:45,neckTopR:25,neckDetails:5,neckSpiral:3,socketType:'e14',socketExt:15,socketDia:14,socketDepth:25,socketFlange:true,patternType:'stars',patternCell:8,patternDepth:.7,patternSpiral:5,patternRibs:4,patternInner:true,patternSeed:55},
+  geometric:{shadeShape:'hexagonal',shadeH:100,shadeBotR:45,shadeTopR:45,shadeWall:1.5,shadeSegs:6,shadeOffset:5,neckShape:'cylinder',neckH:20,neckBotR:45,neckTopR:45,neckDetails:0,neckSpiral:3,socketType:'e27',socketExt:15,socketDia:27,socketDepth:25,socketFlange:false,patternType:'hex',patternCell:10,patternDepth:.8,patternSpiral:5,patternRibs:6,patternInner:false,patternSeed:42},
+  minimal:{shadeShape:'dome',shadeH:80,shadeBotR:40,shadeTopR:40,shadeWall:.8,shadeSegs:48,shadeOffset:5,neckShape:'tapered',neckH:25,neckBotR:40,neckTopR:15,neckDetails:0,neckSpiral:3,socketType:'e27',socketExt:8,socketDia:27,socketDepth:18,socketFlange:false,patternType:'solid',patternCell:8,patternDepth:.8,patternSpiral:5,patternRibs:0,patternInner:false,patternSeed:42}
+};
+
+function applyPreset(name){
+  const p=presets[name];if(!p)return;
+  saveState();
+  Object.assign(P,p);
+  // Update all UI
+  document.getElementById('shadeShape').value=p.shadeShape;
+  document.getElementById('shadeH').value=p.shadeH;document.getElementById('v-sh').textContent=p.shadeH;
+  document.getElementById('shadeBotR').value=p.shadeBotR;document.getElementById('v-sb').textContent=p.shadeBotR;
+  document.getElementById('shadeTopR').value=p.shadeTopR;document.getElementById('v-st').textContent=p.shadeTopR;
+  document.getElementById('shadeWall').value=p.shadeWall;document.getElementById('v-sw').textContent=p.shadeWall;
+  document.getElementById('shadeSegs').value=p.shadeSegs;document.getElementById('v-ss').textContent=p.shadeSegs;
+  document.getElementById('shadeOffset').value=p.shadeOffset;document.getElementById('v-so').textContent=p.shadeOffset;
+  document.getElementById('neckShape').value=p.neckShape;
+  document.getElementById('neckH').value=p.neckH;document.getElementById('v-nh').textContent=p.neckH;
+  document.getElementById('neckBotR').value=p.neckBotR;document.getElementById('v-nb').textContent=p.neckBotR;
+  document.getElementById('neckTopR').value=p.neckTopR;document.getElementById('v-nt').textContent=p.neckTopR;
+  document.getElementById('neckDetails').value=p.neckDetails;document.getElementById('v-nd').textContent=p.neckDetails;
+  document.getElementById('neckSpiral').value=p.neckSpiral;document.getElementById('v-ns').textContent=p.neckSpiral;
+  document.getElementById('socketType').value=p.socketType;
+  document.getElementById('socketExt').value=p.socketExt;document.getElementById('v-sx').textContent=p.socketExt;
+  document.getElementById('socketDia').value=p.socketDia;document.getElementById('v-sd').textContent=p.socketDia;
+  document.getElementById('socketDepth').value=p.socketDepth;document.getElementById('v-sdp').textContent=p.socketDepth;
+  document.getElementById('socketFlange').checked=p.socketFlange;
+  document.getElementById('patternType').value=p.patternType;
+  document.getElementById('patternCell').value=p.patternCell;document.getElementById('v-pc').textContent=p.patternCell;
+  document.getElementById('patternDepth').value=p.patternDepth;document.getElementById('v-pd').textContent=p.patternDepth;
+  document.getElementById('patternSpiral').value=p.patternSpiral;document.getElementById('v-ps').textContent=p.patternSpiral;
+  document.getElementById('patternRibs').value=p.patternRibs;document.getElementById('v-pr').textContent=p.patternRibs;
+  document.getElementById('patternSeed').value=p.patternSeed;document.getElementById('v-seed').textContent=p.patternSeed;
+  document.querySelectorAll('.preset-btn').forEach(b=>b.classList.remove('active'));
+  document.querySelector(`[data-preset="${name}"]`).classList.add('active');
+  refreshLamp();
+  saveState();
+  showToast(`Применён стиль: ${name}`,'success');
+}
+
+function randomizeAll(){
+  saveState();
+  const shapes=['cylinder','sphere','cone','dome','barrel','hourglass','bell','inverted','twisted','hexagonal','teardrop','diamond'];
+  const nShapes=['cylinder','tapered','turned','spiral','crystal','branch'];
+  const pTypes=['solid','spiral','hex','circles','diamond','waves','stars','voronoi','random','lines','cross','lattice'];
+  const sTypes=['e27','e14','gu10','none'];
+
+  P.shadeShape=shapes[Math.floor(Math.random()*shapes.length)];
+  P.shadeH=50+Math.random()*150;
+  P.shadeBotR=20+Math.random()*60;
+  P.shadeTopR=10+Math.random()*60;
+  P.shadeWall=.8+Math.random()*3;
+  P.shadeSegs=Math.floor(4+Math.random()*50);
+  P.shadeOffset=Math.floor(Math.random()*20);
+  P.neckShape=nShapes[Math.floor(Math.random()*nShapes.length)];
+  P.neckH=Math.floor(Math.random()*100);
+  P.neckBotR=15+Math.random()*55;
+  P.neckTopR=8+Math.random()*40;
+  P.neckDetails=Math.floor(Math.random()*6);
+  P.neckSpiral=1+Math.floor(Math.random()*10);
+  P.socketType=sTypes[Math.floor(Math.random()*sTypes.length)];
+  P.socketExt=Math.floor(Math.random()*30);
+  P.socketDia=14+Math.floor(Math.random()*30);
+  P.socketDepth=10+Math.floor(Math.random()*35);
+  P.socketFlange=Math.random()>.5;
+  P.patternType=pTypes[Math.floor(Math.random()*pTypes.length)];
+  P.patternCell=3+Math.floor(Math.random()*20);
+  P.patternDepth=.2+Math.random()*1.5;
+  P.patternSpiral=1+Math.floor(Math.random()*15);
+  P.patternRibs=Math.floor(Math.random()*12);
+  P.patternInner=Math.random()>.6;
+  P.patternSeed=1+Math.floor(Math.random()*999);
+
+  // Update UI
+  document.getElementById('shadeShape').value=P.shadeShape;
+  document.getElementById('shadeH').value=P.shadeH;document.getElementById('v-sh').textContent=Math.round(P.shadeH);
+  document.getElementById('shadeBotR').value=P.shadeBotR;document.getElementById('v-sb').textContent=Math.round(P.shadeBotR);
+  document.getElementById('shadeTopR').value=P.shadeTopR;document.getElementById('v-st').textContent=Math.round(P.shadeTopR);
+  document.getElementById('shadeWall').value=P.shadeWall;document.getElementById('v-sw').textContent=P.shadeWall.toFixed(1);
+  document.getElementById('shadeSegs').value=P.shadeSegs;document.getElementById('v-ss').textContent=P.shadeSegs;
+  document.getElementById('shadeOffset').value=P.shadeOffset;document.getElementById('v-so').textContent=P.shadeOffset;
+  document.getElementById('neckShape').value=P.neckShape;
+  document.getElementById('neckH').value=P.neckH;document.getElementById('v-nh').textContent=P.neckH;
+  document.getElementById('neckBotR').value=P.neckBotR;document.getElementById('v-nb').textContent=Math.round(P.neckBotR);
+  document.getElementById('neckTopR').value=P.neckTopR;document.getElementById('v-nt').textContent=Math.round(P.neckTopR);
+  document.getElementById('neckDetails').value=P.neckDetails;document.getElementById('v-nd').textContent=P.neckDetails;
+  document.getElementById('neckSpiral').value=P.neckSpiral;document.getElementById('v-ns').textContent=P.neckSpiral;
+  document.getElementById('socketType').value=P.socketType;
+  document.getElementById('socketExt').value=P.socketExt;document.getElementById('v-sx').textContent=P.socketExt;
+  document.getElementById('socketDia').value=P.socketDia;document.getElementById('v-sd').textContent=Math.round(P.socketDia);
+  document.getElementById('socketDepth').value=P.socketDepth;document.getElementById('v-sdp').textContent=P.socketDepth;
+  document.getElementById('socketFlange').checked=P.socketFlange;
+  document.getElementById('patternType').value=P.patternType;
+  document.getElementById('patternCell').value=P.patternCell;document.getElementById('v-pc').textContent=Math.round(P.patternCell);
+  document.getElementById('patternDepth').value=P.patternDepth;document.getElementById('v-pd').textContent=P.patternDepth.toFixed(1);
+  document.getElementById('patternSpiral').value=P.patternSpiral;document.getElementById('v-ps').textContent=P.patternSpiral;
+  document.getElementById('patternRibs').value=P.patternRibs;document.getElementById('v-pr').textContent=P.patternRibs;
+  document.getElementById('patternSeed').value=P.patternSeed;document.getElementById('v-seed').textContent=P.patternSeed;
+
+  document.querySelectorAll('.preset-btn').forEach(b=>b.classList.remove('active'));
+  refreshLamp();
+  saveState();
+  showToast('Сгенерирован случайный дизайн','success');
+}
+
+function exportSTL(){
+  const geo=generateMesh();
+  const pos=geo.attributes.position.array;
+  const norm=geo.attributes.normal.array;
+  const idx=geo.index?geo.index.array:null;
+  const nTri=idx?idx.length/3:pos.length/9;
+  const buf=new ArrayBuffer(84+nTri*50);
+  const v=new DataView(buf);
+  const h='LampGenerator3DPro';
+  for(let i=0;i<80;i++)v.setUint8(i,i<h.length?h.charCodeAt(i):0);
+  v.setUint32(80,nTri,true);
+  let off=84;
+  for(let i=0;i<nTri;i++){
+    const i0=idx?idx[i*3]:i*3,i1=idx?idx[i*3+1]:i*3+1,i2=idx?idx[i*3+2]:i*3+2;
+    v.setFloat32(off,norm[i0*3],true);off+=4;v.setFloat32(off,norm[i0*3+1],true);off+=4;v.setFloat32(off,norm[i0*3+2],true);off+=4;
+    v.setFloat32(off,pos[i0*3],true);off+=4;v.setFloat32(off,pos[i0*3+1],true);off+=4;v.setFloat32(off,pos[i0*3+2],true);off+=4;
+    v.setFloat32(off,pos[i1*3],true);off+=4;v.setFloat32(off,pos[i1*3+1],true);off+=4;v.setFloat32(off,pos[i1*3+2],true);off+=4;
+    v.setFloat32(off,pos[i2*3],true);off+=4;v.setFloat32(off,pos[i2*3+1],true);off+=4;v.setFloat32(off,pos[i2*3+2],true);off+=4;
+    v.setUint16(off,0,true);off+=2;
+  }
+  const blob=new Blob([buf],{type:'application/octet-stream'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');a.href=url;a.download='lamp_3d_print.stl';a.click();URL.revokeObjectURL(url);
+  showToast('STL файл скачан','success');
+}
+
+// Init
+window.addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight)});
+saveState();
+refreshLamp();
+(function anim(){requestAnimationFrame(anim);updateCam();glow.intensity=.5+Math.sin(Date.now()*.003)*.3;renderer.render(scene,camera)})();
+</script>
+</body>
+</html>
