@@ -11,28 +11,37 @@
 *{margin:0;padding:0;box-sizing:border-box}
 body{font-family:'Inter',sans-serif;background:#08080f;color:#e0e0e0;overflow:hidden}
 #canvas3d{position:absolute;top:0;left:0;width:100%;height:100%}
-.panel{backdrop-filter:blur(24px);background:rgba(10,10,20,0.88);border:1px solid rgba(255,255,255,0.07)}
-.slider-group label{font-size:.7rem;color:#777;text-transform:uppercase;letter-spacing:.05em}
-input[type=range]{-webkit-appearance:none;width:100%;height:5px;border-radius:3px;background:#1a1a2e;outline:none}
-input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:16px;border-radius:50%;background:#7c3aed;cursor:pointer;border:2px solid #fff}
-select{background:#111122;border:1px solid rgba(255,255,255,0.1);color:#fff;border-radius:6px;padding:6px 10px;font-size:12px;width:100%}
-.btn-gen{background:linear-gradient(135deg,#7c3aed,#5b21b6);transition:all .3s}
-.btn-gen:hover{transform:translateY(-2px);box-shadow:0 8px 30px rgba(124,58,237,.4)}
-.btn-dl{background:linear-gradient(135deg,#059669,#047857);transition:all .3s}
-.btn-dl:hover{transform:translateY(-2px);box-shadow:0 8px 30px rgba(5,150,105,.4)}
-.btn-sec{background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);transition:all .3s}
-.btn-sec:hover{background:rgba(255,255,255,0.1)}
-.preset-btn{transition:all .3s;cursor:pointer;font-size:11px}
-.preset-btn:hover,.preset-btn.active{background:rgba(124,58,237,0.2);border-color:#7c3aed;color:#c4b5fd}
-.tab-btn{transition:all .3s}
-.tab-btn.active{background:#7c3aed;color:#fff}
-.val{font-family:monospace;color:#a78bfa;font-weight:600;font-size:.75rem}
-.glow{text-shadow:0 0 20px rgba(124,58,237,.5)}
-::-webkit-scrollbar{width:5px}
-::-webkit-scrollbar-track{background:transparent}
-::-webkit-scrollbar-thumb{background:#333;border-radius:3px}
-.color-dot{width:16px;height:16px;border-radius:50%;cursor:pointer;border:2px solid transparent}
-.color-dot.active{border-color:#fff}
+.panel{backdrop-filter:blur(24px);background:rgba(10,10,20,0.92);border:1px solid rgba(255,255,255,0.08);box-shadow:0 8px 32px rgba(0,0,0,0.4)}
+.slider-group label{font-size:.7rem;color:#888;text-transform:uppercase;letter-spacing:.08em;font-weight:500}
+input[type=range]{-webkit-appearance:none;width:100%;height:6px;border-radius:3px;background:linear-gradient(90deg,#1a1a2e,#2a2a4e);outline:none;cursor:pointer}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;height:18px;border-radius:50%;background:linear-gradient(135deg,#7c3aed,#5b21b6);cursor:pointer;border:2px solid #fff;box-shadow:0 2px 8px rgba(124,58,237,0.5);transition:transform .2s}
+input[type=range]::-webkit-slider-thumb:hover{transform:scale(1.1)}
+select{background:linear-gradient(135deg,#1a1a2e,#111122);border:1px solid rgba(124,58,237,0.3);color:#fff;border-radius:8px;padding:8px 12px;font-size:12px;width:100%;cursor:pointer;transition:all .3s}
+select:hover{border-color:#7c3aed;box-shadow:0 0 15px rgba(124,58,237,0.3)}
+.btn-gen{background:linear-gradient(135deg,#7c3aed,#5b21b6);transition:all .3s;box-shadow:0 4px 15px rgba(124,58,237,0.3)}
+.btn-gen:hover{transform:translateY(-2px);box-shadow:0 8px 30px rgba(124,58,237,0.5)}
+.btn-dl{background:linear-gradient(135deg,#059669,#047857);transition:all .3s;box-shadow:0 4px 15px rgba(5,150,105,0.3)}
+.btn-dl:hover{transform:translateY(-2px);box-shadow:0 8px 30px rgba(5,150,105,0.5)}
+.btn-sec{background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);transition:all .3s}
+.btn-sec:hover{background:rgba(124,58,237,0.15);border-color:#7c3aed}
+.preset-btn{transition:all .3s;cursor:pointer;font-size:11px;border:1px solid transparent}
+.preset-btn:hover,.preset-btn.active{background:linear-gradient(135deg,rgba(124,58,237,0.2),rgba(91,33,182,0.1));border-color:#7c3aed;color:#c4b5fd;box-shadow:0 0 15px rgba(124,58,237,0.2)}
+.tab-btn{transition:all .3s;border-radius:8px}
+.tab-btn.active{background:linear-gradient(135deg,#7c3aed,#5b21b6);color:#fff;box-shadow:0 2px 10px rgba(124,58,237,0.4)}
+.val{font-family:'JetBrains Mono',monospace;color:#a78bfa;font-weight:600;font-size:.8rem;background:rgba(124,58,237,0.1);padding:2px 6px;border-radius:4px}
+.glow{text-shadow:0 0 25px rgba(124,58,237,0.6),0 0 50px rgba(124,58,237,0.3)}
+::-webkit-scrollbar{width:6px}
+::-webkit-scrollbar-track{background:rgba(0,0,0,0.2)}
+::-webkit-scrollbar-thumb{background:linear-gradient(135deg,#4c4c6c,#2a2a4e);border-radius:3px}
+.color-dot{width:20px;height:20px;border-radius:50%;cursor:pointer;border:2px solid rgba(255,255,255,0.2);transition:all .3s;box-shadow:0 2px 8px rgba(0,0,0,0.3)}
+.color-dot:hover{transform:scale(1.15)}
+.color-dot.active{border-color:#fff;box-shadow:0 0 15px currentColor,0 0 30px currentColor}
+.layer-preview{background:rgba(0,0,0,0.3);border-radius:8px;padding:10px;margin-top:10px}
+.layer-slider{width:100%;margin:10px 0}
+.support-toggle{display:flex;align-items:center;gap:8px;margin-top:8px}
+.support-toggle input{accent-color:#7c3aed;width:16px;height:16px}
+.print-mode-btn{flex:1;padding:8px;border:none;border-radius:6px;cursor:pointer;font-size:11px;font-weight:600;transition:all .3s;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1)}
+.print-mode-btn.active{background:linear-gradient(135deg,#7c3aed,#5b21b6);border-color:#7c3aed;box-shadow:0 0 15px rgba(124,58,237,0.4)}
 </style>
 </head>
 <body>
@@ -40,12 +49,12 @@ select{background:#111122;border:1px solid rgba(255,255,255,0.1);color:#fff;bord
 <div id="canvas3d"></div>
 
 <!-- Header -->
-<div class="absolute top-0 left-0 right-0 z-10 p-3">
+<div class="absolute top-0 left-0 right-0 z-10 p-4">
 <div class="flex items-center justify-between">
-<h1 class="text-xl font-bold glow">💡 Lamp Generator 3D Pro</h1>
-<div class="flex gap-2">
-<button onclick="randomizeAll()" class="btn-gen px-4 py-2 rounded-lg text-xs font-bold text-white">🎲 Рандом</button>
-<button onclick="exportSTL()" class="btn-dl px-5 py-2 rounded-lg text-xs font-bold text-white">⬇ Скачать STL</button>
+<h1 class="text-2xl font-bold glow">💡 Lamp Generator 3D Pro</h1>
+<div class="flex gap-3">
+<button onclick="randomizeAll()" class="btn-gen px-5 py-2.5 rounded-xl text-sm font-bold text-white">🎲 Рандом</button>
+<button onclick="exportSTL()" class="btn-dl px-6 py-2.5 rounded-xl text-sm font-bold text-white">⬇ Скачать STL</button>
 </div>
 </div>
 </div>
@@ -82,10 +91,64 @@ select{background:#111122;border:1px solid rgba(255,255,255,0.1);color:#fff;bord
 <!-- Right: Controls -->
 <div class="absolute top-14 right-3 z-10 panel rounded-xl p-4 w-72 max-h-[calc(100vh-5rem)] overflow-y-auto">
 <div class="flex gap-1 mb-3 bg-black/30 rounded-lg p-1">
-<button class="tab-btn active flex-1 py-1.5 rounded-md text-xs font-medium" onclick="switchTab('shade',this)">Плафон</button>
-<button class="tab-btn flex-1 py-1.5 rounded-md text-xs font-medium" onclick="switchTab('neck',this)">Ножка</button>
-<button class="tab-btn flex-1 py-1.5 rounded-md text-xs font-medium" onclick="switchTab('socket',this)">Патрон</button>
-<button class="tab-btn flex-1 py-1.5 rounded-md text-xs font-medium" onclick="switchTab('pattern',this)">Узор</button>
+<button class="tab-btn active flex-1 py-2 rounded-md text-xs font-medium" onclick="switchTab('shade',this)">Плафон</button>
+<button class="tab-btn flex-1 py-2 rounded-md text-xs font-medium" onclick="switchTab('neck',this)">Ножка</button>
+<button class="tab-btn flex-1 py-2 rounded-md text-xs font-medium" onclick="switchTab('socket',this)">Патрон</button>
+<button class="tab-btn flex-1 py-2 rounded-md text-xs font-medium" onclick="switchTab('pattern',this)">Узор</button>
+<button class="tab-btn flex-1 py-2 rounded-md text-xs font-medium" onclick="switchTab('print',this)">🖨 Печать</button>
+</div>
+
+<!-- Print Tab (NEW) -->
+<div id="tab-print" class="tab-content space-y-3 hidden">
+<div class="layer-preview">
+<h3 class="text-xs font-semibold mb-2 text-purple-400 uppercase">Послойная визуализация</h3>
+<label class="text-xs text-gray-400">Слой: <span class="val" id="layerNum">1</span> / <span id="totalLayers">0</span></label>
+<input type="range" class="layer-slider" min="1" max="100" value="1" id="layerSlider" oninput="updateLayerView()">
+<div class="flex gap-2 mt-2">
+<button class="print-mode-btn active" onclick="setPrintMode('normal',this)">Модель</button>
+<button class="print-mode-btn" onclick="setPrintMode('supports',this)">Поддержки</button>
+<button class="print-mode-btn" onclick="setPrintMode('combined',this)">Вместе</button>
+</div>
+<div class="support-toggle">
+<input type="checkbox" id="showSupports" onchange="toggleSupports()" checked>
+<label class="text-xs text-gray-400 cursor-pointer" for="showSupports">Показывать поддержки</label>
+</div>
+<div class="support-toggle">
+<input type="checkbox" id="showPathLines" onchange="togglePathLines()" checked>
+<label class="text-xs text-gray-400 cursor-pointer" for="showPathLines">Траектория печати</label>
+</div>
+</div>
+<div class="mt-3 p-3 bg-black/20 rounded-lg border border-purple-500/20">
+<h4 class="text-xs font-semibold text-purple-300 uppercase mb-2">📊 Калькулятор стоимости</h4>
+<div class="grid grid-cols-2 gap-2 text-xs">
+<div>
+<div class="text-gray-500 mb-1">Вес пластика:</div>
+<div class="text-sm text-blue-300 font-mono" id="plasticWeight">~85 г</div>
+</div>
+<div>
+<div class="text-gray-500 mb-1">Длина филамента:</div>
+<div class="text-sm text-green-300 font-mono" id="filamentLength">~28 м</div>
+</div>
+<div>
+<div class="text-gray-500 mb-1">Время печати:</div>
+<div class="text-sm text-yellow-300 font-mono" id="printTimeCalc">~2ч 15мин</div>
+</div>
+<div>
+<div class="text-gray-500 mb-1">Стоимость:</div>
+<div class="text-sm text-purple-300 font-mono" id="printCost">~125 ₽</div>
+</div>
+</div>
+<div class="mt-2 pt-2 border-t border-white/10">
+<div class="flex justify-between items-center">
+<span class="text-xs text-gray-500">Цена за кг:</span>
+<input type="number" id="pricePerKg" value="1500" min="500" max="5000" step="100" onchange="calculatePrintStats()" class="w-20 bg-black/30 border border-white/10 rounded px-2 py-1 text-xs text-white text-right">
+</div>
+<div class="flex justify-between items-center mt-1">
+<span class="text-xs text-gray-500">Электроэнергия:</span>
+<span class="text-xs text-gray-400" id="powerCost">~15 ₽</span>
+</div>
+</div>
+</div>
 </div>
 
 <!-- Shade Tab -->
@@ -617,12 +680,54 @@ function generateMesh(){
     }
   }
 
-  // Neck
+  // Socket - встроенный в конструкцию (внутри плафона)
+  if(P.socketType!=='none'){
+    const sDia=P.socketDia,sExt=P.socketExt;
+    const sSegs=24;
+    // Патрон теперь внутри плафона, на уровне начала ножки или дна плафона
+    const sTop=P.neckH>0?0:P.shadeOffset;
+    const sBot=sTop-sExt;
+    
+    // Внутренняя полость для патрона (выемка в дне плафона)
+    for(let s=0;s<sSegs;s++){
+      const a0=(s/sSegs)*Math.PI*2,a1=((s+1)/sSegs)*Math.PI*2;
+      const holeR=sDia/2+1; // Чуть больше диаметра патрона
+      // Стены полости для патрона
+      addTri([Math.cos(a0)*holeR,sTop,Math.sin(a0)*holeR],[Math.cos(a1)*holeR,sTop,Math.sin(a1)*holeR],[Math.cos(a0)*holeR,sBot,Math.sin(a0)*holeR]);
+      addTri([Math.cos(a1)*holeR,sTop,Math.sin(a1)*holeR],[Math.cos(a1)*holeR,sBot,Math.sin(a1)*holeR],[Math.cos(a0)*holeR,sBot,Math.sin(a0)*holeR]);
+    }
+    // Дно полости
+    for(let s=0;s<sSegs;s++){
+      const a0=(s/sSegs)*Math.PI*2,a1=((s+1)/sSegs)*Math.PI*2;
+      const holeR=sDia/2+1;
+      addTri([0,sBot,0],[Math.cos(a1)*holeR,sBot,Math.sin(a1)*holeR],[Math.cos(a0)*holeR,sBot,Math.sin(a0)*holeR]);
+    }
+    
+    // Сам патрон (внутри полости, виден только верх)
+    const threadL=Math.floor(Math.min(sExt,15)/2); // Укороченная резьба
+    for(let tl=0;tl<threadL;tl++){
+      const y0=sTop-tl*2,y1=sTop-(tl+1)*2;
+      const tr=sDia/2,rid=tr+.5;
+      for(let s=0;s<sSegs;s++){
+        const a0=(s/sSegs)*Math.PI*2,a1=((s+1)/sSegs)*Math.PI*2;
+        addTri([Math.cos(a0)*rid,y0,Math.sin(a0)*rid],[Math.cos(a1)*rid,y0,Math.sin(a1)*rid],[Math.cos(a0)*rid,y1,Math.sin(a0)*rid]);
+        addTri([Math.cos(a1)*rid,y0,Math.sin(a1)*rid],[Math.cos(a1)*rid,y1,Math.sin(a1)*rid],[Math.cos(a0)*rid,y1,Math.sin(a0)*rid]);
+      }
+    }
+    // Видимая часть патрона (только самый верх)
+    for(let s=0;s<sSegs;s++){
+      const a0=(s/sSegs)*Math.PI*2,a1=((s+1)/sSegs)*Math.PI*2;
+      addTri([Math.cos(a0)*sDia/2,sTop,Math.sin(a0)*sDia/2],[Math.cos(a1)*sDia/2,sTop,Math.sin(a1)*sDia/2],[Math.cos(a0)*sDia/2,sTop-5,Math.sin(a0)*sDia/2]);
+      addTri([Math.cos(a1)*sDia/2,sTop,Math.sin(a1)*sDia/2],[Math.cos(a1)*sDia/2,sTop-5,Math.sin(a1)*sDia/2],[Math.cos(a0)*sDia/2,sTop-5,Math.sin(a0)*sDia/2]);
+    }
+  }
+
+  // Ножка лампы - теперь соединяется с основанием плафона
   if(P.neckH>0){
     const nL=12;
     for(let ly=0;ly<nL;ly++){
       const t0=ly/nL,t1=(ly+1)/nL;
-      const y0=-P.neckH*t0,y1=-P.neckH*t1;
+      const y0=P.shadeOffset-P.neckH*t0,y1=P.shadeOffset-P.neckH*t1;
       let nr0,nr1;
       switch(P.neckShape){
         case'cylinder':nr0=P.neckBotR+(P.neckTopR-P.neckBotR)*t0;nr1=P.neckBotR+(P.neckTopR-P.neckBotR)*t1;break;
@@ -643,41 +748,7 @@ function generateMesh(){
       }
     }
     const nbR=P.neckBotR;
-    for(let s=0;s<segs;s++){const a0=(s/segs)*Math.PI*2,a1=((s+1)/segs)*Math.PI*2;addTri([0,-P.neckH,0],[Math.cos(a1)*nbR,-P.neckH,Math.sin(a1)*nbR],[Math.cos(a0)*nbR,-P.neckH,Math.sin(a0)*nbR])}
-  }
-
-  // Socket
-  if(P.socketType!=='none'){
-    const sDia=P.socketDia,sExt=P.socketExt;
-    const sSegs=24;
-    const sTop=P.neckH>0?-P.neckH:0;
-    const sBot=sTop-sExt;
-    const threadL=Math.floor(sExt/2);
-    for(let tl=0;tl<threadL;tl++){
-      const y0=sTop-tl*2,y1=sTop-(tl+1)*2;
-      const tr=sDia/2,rid=tr+.8;
-      for(let s=0;s<sSegs;s++){
-        const a0=(s/sSegs)*Math.PI*2,a1=((s+1)/sSegs)*Math.PI*2;
-        addTri([Math.cos(a0)*rid,y0,Math.sin(a0)*rid],[Math.cos(a1)*rid,y0,Math.sin(a1)*rid],[Math.cos(a0)*rid,y1,Math.sin(a0)*rid]);
-        addTri([Math.cos(a1)*rid,y0,Math.sin(a1)*rid],[Math.cos(a1)*rid,y1,Math.sin(a1)*rid],[Math.cos(a0)*rid,y1,Math.sin(a0)*rid]);
-      }
-    }
-    for(let s=0;s<sSegs;s++){
-      const a0=(s/sSegs)*Math.PI*2,a1=((s+1)/sSegs)*Math.PI*2;
-      addTri([Math.cos(a0)*sDia/2,sTop,Math.sin(a0)*sDia/2],[Math.cos(a1)*sDia/2,sTop,Math.sin(a1)*sDia/2],[Math.cos(a0)*sDia/2,sBot,Math.sin(a0)*sDia/2]);
-      addTri([Math.cos(a1)*sDia/2,sTop,Math.sin(a1)*sDia/2],[Math.cos(a1)*sDia/2,sBot,Math.sin(a1)*sDia/2],[Math.cos(a0)*sDia/2,sBot,Math.sin(a0)*sDia/2]);
-    }
-    for(let s=0;s<sSegs;s++){const a0=(s/sSegs)*Math.PI*2,a1=((s+1)/sSegs)*Math.PI*2;addTri([0,sBot,0],[Math.cos(a1)*sDia/2,sBot,Math.sin(a1)*sDia/2],[Math.cos(a0)*sDia/2,sBot,Math.sin(a0)*sDia/2])}
-    if(P.socketFlange){
-      const fR=sDia/2+8,fH=3;
-      for(let s=0;s<sSegs;s++){
-        const a0=(s/sSegs)*Math.PI*2,a1=((s+1)/sSegs)*Math.PI*2;
-        addTri([Math.cos(a0)*sDia/2,sTop,Math.sin(a0)*sDia/2],[Math.cos(a0)*fR,sTop,Math.sin(a0)*fR],[Math.cos(a1)*fR,sTop,Math.sin(a1)*fR]);
-        addTri([Math.cos(a0)*sDia/2,sTop,Math.sin(a0)*sDia/2],[Math.cos(a1)*fR,sTop,Math.sin(a1)*fR],[Math.cos(a1)*sDia/2,sTop,Math.sin(a1)*sDia/2]);
-        addTri([Math.cos(a0)*fR,sTop,Math.sin(a0)*fR],[Math.cos(a0)*fR,sTop-fH,Math.sin(a0)*fR],[Math.cos(a1)*fR,sTop-fH,Math.sin(a1)*fR]);
-        addTri([Math.cos(a0)*fR,sTop,Math.sin(a0)*fR],[Math.cos(a1)*fR,sTop-fH,Math.sin(a1)*fR],[Math.cos(a1)*fR,sTop,Math.sin(a1)*fR]);
-      }
-    }
+    for(let s=0;s<segs;s++){const a0=(s/segs)*Math.PI*2,a1=((s+1)/segs)*Math.PI*2;addTri([0,P.shadeOffset-P.neckH,0],[Math.cos(a1)*nbR,P.shadeOffset-P.neckH,Math.sin(a1)*nbR],[Math.cos(a0)*nbR,P.shadeOffset-P.neckH,Math.sin(a0)*nbR])}
   }
 
   const geo=new THREE.BufferGeometry();
@@ -838,11 +909,294 @@ function exportSTL(){
   const a=document.createElement('a');a.href=url;a.download='lamp_3d_print.stl';a.click();URL.revokeObjectURL(url);
 }
 
+// ==================== PRINT VISUALIZATION ====================
+let layerMesh=null,supportMesh=null,pathLines=null;
+let currentLayer=1,totalLayers=100,printMode='normal',showSupports=true,showPath=true;
+const LAYER_HEIGHT=0.2; // mm
+const FILAMENT_DIAMETER=1.75; // mm
+const FILAMENT_DENSITY=1.24; // g/cm³
+const POWER_CONSUMPTION=0.3; // kW average
+const ELECTRICITY_RATE=5; // rub/kWh
+
+function calculatePrintStats(){
+  const shadeVol=(P.shadeBotR*P.shadeBotR*Math.PI*P.shadeH/1000);
+  const neckVol=P.neckH>0?(P.neckBotR*P.neckBotR*Math.PI*P.neckH/1000):0;
+  const socketVol=P.socketType!=='none'?(P.socketDia/2)*(P.socketDia/2)*Math.PI*P.socketExt/1000:0;
+  const totalVol=shadeVol+neckVol+socketVol;
+  const weight=totalVol*FILAMENT_DENSITY*1.5; // +50% for supports and infill
+  const filamentLength=weight/(Math.PI*(FILAMENT_DIAMETER/2)*(FILAMENT_DIAMETER/2)*FILAMENT_DENSITY)*10;
+  const totalHeight=P.shadeH+P.neckH+P.socketExt;
+  const layers=Math.ceil(totalHeight/LAYER_HEIGHT);
+  const printTimeMin=layers*2.5+weight*1.8;
+  const hours=Math.floor(printTimeMin/60);
+  const mins=Math.round(printTimeMin%60);
+  
+  const pricePerKg=parseFloat(document.getElementById('pricePerKg')?.value)||1500;
+  const materialCost=(weight/1000)*pricePerKg;
+  const powerCost=printTimeMin/60*POWER_CONSUMPTION*ELECTRICITY_RATE;
+  const totalCost=materialCost+powerCost;
+  
+  document.getElementById('totalLayers').textContent=layers;
+  document.getElementById('plasticWeight').textContent=`~${Math.round(weight)} г`;
+  document.getElementById('filamentLength').textContent=`~${Math.round(filamentLength)} м`;
+  document.getElementById('printTimeCalc').textContent=`~${hours}ч ${mins}мин`;
+  document.getElementById('printCost').textContent=`~${Math.round(totalCost)} ₽`;
+  document.getElementById('powerCost').textContent=`~${Math.round(powerCost)} ₽`;
+  
+  return{layers,weight,filamentLength,printTimeMin,totalCost};
+}
+
+function getShadeRForLayer(y){
+  const t=y/P.shadeH;
+  let r;
+  switch(P.shadeShape){
+    case'cylinder':r=P.shadeBotR+(P.shadeTopR-P.shadeBotR)*t;break;
+    case'sphere':r=P.shadeBotR*Math.sin(t*Math.PI)*1.2;break;
+    case'cone':r=P.shadeBotR*(1-t)+Math.max(P.shadeTopR,3)*t;break;
+    case'dome':r=P.shadeBotR*Math.sqrt(1-(1-t)*(1-t));break;
+    case'barrel':r=P.shadeBotR+Math.sin(t*Math.PI)*25;break;
+    case'hourglass':r=P.shadeBotR*(1-Math.sin(t*Math.PI)*.6);break;
+    case'bell':{const bt=t<.5?1-t*1.2:.3+(t-.5)*.4;r=P.shadeBotR*Math.max(.2,bt);break}
+    case'inverted':r=P.shadeTopR+(P.shadeBotR-P.shadeTopR)*(1-t);break;
+    case'twisted':{const base=P.shadeBotR+(P.shadeTopR-P.shadeBotR)*t;r=base+Math.sin(t*Math.PI*3)*8;break}
+    case'hexagonal':r=P.shadeBotR+(P.shadeTopR-P.shadeBotR)*t;break;
+    case'teardrop':r=P.shadeBotR*Math.pow(Math.sin(t*Math.PI),.7);break;
+    case'diamond':r=P.shadeBotR*Math.sin(t*Math.PI)*1.5;break;
+    default:r=P.shadeBotR;
+  }
+  return Math.max(r,2);
+}
+
+function generateLayerGeometry(layerNum){
+  const V=[],N=[],Idx=[];
+  let vCount=0;
+  function addTri(a,b,c){
+    V.push(...a,...b,...c);
+    const ux=b[0]-a[0],uy=b[1]-a[1],uz=b[2]-a[2],vx=c[0]-a[0],vy=c[1]-a[1],vz=c[2]-a[2];
+    let nnx=uy*vz-uz*vy,nny=uz*vx-ux*vz,nnz=ux*vy-uy*vx;
+    const nl=Math.sqrt(nnx*nnx+nny*nny+nnz*nnz)||1;nnx/=nl;nny/=nl;nnz/=nl;
+    N.push(nnx,nny,nnz,nnx,nny,nnz,nnx,nny,nnz);
+    Idx.push(vCount,vCount+1,vCount+2);vCount+=3;
+  }
+  const yBase=P.shadeOffset+(layerNum-1)*LAYER_HEIGHT;
+  if(yBase>P.shadeH+P.shadeOffset)return null;
+  const segs=P.shadeSegs;
+  const r=getShadeRForLayer(yBase-P.shadeOffset);
+  const ir=Math.max(r-P.shadeWall,1);
+  for(let s=0;s<segs;s++){
+    const a0=(s/segs)*Math.PI*2,a1=((s+1)/segs)*Math.PI*2;
+    const h=LAYER_HEIGHT;
+    addTri([Math.cos(a0)*r,yBase,Math.sin(a0)*r],[Math.cos(a1)*r,yBase,Math.sin(a1)*r],[Math.cos(a0)*r,yBase+h,Math.sin(a0)*r]);
+    addTri([Math.cos(a1)*r,yBase,Math.sin(a1)*r],[Math.cos(a1)*r,yBase+h,Math.sin(a1)*r],[Math.cos(a0)*r,yBase+h,Math.sin(a0)*r]);
+  }
+  for(let s=0;s<segs;s++){
+    const a0=(s/segs)*Math.PI*2,a1=((s+1)/segs)*Math.PI*2;
+    const h=LAYER_HEIGHT;
+    addTri([Math.cos(a0)*ir,yBase+h,Math.sin(a0)*ir],[Math.cos(a1)*ir,yBase+h,Math.sin(a1)*ir],[Math.cos(a0)*ir,yBase,Math.sin(a0)*ir]);
+    addTri([Math.cos(a1)*ir,yBase+h,Math.sin(a1)*ir],[Math.cos(a1)*ir,yBase,Math.sin(a1)*ir],[Math.cos(a0)*ir,yBase,Math.sin(a0)*ir]);
+  }
+  for(let s=0;s<segs;s++){
+    const a0=(s/segs)*Math.PI*2,a1=((s+1)/segs)*Math.PI*2;
+    addTri([Math.cos(a0)*r,yBase,Math.sin(a0)*r],[Math.cos(a1)*r,yBase,Math.sin(a1)*r],[Math.cos(a0)*ir,yBase,Math.sin(a0)*ir]);
+    addTri([Math.cos(a1)*r,yBase,Math.sin(a1)*r],[Math.cos(a1)*ir,yBase,Math.sin(a1)*ir],[Math.cos(a0)*ir,yBase,Math.sin(a0)*ir]);
+    addTri([Math.cos(a0)*r,yBase+LAYER_HEIGHT,Math.sin(a0)*r],[Math.cos(a0)*ir,yBase+LAYER_HEIGHT,Math.sin(a0)*ir],[Math.cos(a1)*ir,yBase+LAYER_HEIGHT,Math.sin(a1)*ir]);
+    addTri([Math.cos(a0)*r,yBase+LAYER_HEIGHT,Math.sin(a0)*r],[Math.cos(a1)*ir,yBase+LAYER_HEIGHT,Math.sin(a1)*ir],[Math.cos(a1)*r,yBase+LAYER_HEIGHT,Math.sin(a1)*r]);
+  }
+  return{V,N,Idx};
+}
+
+function generateSupports(){
+  const V=[],N=[],Idx=[];
+  let vCount=0;
+  function addTri(a,b,c){
+    V.push(...a,...b,...c);
+    const ux=b[0]-a[0],uy=b[1]-a[1],uz=b[2]-a[2],vx=c[0]-a[0],vy=c[1]-a[1],vz=c[2]-a[2];
+    let nnx=uy*vz-uz*vy,nny=uz*vx-ux*vz,nnz=ux*vy-uy*vx;
+    const nl=Math.sqrt(nnx*nnx+nny*nny+nnz*nnz)||1;nnx/=nl;nny/=nl;nnz/=nl;
+    N.push(nnx,nny,nnz,nnx,nny,nnz,nnx,nny,nnz);
+    Idx.push(vCount,vCount+1,vCount+2);vCount+=3;
+  }
+  
+  // Generate supports for overhangs (angles > 45 degrees)
+  const supportColumns=[];
+  const segs=6;
+  
+  // Check each layer for overhangs in the shade
+  for(let ly=5;ly<totalLayers;ly+=3){
+    const y=P.shadeOffset+ly*LAYER_HEIGHT;
+    const yBelow=P.shadeOffset+(ly-5)*LAYER_HEIGHT;
+    const r=getShadeRForLayer(y-P.shadeOffset);
+    const rBelow=getShadeRForLayer(yBelow-P.shadeOffset);
+    const ir=Math.max(r-P.shadeWall,1);
+    
+    // If radius increases significantly, we need supports
+    if(r>rBelow+2&&ly>5){
+      const numCols=Math.max(4,Math.floor(r/8));
+      for(let i=0;i<numCols;i++){
+        const angle=(i/numCols)*Math.PI*2;
+        const dist=ir*0.6;
+        supportColumns.push({
+          x:Math.cos(angle)*dist,
+          z:Math.sin(angle)*dist,
+          startY:P.shadeOffset, // Start from bottom of shade
+          endY:y,
+          radius:4
+        });
+      }
+    }
+  }
+  
+  // Add supports under socket if it overhangs (inside the neck/shade cavity)
+  if(P.socketType!=='none'&&P.socketExt>10){
+    const sDia=P.socketDia;
+    for(let i=0;i<4;i++){
+      const angle=(i/4)*Math.PI*2;
+      supportColumns.push({
+        x:Math.cos(angle)*sDia*0.3,
+        z:Math.sin(angle)*sDia*0.3,
+        startY:-P.socketExt+5,
+        endY:0,
+        radius:5
+      });
+    }
+  }
+  
+  // Render support columns as tree-like structures with visible mesh
+  for(const col of supportColumns){
+    const segments=Math.max(2,Math.ceil((col.endY-col.startY)/LAYER_HEIGHT/3));
+    for(let seg=0;seg<segments;seg++){
+      const segStart=col.startY+seg*(col.endY-col.startY)/segments;
+      const segEnd=col.startY+(seg+1)*(col.endY-col.startY)/segments;
+      const progress=seg/segments;
+      const taper=1-progress*0.3;
+      
+      // Create conical support segment with solid fill
+      for(let s=0;s<segs;s++){
+        const a0=(s/segs)*Math.PI*2,a1=((s+1)/segs)*Math.PI*2;
+        const r0=col.radius*taper,r1=col.radius*(1-(seg+1)/segments*0.2);
+        
+        // Outer walls
+        addTri([col.x+Math.cos(a0)*r0,segStart,col.z+Math.sin(a0)*r0],
+               [col.x+Math.cos(a1)*r0,segStart,col.z+Math.sin(a1)*r0],
+               [col.x+Math.cos(a0)*r1,segEnd,col.z+Math.sin(a0)*r1]);
+        addTri([col.x+Math.cos(a1)*r0,segStart,col.z+Math.sin(a1)*r0],
+               [col.x+Math.cos(a1)*r1,segEnd,col.z+Math.sin(a1)*r1],
+               [col.x+Math.cos(a0)*r1,segEnd,col.z+Math.sin(a0)*r1]);
+        
+        // Inner fill (solid support)
+        addTri([col.x,segStart,col.z],
+               [col.x+Math.cos(a0)*r0*0.7,segStart,col.z+Math.sin(a0)*r0*0.7],
+               [col.x+Math.cos(a1)*r0*0.7,segStart,col.z+Math.sin(a1)*r0*0.7]);
+        addTri([col.x,segEnd,col.z],
+               [col.x+Math.cos(a1)*r1*0.7,segEnd,col.z+Math.sin(a1)*r1*0.7],
+               [col.x+Math.cos(a0)*r1*0.7,segEnd,col.z+Math.sin(a0)*r1*0.7]);
+      }
+    }
+    
+    // Add horizontal connection bars between adjacent supports
+    if(supportColumns.length>1){
+      const colIdx=supportColumns.indexOf(col);
+      const nextCol=supportColumns[(colIdx+1)%supportColumns.length];
+      if(nextCol&&colIdx<supportColumns.length-1){
+        for(let barLy=8;barLy<totalLayers;barLy+=12){
+          const barY=P.shadeOffset+barLy*LAYER_HEIGHT;
+          if(barY>=col.startY&&barY<=col.endY&&barY>=nextCol.startY&&barY<=nextCol.endY){
+            const beamW=4;
+            // Create beam between columns
+            const dx=nextCol.x-col.x,dz=nextCol.z-col.z;
+            const dist=Math.sqrt(dx*dx+dz*dz);
+            if(dist>5){
+              const steps=Math.floor(dist/beamW);
+              for(let st=0;st<steps;st++){
+                const tx=col.x+(st/steps)*dx,tz=col.z+(st/steps)*dz;
+                const tx2=col.x+((st+1)/steps)*dx,tz2=col.z+((st+1)/steps)*dz;
+                addTri([tx,barY,tz],[tx2,barY,tz2],[tx+beamW*0.3,barY+beamW*0.5,tz]);
+                addTri([tx2,barY,tz2],[tx2+beamW*0.3,barY+beamW*0.5,tz2],[tx+beamW*0.3,barY+beamW*0.5,tz]);
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  
+  return V.length>0?{V,N,Idx}:null;
+}
+
+function generatePathLines(){
+  const points=[];
+  const segs=Math.min(P.shadeSegs,16);
+  for(let ly=0;ly<totalLayers;ly+=2){
+    const y=P.shadeOffset+ly*LAYER_HEIGHT;
+    const r=getShadeRForLayer(y-P.shadeOffset)-P.shadeWall/2;
+    for(let s=0;s<=segs;s++){
+      const a=(s/segs)*Math.PI*2;
+      points.push(new THREE.Vector3(Math.cos(a)*r,y,Math.sin(a)*r));
+    }
+  }
+  const geo=new THREE.BufferGeometry().setFromPoints(points);
+  const mat=new THREE.LineBasicMaterial({color:0x00ff00,opacity:0.6,transparent:true});
+  return new THREE.Line(geo,mat);
+}
+
+function updateLayerView(){
+  const slider=document.getElementById('layerSlider');
+  currentLayer=parseInt(slider.value);
+  document.getElementById('layerNum').textContent=currentLayer;
+  if(layerMesh){scene.remove(layerMesh);layerMesh.geometry.dispose();}
+  if(supportMesh){scene.remove(supportMesh);supportMesh.geometry.dispose();}
+  if(pathLines){scene.remove(pathLines);}
+  const layerData=generateLayerGeometry(currentLayer);
+  if(layerData&&(printMode==='normal'||printMode==='combined')){
+    const geo=new THREE.BufferGeometry();
+    geo.setAttribute('position',new THREE.Float32BufferAttribute(layerData.V,3));
+    geo.setAttribute('normal',new THREE.Float32BufferAttribute(layerData.N,3));
+    geo.setIndex(layerData.Idx);
+    const layerMat=new THREE.MeshStandardMaterial({color:0x7c3aed,roughness:0.3,metalness:0.5,emissive:0x3c1f7c,emissiveIntensity:0.5,side:THREE.DoubleSide});
+    layerMesh=new THREE.Mesh(geo,layerMat);
+    layerMesh.castShadow=true;
+    scene.add(layerMesh);
+  }
+  if(showSupports&&(printMode==='supports'||printMode==='combined')){
+    const suppData=generateSupports();
+    if(suppData){
+      const geo=new THREE.BufferGeometry();
+      geo.setAttribute('position',new THREE.Float32BufferAttribute(suppData.V,3));
+      geo.setAttribute('normal',new THREE.Float32BufferAttribute(suppData.N,3));
+      geo.setIndex(suppData.Idx);
+      // More visible support material - solid orange with less transparency
+      const supMat=new THREE.MeshStandardMaterial({color:0xff8c42,roughness:0.6,metalness:0.2,emissive:0xff4500,emissiveIntensity:0.4,side:THREE.DoubleSide});
+      supportMesh=new THREE.Mesh(geo,supMat);
+      scene.add(supportMesh);
+    }
+  }
+  if(showPathLines){
+    pathLines=generatePathLines();
+    if(pathLines)scene.add(pathLines);
+  }
+}
+
+function setPrintMode(mode,btn){
+  printMode=mode;
+  document.querySelectorAll('.print-mode-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  updateLayerView();
+}
+
+function toggleSupports(){
+  showSupports=document.getElementById('showSupports').checked;
+  updateLayerView();
+}
+
+function togglePathLines(){
+  showPathLines=document.getElementById('showPathLines').checked;
+  updateLayerView();
+}
+
 // Init
 window.addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight)});
 refreshLamp();
-(function anim(){requestAnimationFrame(anim);updateCam();glow.intensity=.5+Math.sin(Date.now()*.003)*.3;renderer.render(scene,camera)})();
-</script>
-</body>
-</html>
-
+const stats=calculatePrintStats();
+document.getElementById('layerSlider').max=stats.layers;
+totalLayers=stats.layers;
+(function anim(){requestAnimationFrame(anim);updateCam();glow.intensity=.5+Math.sin(Date.now()*.003)*.3;renderer.render(scene,camera)})();</script></body></html>
