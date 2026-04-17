@@ -11,28 +11,37 @@
 *{margin:0;padding:0;box-sizing:border-box}
 body{font-family:'Inter',sans-serif;background:#08080f;color:#e0e0e0;overflow:hidden}
 #canvas3d{position:absolute;top:0;left:0;width:100%;height:100%}
-.panel{backdrop-filter:blur(24px);background:rgba(10,10,20,0.88);border:1px solid rgba(255,255,255,0.07)}
-.slider-group label{font-size:.7rem;color:#777;text-transform:uppercase;letter-spacing:.05em}
-input[type=range]{-webkit-appearance:none;width:100%;height:5px;border-radius:3px;background:#1a1a2e;outline:none}
-input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:16px;border-radius:50%;background:#7c3aed;cursor:pointer;border:2px solid #fff}
-select{background:#111122;border:1px solid rgba(255,255,255,0.1);color:#fff;border-radius:6px;padding:6px 10px;font-size:12px;width:100%}
-.btn-gen{background:linear-gradient(135deg,#7c3aed,#5b21b6);transition:all .3s}
-.btn-gen:hover{transform:translateY(-2px);box-shadow:0 8px 30px rgba(124,58,237,.4)}
-.btn-dl{background:linear-gradient(135deg,#059669,#047857);transition:all .3s}
-.btn-dl:hover{transform:translateY(-2px);box-shadow:0 8px 30px rgba(5,150,105,.4)}
-.btn-sec{background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);transition:all .3s}
-.btn-sec:hover{background:rgba(255,255,255,0.1)}
-.preset-btn{transition:all .3s;cursor:pointer;font-size:11px}
-.preset-btn:hover,.preset-btn.active{background:rgba(124,58,237,0.2);border-color:#7c3aed;color:#c4b5fd}
-.tab-btn{transition:all .3s}
-.tab-btn.active{background:#7c3aed;color:#fff}
-.val{font-family:monospace;color:#a78bfa;font-weight:600;font-size:.75rem}
-.glow{text-shadow:0 0 20px rgba(124,58,237,.5)}
-::-webkit-scrollbar{width:5px}
-::-webkit-scrollbar-track{background:transparent}
-::-webkit-scrollbar-thumb{background:#333;border-radius:3px}
-.color-dot{width:16px;height:16px;border-radius:50%;cursor:pointer;border:2px solid transparent}
-.color-dot.active{border-color:#fff}
+.panel{backdrop-filter:blur(24px);background:rgba(10,10,20,0.92);border:1px solid rgba(255,255,255,0.08);box-shadow:0 8px 32px rgba(0,0,0,0.4)}
+.slider-group label{font-size:.7rem;color:#888;text-transform:uppercase;letter-spacing:.08em;font-weight:500}
+input[type=range]{-webkit-appearance:none;width:100%;height:6px;border-radius:3px;background:linear-gradient(90deg,#1a1a2e,#2a2a4e);outline:none;cursor:pointer}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;height:18px;border-radius:50%;background:linear-gradient(135deg,#7c3aed,#5b21b6);cursor:pointer;border:2px solid #fff;box-shadow:0 2px 8px rgba(124,58,237,0.5);transition:transform .2s}
+input[type=range]::-webkit-slider-thumb:hover{transform:scale(1.1)}
+select{background:linear-gradient(135deg,#1a1a2e,#111122);border:1px solid rgba(124,58,237,0.3);color:#fff;border-radius:8px;padding:8px 12px;font-size:12px;width:100%;cursor:pointer;transition:all .3s}
+select:hover{border-color:#7c3aed;box-shadow:0 0 15px rgba(124,58,237,0.3)}
+.btn-gen{background:linear-gradient(135deg,#7c3aed,#5b21b6);transition:all .3s;box-shadow:0 4px 15px rgba(124,58,237,0.3)}
+.btn-gen:hover{transform:translateY(-2px);box-shadow:0 8px 30px rgba(124,58,237,0.5)}
+.btn-dl{background:linear-gradient(135deg,#059669,#047857);transition:all .3s;box-shadow:0 4px 15px rgba(5,150,105,0.3)}
+.btn-dl:hover{transform:translateY(-2px);box-shadow:0 8px 30px rgba(5,150,105,0.5)}
+.btn-sec{background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);transition:all .3s}
+.btn-sec:hover{background:rgba(124,58,237,0.15);border-color:#7c3aed}
+.preset-btn{transition:all .3s;cursor:pointer;font-size:11px;border:1px solid transparent}
+.preset-btn:hover,.preset-btn.active{background:linear-gradient(135deg,rgba(124,58,237,0.2),rgba(91,33,182,0.1));border-color:#7c3aed;color:#c4b5fd;box-shadow:0 0 15px rgba(124,58,237,0.2)}
+.tab-btn{transition:all .3s;border-radius:8px}
+.tab-btn.active{background:linear-gradient(135deg,#7c3aed,#5b21b6);color:#fff;box-shadow:0 2px 10px rgba(124,58,237,0.4)}
+.val{font-family:'JetBrains Mono',monospace;color:#a78bfa;font-weight:600;font-size:.8rem;background:rgba(124,58,237,0.1);padding:2px 6px;border-radius:4px}
+.glow{text-shadow:0 0 25px rgba(124,58,237,0.6),0 0 50px rgba(124,58,237,0.3)}
+::-webkit-scrollbar{width:6px}
+::-webkit-scrollbar-track{background:rgba(0,0,0,0.2)}
+::-webkit-scrollbar-thumb{background:linear-gradient(135deg,#4c4c6c,#2a2a4e);border-radius:3px}
+.color-dot{width:20px;height:20px;border-radius:50%;cursor:pointer;border:2px solid rgba(255,255,255,0.2);transition:all .3s;box-shadow:0 2px 8px rgba(0,0,0,0.3)}
+.color-dot:hover{transform:scale(1.15)}
+.color-dot.active{border-color:#fff;box-shadow:0 0 15px currentColor,0 0 30px currentColor}
+.layer-preview{background:rgba(0,0,0,0.3);border-radius:8px;padding:10px;margin-top:10px}
+.layer-slider{width:100%;margin:10px 0}
+.support-toggle{display:flex;align-items:center;gap:8px;margin-top:8px}
+.support-toggle input{accent-color:#7c3aed;width:16px;height:16px}
+.print-mode-btn{flex:1;padding:8px;border:none;border-radius:6px;cursor:pointer;font-size:11px;font-weight:600;transition:all .3s;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1)}
+.print-mode-btn.active{background:linear-gradient(135deg,#7c3aed,#5b21b6);border-color:#7c3aed;box-shadow:0 0 15px rgba(124,58,237,0.4)}
 </style>
 </head>
 <body>
@@ -40,12 +49,12 @@ select{background:#111122;border:1px solid rgba(255,255,255,0.1);color:#fff;bord
 <div id="canvas3d"></div>
 
 <!-- Header -->
-<div class="absolute top-0 left-0 right-0 z-10 p-3">
+<div class="absolute top-0 left-0 right-0 z-10 p-4">
 <div class="flex items-center justify-between">
-<h1 class="text-xl font-bold glow">💡 Lamp Generator 3D Pro</h1>
-<div class="flex gap-2">
-<button onclick="randomizeAll()" class="btn-gen px-4 py-2 rounded-lg text-xs font-bold text-white">🎲 Рандом</button>
-<button onclick="exportSTL()" class="btn-dl px-5 py-2 rounded-lg text-xs font-bold text-white">⬇ Скачать STL</button>
+<h1 class="text-2xl font-bold glow">💡 Lamp Generator 3D Pro</h1>
+<div class="flex gap-3">
+<button onclick="randomizeAll()" class="btn-gen px-5 py-2.5 rounded-xl text-sm font-bold text-white">🎲 Рандом</button>
+<button onclick="exportSTL()" class="btn-dl px-6 py-2.5 rounded-xl text-sm font-bold text-white">⬇ Скачать STL</button>
 </div>
 </div>
 </div>
@@ -82,10 +91,41 @@ select{background:#111122;border:1px solid rgba(255,255,255,0.1);color:#fff;bord
 <!-- Right: Controls -->
 <div class="absolute top-14 right-3 z-10 panel rounded-xl p-4 w-72 max-h-[calc(100vh-5rem)] overflow-y-auto">
 <div class="flex gap-1 mb-3 bg-black/30 rounded-lg p-1">
-<button class="tab-btn active flex-1 py-1.5 rounded-md text-xs font-medium" onclick="switchTab('shade',this)">Плафон</button>
-<button class="tab-btn flex-1 py-1.5 rounded-md text-xs font-medium" onclick="switchTab('neck',this)">Ножка</button>
-<button class="tab-btn flex-1 py-1.5 rounded-md text-xs font-medium" onclick="switchTab('socket',this)">Патрон</button>
-<button class="tab-btn flex-1 py-1.5 rounded-md text-xs font-medium" onclick="switchTab('pattern',this)">Узор</button>
+<button class="tab-btn active flex-1 py-2 rounded-md text-xs font-medium" onclick="switchTab('shade',this)">Плафон</button>
+<button class="tab-btn flex-1 py-2 rounded-md text-xs font-medium" onclick="switchTab('neck',this)">Ножка</button>
+<button class="tab-btn flex-1 py-2 rounded-md text-xs font-medium" onclick="switchTab('socket',this)">Патрон</button>
+<button class="tab-btn flex-1 py-2 rounded-md text-xs font-medium" onclick="switchTab('pattern',this)">Узор</button>
+<button class="tab-btn flex-1 py-2 rounded-md text-xs font-medium" onclick="switchTab('print',this)">🖨 Печать</button>
+</div>
+
+<!-- Print Tab (NEW) -->
+<div id="tab-print" class="tab-content space-y-3 hidden">
+<div class="layer-preview">
+<h3 class="text-xs font-semibold mb-2 text-purple-400 uppercase">Послойная визуализация</h3>
+<label class="text-xs text-gray-400">Слой: <span class="val" id="layerNum">1</span> / <span id="totalLayers">0</span></label>
+<input type="range" class="layer-slider" min="1" max="100" value="1" id="layerSlider" oninput="updateLayerView()">
+<div class="flex gap-2 mt-2">
+<button class="print-mode-btn active" onclick="setPrintMode('normal',this)">Модель</button>
+<button class="print-mode-btn" onclick="setPrintMode('supports',this)">Поддержки</button>
+<button class="print-mode-btn" onclick="setPrintMode('combined',this)">Вместе</button>
+</div>
+<div class="support-toggle">
+<input type="checkbox" id="showSupports" onchange="toggleSupports()" checked>
+<label class="text-xs text-gray-400 cursor-pointer" for="showSupports">Показывать поддержки</label>
+</div>
+<div class="support-toggle">
+<input type="checkbox" id="showPathLines" onchange="togglePathLines()" checked>
+<label class="text-xs text-gray-400 cursor-pointer" for="showPathLines">Траектория печати</label>
+</div>
+</div>
+<div class="mt-3 p-2 bg-black/20 rounded-lg">
+<div class="text-xs text-gray-500 mb-1">Высота слоя:</div>
+<div class="text-sm text-purple-300 font-mono" id="layerHeight">0.2 мм</div>
+<div class="text-xs text-gray-500 mt-2 mb-1">Время печати:</div>
+<div class="text-sm text-green-300 font-mono" id="printTime">~2ч 15мин</div>
+<div class="text-xs text-gray-500 mt-2 mb-1">Расход материала:</div>
+<div class="text-sm text-blue-300 font-mono" id="materialUsage">~85 г</div>
+</div>
 </div>
 
 <!-- Shade Tab -->
@@ -838,11 +878,192 @@ function exportSTL(){
   const a=document.createElement('a');a.href=url;a.download='lamp_3d_print.stl';a.click();URL.revokeObjectURL(url);
 }
 
+// ==================== PRINT VISUALIZATION ====================
+let layerMesh=null,supportMesh=null,pathLines=null;
+let currentLayer=1,totalLayers=100,printMode='normal',showSupports=true,showPath=true;
+const LAYER_HEIGHT=0.2; // mm
+
+function calculatePrintStats(){
+  const vol=(P.shadeBotR*P.shadeBotR*Math.PI*P.shadeH/1000);
+  const weight=vol*1.24;
+  const totalHeight=P.shadeH+P.neckH;
+  const layers=Math.ceil(totalHeight/LAYER_HEIGHT);
+  const printTimeMin=layers*3+weight*2;
+  document.getElementById('totalLayers').textContent=layers;
+  document.getElementById('layerHeight').textContent=LAYER_HEIGHT+' мм';
+  document.getElementById('printTime').textContent=`~${Math.floor(printTimeMin/60)}ч ${Math.round(printTimeMin%60)}мин`;
+  document.getElementById('materialUsage').textContent=`~${Math.round(weight)} г`;
+  return{layers,weight};
+}
+
+function getShadeRForLayer(y){
+  const t=y/P.shadeH;
+  let r;
+  switch(P.shadeShape){
+    case'cylinder':r=P.shadeBotR+(P.shadeTopR-P.shadeBotR)*t;break;
+    case'sphere':r=P.shadeBotR*Math.sin(t*Math.PI)*1.2;break;
+    case'cone':r=P.shadeBotR*(1-t)+Math.max(P.shadeTopR,3)*t;break;
+    case'dome':r=P.shadeBotR*Math.sqrt(1-(1-t)*(1-t));break;
+    case'barrel':r=P.shadeBotR+Math.sin(t*Math.PI)*25;break;
+    case'hourglass':r=P.shadeBotR*(1-Math.sin(t*Math.PI)*.6);break;
+    case'bell':{const bt=t<.5?1-t*1.2:.3+(t-.5)*.4;r=P.shadeBotR*Math.max(.2,bt);break}
+    case'inverted':r=P.shadeTopR+(P.shadeBotR-P.shadeTopR)*(1-t);break;
+    case'twisted':{const base=P.shadeBotR+(P.shadeTopR-P.shadeBotR)*t;r=base+Math.sin(t*Math.PI*3)*8;break}
+    case'hexagonal':r=P.shadeBotR+(P.shadeTopR-P.shadeBotR)*t;break;
+    case'teardrop':r=P.shadeBotR*Math.pow(Math.sin(t*Math.PI),.7);break;
+    case'diamond':r=P.shadeBotR*Math.sin(t*Math.PI)*1.5;break;
+    default:r=P.shadeBotR;
+  }
+  return Math.max(r,2);
+}
+
+function generateLayerGeometry(layerNum){
+  const V=[],N=[],Idx=[];
+  let vCount=0;
+  function addTri(a,b,c){
+    V.push(...a,...b,...c);
+    const ux=b[0]-a[0],uy=b[1]-a[1],uz=b[2]-a[2],vx=c[0]-a[0],vy=c[1]-a[1],vz=c[2]-a[2];
+    let nnx=uy*vz-uz*vy,nny=uz*vx-ux*vz,nnz=ux*vy-uy*vx;
+    const nl=Math.sqrt(nnx*nnx+nny*nny+nnz*nnz)||1;nnx/=nl;nny/=nl;nnz/=nl;
+    N.push(nnx,nny,nnz,nnx,nny,nnz,nnx,nny,nnz);
+    Idx.push(vCount,vCount+1,vCount+2);vCount+=3;
+  }
+  const yBase=P.shadeOffset+(layerNum-1)*LAYER_HEIGHT;
+  if(yBase>P.shadeH+P.shadeOffset)return null;
+  const segs=P.shadeSegs;
+  const r=getShadeRForLayer(yBase-P.shadeOffset);
+  const ir=Math.max(r-P.shadeWall,1);
+  for(let s=0;s<segs;s++){
+    const a0=(s/segs)*Math.PI*2,a1=((s+1)/segs)*Math.PI*2;
+    const h=LAYER_HEIGHT;
+    addTri([Math.cos(a0)*r,yBase,Math.sin(a0)*r],[Math.cos(a1)*r,yBase,Math.sin(a1)*r],[Math.cos(a0)*r,yBase+h,Math.sin(a0)*r]);
+    addTri([Math.cos(a1)*r,yBase,Math.sin(a1)*r],[Math.cos(a1)*r,yBase+h,Math.sin(a1)*r],[Math.cos(a0)*r,yBase+h,Math.sin(a0)*r]);
+  }
+  for(let s=0;s<segs;s++){
+    const a0=(s/segs)*Math.PI*2,a1=((s+1)/segs)*Math.PI*2;
+    const h=LAYER_HEIGHT;
+    addTri([Math.cos(a0)*ir,yBase+h,Math.sin(a0)*ir],[Math.cos(a1)*ir,yBase+h,Math.sin(a1)*ir],[Math.cos(a0)*ir,yBase,Math.sin(a0)*ir]);
+    addTri([Math.cos(a1)*ir,yBase+h,Math.sin(a1)*ir],[Math.cos(a1)*ir,yBase,Math.sin(a1)*ir],[Math.cos(a0)*ir,yBase,Math.sin(a0)*ir]);
+  }
+  for(let s=0;s<segs;s++){
+    const a0=(s/segs)*Math.PI*2,a1=((s+1)/segs)*Math.PI*2;
+    addTri([Math.cos(a0)*r,yBase,Math.sin(a0)*r],[Math.cos(a1)*r,yBase,Math.sin(a1)*r],[Math.cos(a0)*ir,yBase,Math.sin(a0)*ir]);
+    addTri([Math.cos(a1)*r,yBase,Math.sin(a1)*r],[Math.cos(a1)*ir,yBase,Math.sin(a1)*ir],[Math.cos(a0)*ir,yBase,Math.sin(a0)*ir]);
+    addTri([Math.cos(a0)*r,yBase+LAYER_HEIGHT,Math.sin(a0)*r],[Math.cos(a0)*ir,yBase+LAYER_HEIGHT,Math.sin(a0)*ir],[Math.cos(a1)*ir,yBase+LAYER_HEIGHT,Math.sin(a1)*ir]);
+    addTri([Math.cos(a0)*r,yBase+LAYER_HEIGHT,Math.sin(a0)*r],[Math.cos(a1)*ir,yBase+LAYER_HEIGHT,Math.sin(a1)*ir],[Math.cos(a1)*r,yBase+LAYER_HEIGHT,Math.sin(a1)*r]);
+  }
+  return{V,N,Idx};
+}
+
+function generateSupports(){
+  const V=[],N=[],Idx=[];
+  let vCount=0;
+  function addTri(a,b,c){
+    V.push(...a,...b,...c);
+    const ux=b[0]-a[0],uy=b[1]-a[1],uz=b[2]-a[2],vx=c[0]-a[0],vy=c[1]-a[1],vz=c[2]-a[2];
+    let nnx=uy*vz-uz*vy,nny=uz*vx-ux*vz,nnz=ux*vy-uy*vx;
+    const nl=Math.sqrt(nnx*nnx+nny*nny+nnz*nnz)||1;nnx/=nl;nny/=nl;nnz/=nl;
+    N.push(nnx,nny,nnz,nnx,nny,nnz,nnx,nny,nnz);
+    Idx.push(vCount,vCount+1,vCount+2);vCount+=3;
+  }
+  const supportPoints=[];
+  const segs=8;
+  for(let ly=0;ly<totalLayers;ly+=5){
+    const y=P.shadeOffset+ly*LAYER_HEIGHT;
+    const r=getShadeRForLayer(y-P.shadeOffset);
+    const ir=Math.max(r-P.shadeWall,1);
+    if(ly>0&&r>ir+3){
+      for(let i=0;i<4;i++){
+        const angle=(i/4)*Math.PI*2;
+        supportPoints.push({x:Math.cos(angle)*r*0.7,y:y,z:Math.sin(angle)*r*0.7,radius:3});
+      }
+    }
+  }
+  for(const pt of supportPoints){
+    const h=pt.y;
+    for(let s=0;s<segs;s++){
+      const a0=(s/segs)*Math.PI*2,a1=((s+1)/segs)*Math.PI*2;
+      const r=pt.radius;
+      addTri([Math.cos(a0)*r,0,Math.sin(a0)*r],[Math.cos(a1)*r,0,Math.sin(a1)*r],[Math.cos(a0)*r,h,Math.sin(a0)*r]);
+      addTri([Math.cos(a1)*r,0,Math.sin(a1)*r],[Math.cos(a1)*r,h,Math.sin(a1)*r],[Math.cos(a0)*r,h,Math.sin(a0)*r]);
+    }
+  }
+  return V.length>0?{V,N,Idx}:null;
+}
+
+function generatePathLines(){
+  const points=[];
+  const segs=Math.min(P.shadeSegs,16);
+  for(let ly=0;ly<totalLayers;ly+=2){
+    const y=P.shadeOffset+ly*LAYER_HEIGHT;
+    const r=getShadeRForLayer(y-P.shadeOffset)-P.shadeWall/2;
+    for(let s=0;s<=segs;s++){
+      const a=(s/segs)*Math.PI*2;
+      points.push(new THREE.Vector3(Math.cos(a)*r,y,Math.sin(a)*r));
+    }
+  }
+  const geo=new THREE.BufferGeometry().setFromPoints(points);
+  const mat=new THREE.LineBasicMaterial({color:0x00ff00,opacity:0.6,transparent:true});
+  return new THREE.Line(geo,mat);
+}
+
+function updateLayerView(){
+  const slider=document.getElementById('layerSlider');
+  currentLayer=parseInt(slider.value);
+  document.getElementById('layerNum').textContent=currentLayer;
+  if(layerMesh){scene.remove(layerMesh);layerMesh.geometry.dispose();}
+  if(supportMesh){scene.remove(supportMesh);supportMesh.geometry.dispose();}
+  if(pathLines){scene.remove(pathLines);}
+  const layerData=generateLayerGeometry(currentLayer);
+  if(layerData&&(printMode==='normal'||printMode==='combined')){
+    const geo=new THREE.BufferGeometry();
+    geo.setAttribute('position',new THREE.Float32BufferAttribute(layerData.V,3));
+    geo.setAttribute('normal',new THREE.Float32BufferAttribute(layerData.N,3));
+    geo.setIndex(layerData.Idx);
+    const layerMat=new THREE.MeshStandardMaterial({color:0x7c3aed,roughness:0.3,metalness:0.5,emissive:0x3c1f7c,emissiveIntensity:0.5,side:THREE.DoubleSide});
+    layerMesh=new THREE.Mesh(geo,layerMat);
+    layerMesh.castShadow=true;
+    scene.add(layerMesh);
+  }
+  if(showSupports&&(printMode==='supports'||printMode==='combined')){
+    const suppData=generateSupports();
+    if(suppData){
+      const geo=new THREE.BufferGeometry();
+      geo.setAttribute('position',new THREE.Float32BufferAttribute(suppData.V,3));
+      geo.setAttribute('normal',new THREE.Float32BufferAttribute(suppData.N,3));
+      geo.setIndex(suppData.Idx);
+      const supMat=new THREE.MeshStandardMaterial({color:0xff6b35,roughness:0.8,metalness:0.1,emissive:0x552200,emissiveIntensity:0.3,side:THREE.DoubleSide,wireframe:true});
+      supportMesh=new THREE.Mesh(geo,supMat);
+      scene.add(supportMesh);
+    }
+  }
+  if(showPathLines){
+    pathLines=generatePathLines();
+    if(pathLines)scene.add(pathLines);
+  }
+}
+
+function setPrintMode(mode,btn){
+  printMode=mode;
+  document.querySelectorAll('.print-mode-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  updateLayerView();
+}
+
+function toggleSupports(){
+  showSupports=document.getElementById('showSupports').checked;
+  updateLayerView();
+}
+
+function togglePathLines(){
+  showPathLines=document.getElementById('showPathLines').checked;
+  updateLayerView();
+}
+
 // Init
 window.addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight)});
 refreshLamp();
-(function anim(){requestAnimationFrame(anim);updateCam();glow.intensity=.5+Math.sin(Date.now()*.003)*.3;renderer.render(scene,camera)})();
-</script>
-</body>
-</html>
-
+const stats=calculatePrintStats();
+document.getElementById('layerSlider').max=stats.layers;
+totalLayers=stats.layers;
+(function anim(){requestAnimationFrame(anim);updateCam();glow.intensity=.5+Math.sin(Date.now()*.003)*.3;renderer.render(scene,camera)})();</script></body></html>
