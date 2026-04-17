@@ -118,13 +118,36 @@ select:hover{border-color:#7c3aed;box-shadow:0 0 15px rgba(124,58,237,0.3)}
 <label class="text-xs text-gray-400 cursor-pointer" for="showPathLines">Траектория печати</label>
 </div>
 </div>
-<div class="mt-3 p-2 bg-black/20 rounded-lg">
-<div class="text-xs text-gray-500 mb-1">Высота слоя:</div>
-<div class="text-sm text-purple-300 font-mono" id="layerHeight">0.2 мм</div>
-<div class="text-xs text-gray-500 mt-2 mb-1">Время печати:</div>
-<div class="text-sm text-green-300 font-mono" id="printTime">~2ч 15мин</div>
-<div class="text-xs text-gray-500 mt-2 mb-1">Расход материала:</div>
-<div class="text-sm text-blue-300 font-mono" id="materialUsage">~85 г</div>
+<div class="mt-3 p-3 bg-black/20 rounded-lg border border-purple-500/20">
+<h4 class="text-xs font-semibold text-purple-300 uppercase mb-2">📊 Калькулятор стоимости</h4>
+<div class="grid grid-cols-2 gap-2 text-xs">
+<div>
+<div class="text-gray-500 mb-1">Вес пластика:</div>
+<div class="text-sm text-blue-300 font-mono" id="plasticWeight">~85 г</div>
+</div>
+<div>
+<div class="text-gray-500 mb-1">Длина филамента:</div>
+<div class="text-sm text-green-300 font-mono" id="filamentLength">~28 м</div>
+</div>
+<div>
+<div class="text-gray-500 mb-1">Время печати:</div>
+<div class="text-sm text-yellow-300 font-mono" id="printTimeCalc">~2ч 15мин</div>
+</div>
+<div>
+<div class="text-gray-500 mb-1">Стоимость:</div>
+<div class="text-sm text-purple-300 font-mono" id="printCost">~125 ₽</div>
+</div>
+</div>
+<div class="mt-2 pt-2 border-t border-white/10">
+<div class="flex justify-between items-center">
+<span class="text-xs text-gray-500">Цена за кг:</span>
+<input type="number" id="pricePerKg" value="1500" min="500" max="5000" step="100" onchange="calculatePrintStats()" class="w-20 bg-black/30 border border-white/10 rounded px-2 py-1 text-xs text-white text-right">
+</div>
+<div class="flex justify-between items-center mt-1">
+<span class="text-xs text-gray-500">Электроэнергия:</span>
+<span class="text-xs text-gray-400" id="powerCost">~15 ₽</span>
+</div>
+</div>
 </div>
 </div>
 
@@ -657,12 +680,54 @@ function generateMesh(){
     }
   }
 
-  // Neck
+  // Socket - встроенный в конструкцию (внутри плафона)
+  if(P.socketType!=='none'){
+    const sDia=P.socketDia,sExt=P.socketExt;
+    const sSegs=24;
+    // Патрон теперь внутри плафона, на уровне начала ножки или дна плафона
+    const sTop=P.neckH>0?0:P.shadeOffset;
+    const sBot=sTop-sExt;
+    
+    // Внутренняя полость для патрона (выемка в дне плафона)
+    for(let s=0;s<sSegs;s++){
+      const a0=(s/sSegs)*Math.PI*2,a1=((s+1)/sSegs)*Math.PI*2;
+      const holeR=sDia/2+1; // Чуть больше диаметра патрона
+      // Стены полости для патрона
+      addTri([Math.cos(a0)*holeR,sTop,Math.sin(a0)*holeR],[Math.cos(a1)*holeR,sTop,Math.sin(a1)*holeR],[Math.cos(a0)*holeR,sBot,Math.sin(a0)*holeR]);
+      addTri([Math.cos(a1)*holeR,sTop,Math.sin(a1)*holeR],[Math.cos(a1)*holeR,sBot,Math.sin(a1)*holeR],[Math.cos(a0)*holeR,sBot,Math.sin(a0)*holeR]);
+    }
+    // Дно полости
+    for(let s=0;s<sSegs;s++){
+      const a0=(s/sSegs)*Math.PI*2,a1=((s+1)/sSegs)*Math.PI*2;
+      const holeR=sDia/2+1;
+      addTri([0,sBot,0],[Math.cos(a1)*holeR,sBot,Math.sin(a1)*holeR],[Math.cos(a0)*holeR,sBot,Math.sin(a0)*holeR]);
+    }
+    
+    // Сам патрон (внутри полости, виден только верх)
+    const threadL=Math.floor(Math.min(sExt,15)/2); // Укороченная резьба
+    for(let tl=0;tl<threadL;tl++){
+      const y0=sTop-tl*2,y1=sTop-(tl+1)*2;
+      const tr=sDia/2,rid=tr+.5;
+      for(let s=0;s<sSegs;s++){
+        const a0=(s/sSegs)*Math.PI*2,a1=((s+1)/sSegs)*Math.PI*2;
+        addTri([Math.cos(a0)*rid,y0,Math.sin(a0)*rid],[Math.cos(a1)*rid,y0,Math.sin(a1)*rid],[Math.cos(a0)*rid,y1,Math.sin(a0)*rid]);
+        addTri([Math.cos(a1)*rid,y0,Math.sin(a1)*rid],[Math.cos(a1)*rid,y1,Math.sin(a1)*rid],[Math.cos(a0)*rid,y1,Math.sin(a0)*rid]);
+      }
+    }
+    // Видимая часть патрона (только самый верх)
+    for(let s=0;s<sSegs;s++){
+      const a0=(s/sSegs)*Math.PI*2,a1=((s+1)/sSegs)*Math.PI*2;
+      addTri([Math.cos(a0)*sDia/2,sTop,Math.sin(a0)*sDia/2],[Math.cos(a1)*sDia/2,sTop,Math.sin(a1)*sDia/2],[Math.cos(a0)*sDia/2,sTop-5,Math.sin(a0)*sDia/2]);
+      addTri([Math.cos(a1)*sDia/2,sTop,Math.sin(a1)*sDia/2],[Math.cos(a1)*sDia/2,sTop-5,Math.sin(a1)*sDia/2],[Math.cos(a0)*sDia/2,sTop-5,Math.sin(a0)*sDia/2]);
+    }
+  }
+
+  // Ножка лампы - теперь соединяется с основанием плафона
   if(P.neckH>0){
     const nL=12;
     for(let ly=0;ly<nL;ly++){
       const t0=ly/nL,t1=(ly+1)/nL;
-      const y0=-P.neckH*t0,y1=-P.neckH*t1;
+      const y0=P.shadeOffset-P.neckH*t0,y1=P.shadeOffset-P.neckH*t1;
       let nr0,nr1;
       switch(P.neckShape){
         case'cylinder':nr0=P.neckBotR+(P.neckTopR-P.neckBotR)*t0;nr1=P.neckBotR+(P.neckTopR-P.neckBotR)*t1;break;
@@ -683,41 +748,7 @@ function generateMesh(){
       }
     }
     const nbR=P.neckBotR;
-    for(let s=0;s<segs;s++){const a0=(s/segs)*Math.PI*2,a1=((s+1)/segs)*Math.PI*2;addTri([0,-P.neckH,0],[Math.cos(a1)*nbR,-P.neckH,Math.sin(a1)*nbR],[Math.cos(a0)*nbR,-P.neckH,Math.sin(a0)*nbR])}
-  }
-
-  // Socket
-  if(P.socketType!=='none'){
-    const sDia=P.socketDia,sExt=P.socketExt;
-    const sSegs=24;
-    const sTop=P.neckH>0?-P.neckH:0;
-    const sBot=sTop-sExt;
-    const threadL=Math.floor(sExt/2);
-    for(let tl=0;tl<threadL;tl++){
-      const y0=sTop-tl*2,y1=sTop-(tl+1)*2;
-      const tr=sDia/2,rid=tr+.8;
-      for(let s=0;s<sSegs;s++){
-        const a0=(s/sSegs)*Math.PI*2,a1=((s+1)/sSegs)*Math.PI*2;
-        addTri([Math.cos(a0)*rid,y0,Math.sin(a0)*rid],[Math.cos(a1)*rid,y0,Math.sin(a1)*rid],[Math.cos(a0)*rid,y1,Math.sin(a0)*rid]);
-        addTri([Math.cos(a1)*rid,y0,Math.sin(a1)*rid],[Math.cos(a1)*rid,y1,Math.sin(a1)*rid],[Math.cos(a0)*rid,y1,Math.sin(a0)*rid]);
-      }
-    }
-    for(let s=0;s<sSegs;s++){
-      const a0=(s/sSegs)*Math.PI*2,a1=((s+1)/sSegs)*Math.PI*2;
-      addTri([Math.cos(a0)*sDia/2,sTop,Math.sin(a0)*sDia/2],[Math.cos(a1)*sDia/2,sTop,Math.sin(a1)*sDia/2],[Math.cos(a0)*sDia/2,sBot,Math.sin(a0)*sDia/2]);
-      addTri([Math.cos(a1)*sDia/2,sTop,Math.sin(a1)*sDia/2],[Math.cos(a1)*sDia/2,sBot,Math.sin(a1)*sDia/2],[Math.cos(a0)*sDia/2,sBot,Math.sin(a0)*sDia/2]);
-    }
-    for(let s=0;s<sSegs;s++){const a0=(s/sSegs)*Math.PI*2,a1=((s+1)/sSegs)*Math.PI*2;addTri([0,sBot,0],[Math.cos(a1)*sDia/2,sBot,Math.sin(a1)*sDia/2],[Math.cos(a0)*sDia/2,sBot,Math.sin(a0)*sDia/2])}
-    if(P.socketFlange){
-      const fR=sDia/2+8,fH=3;
-      for(let s=0;s<sSegs;s++){
-        const a0=(s/sSegs)*Math.PI*2,a1=((s+1)/sSegs)*Math.PI*2;
-        addTri([Math.cos(a0)*sDia/2,sTop,Math.sin(a0)*sDia/2],[Math.cos(a0)*fR,sTop,Math.sin(a0)*fR],[Math.cos(a1)*fR,sTop,Math.sin(a1)*fR]);
-        addTri([Math.cos(a0)*sDia/2,sTop,Math.sin(a0)*sDia/2],[Math.cos(a1)*fR,sTop,Math.sin(a1)*fR],[Math.cos(a1)*sDia/2,sTop,Math.sin(a1)*sDia/2]);
-        addTri([Math.cos(a0)*fR,sTop,Math.sin(a0)*fR],[Math.cos(a0)*fR,sTop-fH,Math.sin(a0)*fR],[Math.cos(a1)*fR,sTop-fH,Math.sin(a1)*fR]);
-        addTri([Math.cos(a0)*fR,sTop,Math.sin(a0)*fR],[Math.cos(a1)*fR,sTop-fH,Math.sin(a1)*fR],[Math.cos(a1)*fR,sTop,Math.sin(a1)*fR]);
-      }
-    }
+    for(let s=0;s<segs;s++){const a0=(s/segs)*Math.PI*2,a1=((s+1)/segs)*Math.PI*2;addTri([0,P.shadeOffset-P.neckH,0],[Math.cos(a1)*nbR,P.shadeOffset-P.neckH,Math.sin(a1)*nbR],[Math.cos(a0)*nbR,P.shadeOffset-P.neckH,Math.sin(a0)*nbR])}
   }
 
   const geo=new THREE.BufferGeometry();
@@ -882,18 +913,37 @@ function exportSTL(){
 let layerMesh=null,supportMesh=null,pathLines=null;
 let currentLayer=1,totalLayers=100,printMode='normal',showSupports=true,showPath=true;
 const LAYER_HEIGHT=0.2; // mm
+const FILAMENT_DIAMETER=1.75; // mm
+const FILAMENT_DENSITY=1.24; // g/cm³
+const POWER_CONSUMPTION=0.3; // kW average
+const ELECTRICITY_RATE=5; // rub/kWh
 
 function calculatePrintStats(){
-  const vol=(P.shadeBotR*P.shadeBotR*Math.PI*P.shadeH/1000);
-  const weight=vol*1.24;
-  const totalHeight=P.shadeH+P.neckH;
+  const shadeVol=(P.shadeBotR*P.shadeBotR*Math.PI*P.shadeH/1000);
+  const neckVol=P.neckH>0?(P.neckBotR*P.neckBotR*Math.PI*P.neckH/1000):0;
+  const socketVol=P.socketType!=='none'?(P.socketDia/2)*(P.socketDia/2)*Math.PI*P.socketExt/1000:0;
+  const totalVol=shadeVol+neckVol+socketVol;
+  const weight=totalVol*FILAMENT_DENSITY*1.5; // +50% for supports and infill
+  const filamentLength=weight/(Math.PI*(FILAMENT_DIAMETER/2)*(FILAMENT_DIAMETER/2)*FILAMENT_DENSITY)*10;
+  const totalHeight=P.shadeH+P.neckH+P.socketExt;
   const layers=Math.ceil(totalHeight/LAYER_HEIGHT);
-  const printTimeMin=layers*3+weight*2;
+  const printTimeMin=layers*2.5+weight*1.8;
+  const hours=Math.floor(printTimeMin/60);
+  const mins=Math.round(printTimeMin%60);
+  
+  const pricePerKg=parseFloat(document.getElementById('pricePerKg')?.value)||1500;
+  const materialCost=(weight/1000)*pricePerKg;
+  const powerCost=printTimeMin/60*POWER_CONSUMPTION*ELECTRICITY_RATE;
+  const totalCost=materialCost+powerCost;
+  
   document.getElementById('totalLayers').textContent=layers;
-  document.getElementById('layerHeight').textContent=LAYER_HEIGHT+' мм';
-  document.getElementById('printTime').textContent=`~${Math.floor(printTimeMin/60)}ч ${Math.round(printTimeMin%60)}мин`;
-  document.getElementById('materialUsage').textContent=`~${Math.round(weight)} г`;
-  return{layers,weight};
+  document.getElementById('plasticWeight').textContent=`~${Math.round(weight)} г`;
+  document.getElementById('filamentLength').textContent=`~${Math.round(filamentLength)} м`;
+  document.getElementById('printTimeCalc').textContent=`~${hours}ч ${mins}мин`;
+  document.getElementById('printCost').textContent=`~${Math.round(totalCost)} ₽`;
+  document.getElementById('powerCost').textContent=`~${Math.round(powerCost)} ₽`;
+  
+  return{layers,weight,filamentLength,printTimeMin,totalCost};
 }
 
 function getShadeRForLayer(y){
@@ -966,28 +1016,110 @@ function generateSupports(){
     N.push(nnx,nny,nnz,nnx,nny,nnz,nnx,nny,nnz);
     Idx.push(vCount,vCount+1,vCount+2);vCount+=3;
   }
-  const supportPoints=[];
-  const segs=8;
-  for(let ly=0;ly<totalLayers;ly+=5){
+  
+  // Generate supports for overhangs (angles > 45 degrees)
+  const supportColumns=[];
+  const segs=6;
+  
+  // Check each layer for overhangs in the shade
+  for(let ly=5;ly<totalLayers;ly+=3){
     const y=P.shadeOffset+ly*LAYER_HEIGHT;
+    const yBelow=P.shadeOffset+(ly-5)*LAYER_HEIGHT;
     const r=getShadeRForLayer(y-P.shadeOffset);
+    const rBelow=getShadeRForLayer(yBelow-P.shadeOffset);
     const ir=Math.max(r-P.shadeWall,1);
-    if(ly>0&&r>ir+3){
-      for(let i=0;i<4;i++){
-        const angle=(i/4)*Math.PI*2;
-        supportPoints.push({x:Math.cos(angle)*r*0.7,y:y,z:Math.sin(angle)*r*0.7,radius:3});
+    
+    // If radius increases significantly, we need supports
+    if(r>rBelow+2&&ly>5){
+      const numCols=Math.max(4,Math.floor(r/8));
+      for(let i=0;i<numCols;i++){
+        const angle=(i/numCols)*Math.PI*2;
+        const dist=ir*0.6;
+        supportColumns.push({
+          x:Math.cos(angle)*dist,
+          z:Math.sin(angle)*dist,
+          startY:P.shadeOffset, // Start from bottom of shade
+          endY:y,
+          radius:4
+        });
       }
     }
   }
-  for(const pt of supportPoints){
-    const h=pt.y;
-    for(let s=0;s<segs;s++){
-      const a0=(s/segs)*Math.PI*2,a1=((s+1)/segs)*Math.PI*2;
-      const r=pt.radius;
-      addTri([Math.cos(a0)*r,0,Math.sin(a0)*r],[Math.cos(a1)*r,0,Math.sin(a1)*r],[Math.cos(a0)*r,h,Math.sin(a0)*r]);
-      addTri([Math.cos(a1)*r,0,Math.sin(a1)*r],[Math.cos(a1)*r,h,Math.sin(a1)*r],[Math.cos(a0)*r,h,Math.sin(a0)*r]);
+  
+  // Add supports under socket if it overhangs (inside the neck/shade cavity)
+  if(P.socketType!=='none'&&P.socketExt>10){
+    const sDia=P.socketDia;
+    for(let i=0;i<4;i++){
+      const angle=(i/4)*Math.PI*2;
+      supportColumns.push({
+        x:Math.cos(angle)*sDia*0.3,
+        z:Math.sin(angle)*sDia*0.3,
+        startY:-P.socketExt+5,
+        endY:0,
+        radius:5
+      });
     }
   }
+  
+  // Render support columns as tree-like structures with visible mesh
+  for(const col of supportColumns){
+    const segments=Math.max(2,Math.ceil((col.endY-col.startY)/LAYER_HEIGHT/3));
+    for(let seg=0;seg<segments;seg++){
+      const segStart=col.startY+seg*(col.endY-col.startY)/segments;
+      const segEnd=col.startY+(seg+1)*(col.endY-col.startY)/segments;
+      const progress=seg/segments;
+      const taper=1-progress*0.3;
+      
+      // Create conical support segment with solid fill
+      for(let s=0;s<segs;s++){
+        const a0=(s/segs)*Math.PI*2,a1=((s+1)/segs)*Math.PI*2;
+        const r0=col.radius*taper,r1=col.radius*(1-(seg+1)/segments*0.2);
+        
+        // Outer walls
+        addTri([col.x+Math.cos(a0)*r0,segStart,col.z+Math.sin(a0)*r0],
+               [col.x+Math.cos(a1)*r0,segStart,col.z+Math.sin(a1)*r0],
+               [col.x+Math.cos(a0)*r1,segEnd,col.z+Math.sin(a0)*r1]);
+        addTri([col.x+Math.cos(a1)*r0,segStart,col.z+Math.sin(a1)*r0],
+               [col.x+Math.cos(a1)*r1,segEnd,col.z+Math.sin(a1)*r1],
+               [col.x+Math.cos(a0)*r1,segEnd,col.z+Math.sin(a0)*r1]);
+        
+        // Inner fill (solid support)
+        addTri([col.x,segStart,col.z],
+               [col.x+Math.cos(a0)*r0*0.7,segStart,col.z+Math.sin(a0)*r0*0.7],
+               [col.x+Math.cos(a1)*r0*0.7,segStart,col.z+Math.sin(a1)*r0*0.7]);
+        addTri([col.x,segEnd,col.z],
+               [col.x+Math.cos(a1)*r1*0.7,segEnd,col.z+Math.sin(a1)*r1*0.7],
+               [col.x+Math.cos(a0)*r1*0.7,segEnd,col.z+Math.sin(a0)*r1*0.7]);
+      }
+    }
+    
+    // Add horizontal connection bars between adjacent supports
+    if(supportColumns.length>1){
+      const colIdx=supportColumns.indexOf(col);
+      const nextCol=supportColumns[(colIdx+1)%supportColumns.length];
+      if(nextCol&&colIdx<supportColumns.length-1){
+        for(let barLy=8;barLy<totalLayers;barLy+=12){
+          const barY=P.shadeOffset+barLy*LAYER_HEIGHT;
+          if(barY>=col.startY&&barY<=col.endY&&barY>=nextCol.startY&&barY<=nextCol.endY){
+            const beamW=4;
+            // Create beam between columns
+            const dx=nextCol.x-col.x,dz=nextCol.z-col.z;
+            const dist=Math.sqrt(dx*dx+dz*dz);
+            if(dist>5){
+              const steps=Math.floor(dist/beamW);
+              for(let st=0;st<steps;st++){
+                const tx=col.x+(st/steps)*dx,tz=col.z+(st/steps)*dz;
+                const tx2=col.x+((st+1)/steps)*dx,tz2=col.z+((st+1)/steps)*dz;
+                addTri([tx,barY,tz],[tx2,barY,tz2],[tx+beamW*0.3,barY+beamW*0.5,tz]);
+                addTri([tx2,barY,tz2],[tx2+beamW*0.3,barY+beamW*0.5,tz2],[tx+beamW*0.3,barY+beamW*0.5,tz]);
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  
   return V.length>0?{V,N,Idx}:null;
 }
 
@@ -1032,7 +1164,8 @@ function updateLayerView(){
       geo.setAttribute('position',new THREE.Float32BufferAttribute(suppData.V,3));
       geo.setAttribute('normal',new THREE.Float32BufferAttribute(suppData.N,3));
       geo.setIndex(suppData.Idx);
-      const supMat=new THREE.MeshStandardMaterial({color:0xff6b35,roughness:0.8,metalness:0.1,emissive:0x552200,emissiveIntensity:0.3,side:THREE.DoubleSide,wireframe:true});
+      // More visible support material - solid orange with less transparency
+      const supMat=new THREE.MeshStandardMaterial({color:0xff8c42,roughness:0.6,metalness:0.2,emissive:0xff4500,emissiveIntensity:0.4,side:THREE.DoubleSide});
       supportMesh=new THREE.Mesh(geo,supMat);
       scene.add(supportMesh);
     }
